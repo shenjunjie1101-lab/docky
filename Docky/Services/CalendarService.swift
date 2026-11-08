@@ -59,11 +59,11 @@ final class CalendarService: ObservableObject {
     /// not-granted because the widget needs read access to show events.
     var permissionStatus: PermissionStatus {
         switch authorizationStatus {
-        case .fullAccess, .authorized:
+        case .authorized:
             return .granted
         case .notDetermined:
             return .notDetermined
-        case .denied, .restricted, .writeOnly:
+        case .denied, .restricted:
             return .denied
         @unknown default:
             return .denied
@@ -81,9 +81,9 @@ final class CalendarService: ObservableObject {
         lastErrorDescription = nil
 
         switch authorizationStatus {
-        case .fullAccess, .authorized:
+        case .authorized:
             loadNextEvent()
-        case .writeOnly:
+        case _ where authorizationStatus.rawValue == 4:
             nextEvent = nil
             upcomingEvents = []
             isLoading = false
@@ -122,11 +122,16 @@ final class CalendarService: ObservableObject {
         refreshAuthorizationStatus()
 
         switch authorizationStatus {
-        case .fullAccess, .authorized:
+        case .authorized:
             return true
-        case .writeOnly, .denied, .restricted:
+        case .denied, .restricted:
             return false
         case .notDetermined:
+            if #unavailable(macOS 14.0) {
+                let granted = (try? await eventStore.requestAccess(to: .event)) ?? false
+                refreshAuthorizationStatus()
+                return granted
+            }
             return await withCheckedContinuation { continuation in
                 eventStore.requestFullAccessToEvents { [weak self] granted, _ in
                     guard let self else {

@@ -408,11 +408,11 @@ private struct LaunchpadOverlayView: View {
                                         .id("page-\(pageIndex)")
                                     }
                                 }
-                                .scrollTargetLayout()
+                                .dockyScrollTargetLayout()
                             }
-                            .scrollTargetBehavior(.paging)
-                            .scrollPosition(id: $visiblePageID, anchor: .leading)
-                            .scrollClipDisabled()
+                            .dockyScrollTargetBehavior(.paging)
+                            .dockyScrollPosition(id: $visiblePageID, anchor: .leading)
+                            .dockyScrollClipDisabled()
                             .padding(.top, topInset)
                             .padding(.bottom, resolvedBottomInset)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -642,7 +642,7 @@ private struct LaunchpadOverlayView: View {
     /// `topInset` / `bottomInset` are applied as `.contentMargins`
     /// rather than outer paddings so the scroll viewport occupies
     /// the full chrome area, content can scroll behind the search
-    /// bar and dock chrome, and `.scrollClipDisabled()` lets cells
+    /// bar and dock chrome, and `.dockyScrollClipDisabled()` lets cells
     /// render past the viewport edges without getting clipped (e.g.
     /// during drag previews).
     @ViewBuilder
@@ -689,10 +689,10 @@ private struct LaunchpadOverlayView: View {
                         .onTapGesture { overlay.dismiss() }
                 )
             }
-            .scrollPosition(id: $visibleEntryID, anchor: .top)
-            .scrollClipDisabled()
-            .contentMargins(.top, topInset, for: .scrollContent)
-            .contentMargins(.bottom, bottomInset, for: .scrollContent)
+            .dockyScrollPosition(id: $visibleEntryID, anchor: .top)
+            .dockyScrollClipDisabled()
+            .dockyContentMargin(.top, topInset)
+            .dockyContentMargin(.bottom, bottomInset)
             .onChange(of: selectedEntryID) { selection in
                 guard let selection else { return }
                 withAnimation(.easeInOut(duration: 0.18)) {
@@ -788,7 +788,7 @@ private struct LaunchpadOverlayView: View {
     /// binding, so `currentPageIndex` would stay stale and the next
     /// chevron click would re-target the same page. Wrapped in
     /// `withAnimation` so the transition is smooth despite the
-    /// `.scrollTargetBehavior(.paging)` snap.
+    /// `.dockyScrollTargetBehavior(.paging)` snap.
     private func scrollToPage(index: Int, pageCount: Int) {
         let clamped = max(0, min(index, pageCount - 1))
         withAnimation(.easeInOut(duration: 0.22)) {
@@ -1928,7 +1928,7 @@ private struct ExpandedFolderOverlay: View {
                 .onAppear {
                     isRenameFieldFocused = true
                 }
-                .onChange(of: isRenaming) { _, nowRenaming in
+                .onChange(of: isRenaming) { nowRenaming in
                     isRenameFieldFocused = nowRenaming
                 }
         } else {
@@ -1961,11 +1961,11 @@ private struct ExpandedFolderOverlay: View {
                             .id("folder-page-\(index)")
                     }
                 }
-                .scrollTargetLayout()
+                .dockyScrollTargetLayout()
             }
-            .scrollTargetBehavior(.paging)
-            .scrollPosition(id: $visiblePageID, anchor: .leading)
-            .scrollClipDisabled()
+            .dockyScrollTargetBehavior(.paging)
+            .dockyScrollPosition(id: $visiblePageID, anchor: .leading)
+            .dockyScrollClipDisabled()
             .frame(height: gridHeight)
 
             // Only reserve indicator height when the folder actually

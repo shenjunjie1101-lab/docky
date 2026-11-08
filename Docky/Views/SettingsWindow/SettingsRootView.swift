@@ -212,8 +212,8 @@ struct SettingsRootView: View {
             let _ = Self._printChanges()
             #endif
 
-            NavigationSplitView {
-                List(selection: $selection) {
+            HSplitView {
+                List(selection: Binding<SettingsPane?>(get: { selection }, set: { if let pane = $0 { selection = pane } })) {
                     ForEach(settingsSections) { section in
                         if let title = section.title {
                             Section(title) {
@@ -226,9 +226,8 @@ struct SettingsRootView: View {
                         }
                     }
                 }
-                .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
+                .frame(minWidth: 200, idealWidth: 220, maxWidth: 260)
                 .listStyle(.sidebar)
-            } detail: {
                 SettingsDetailView(pane: selection)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)

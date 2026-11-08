@@ -760,7 +760,7 @@ struct TileView: View {
             displayedContent
                 .background(appFolderDropTargetBackdrop)
                 .padding(contentPaddingEdges, contentPadding)
-                .animation(.bouncy(duration: 0.4, extraBounce: 0.05), value: showsAppFolderDropBackdrop)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showsAppFolderDropBackdrop)
         }
     }
 

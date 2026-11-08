@@ -26,6 +26,11 @@ jobs:
               echo "DEVELOPER_DIR=$xcode_path/Contents/Developer" >> "$GITHUB_ENV"
             fi
           done
+      - uses: actions/cache/restore@v4
+        with:
+          path: build
+          key: monterey-xcode263-${{ github.sha }}
+          restore-keys: monterey-xcode263-
       - name: Build for macOS 12.6 on Apple Silicon
         shell: bash
         run: |
@@ -33,7 +38,8 @@ jobs:
           xcodebuild -version
           xcodebuild -project Docky.xcodeproj -scheme Docky \
             -configuration Release -destination 'generic/platform=macOS' \
-            -derivedDataPath build MACOSX_DEPLOYMENT_TARGET=12.6 \
+            -derivedDataPath build -skipMacroValidation -skipPackagePluginValidation \
+            MACOSX_DEPLOYMENT_TARGET=12.6 \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO \
             build 2>&1 | tee build.log
       - name: Collect build log
@@ -43,3 +49,8 @@ jobs:
           name: monterey-build-log
           path: build.log
           retention-days: 14
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: build
+          key: monterey-xcode263-${{ github.sha }}

@@ -112,8 +112,8 @@ struct WidgetsSettingsView: View {
         }
 
         Section {
-            Grid(horizontalSpacing: 12, verticalSpacing: 12) {
-                GridRow {
+            VStack(spacing: 12) {
+                HStack(spacing: 12) {
                     actionButton(
                         "Install from File…",
                         systemImage: "square.and.arrow.down",
@@ -125,7 +125,7 @@ struct WidgetsSettingsView: View {
                         action: revealWidgetsFolder
                     )
                 }
-                GridRow {
+                HStack(spacing: 12) {
                     actionButton(
                         "Refresh",
                         systemImage: "arrow.clockwise",

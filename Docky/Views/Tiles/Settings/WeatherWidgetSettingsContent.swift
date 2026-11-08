@@ -49,7 +49,7 @@ struct WeatherWidgetSettingsContent: View {
             }
             .labelsHidden()
             .pickerStyle(.segmented)
-            .onChange(of: unitSelection) { _, newValue in
+            .onChange(of: unitSelection) { newValue in
                 applyTemperatureUnit(newValue)
             }
 
@@ -91,7 +91,7 @@ struct WeatherWidgetSettingsContent: View {
     private var searchSection: some View {
         TextField("Search for a city", text: $query)
             .textFieldStyle(.roundedBorder)
-            .onChange(of: query) { _, newValue in
+            .onChange(of: query) { newValue in
                 scheduleSearch(for: newValue)
             }
             .onSubmit {

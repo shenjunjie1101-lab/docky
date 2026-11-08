@@ -1006,14 +1006,14 @@ final class WorkspaceService: ObservableObject {
             let captureSize = constrainedCaptureSize(for: shareableWindow.frame.size)
             configuration.width = Int(captureSize.width)
             configuration.height = Int(captureSize.height)
-            configuration.capturesAudio = false
+            if #available(macOS 13.0, *) { configuration.capturesAudio = false }
             if FeatureGate.shared.isAvailable(.streamMicrophoneCapture), #available(macOS 15.0, *) {
                 configuration.captureMicrophone = false
             }
             configuration.showsCursor = false
             configuration.scalesToFit = true
-            configuration.ignoreShadowsSingleWindow = true
-            configuration.ignoreGlobalClipSingleWindow = true
+            if #available(macOS 14.0, *) { configuration.ignoreShadowsSingleWindow = true }
+            if #available(macOS 14.0, *) { configuration.ignoreGlobalClipSingleWindow = true }
 
             let filter = SCContentFilter(desktopIndependentWindow: shareableWindow)
             let cgImage = try await captureImage(contentFilter: filter, configuration: configuration)
@@ -1039,14 +1039,14 @@ final class WorkspaceService: ObservableObject {
             let captureSize = fullSizeCaptureSize(for: shareableWindow.frame.size, screenBounds: window.screenBounds)
             configuration.width = Int(captureSize.width)
             configuration.height = Int(captureSize.height)
-            configuration.capturesAudio = false
+            if #available(macOS 13.0, *) { configuration.capturesAudio = false }
             if FeatureGate.shared.isAvailable(.streamMicrophoneCapture), #available(macOS 15.0, *) {
                 configuration.captureMicrophone = false
             }
             configuration.showsCursor = false
             configuration.scalesToFit = false
-            configuration.ignoreShadowsSingleWindow = true
-            configuration.ignoreGlobalClipSingleWindow = true
+            if #available(macOS 14.0, *) { configuration.ignoreShadowsSingleWindow = true }
+            if #available(macOS 14.0, *) { configuration.ignoreGlobalClipSingleWindow = true }
 
             let filter = SCContentFilter(desktopIndependentWindow: shareableWindow)
             let cgImage = try await captureImage(contentFilter: filter, configuration: configuration)
@@ -1085,14 +1085,14 @@ final class WorkspaceService: ObservableObject {
             let captureSize = constrainedCaptureSize(for: shareableWindow.frame.size)
             configuration.width = Int(captureSize.width)
             configuration.height = Int(captureSize.height)
-            configuration.capturesAudio = false
+            if #available(macOS 13.0, *) { configuration.capturesAudio = false }
             if FeatureGate.shared.isAvailable(.streamMicrophoneCapture), #available(macOS 15.0, *) {
                 configuration.captureMicrophone = false
             }
             configuration.showsCursor = false
             configuration.scalesToFit = true
-            configuration.ignoreShadowsSingleWindow = true
-            configuration.ignoreGlobalClipSingleWindow = true
+            if #available(macOS 14.0, *) { configuration.ignoreShadowsSingleWindow = true }
+            if #available(macOS 14.0, *) { configuration.ignoreGlobalClipSingleWindow = true }
 
             let filter = SCContentFilter(desktopIndependentWindow: shareableWindow)
             let cgImage = try await captureImage(contentFilter: filter, configuration: configuration)
@@ -1268,6 +1268,11 @@ final class WorkspaceService: ObservableObject {
         contentFilter: SCContentFilter,
         configuration: SCStreamConfiguration
     ) async throws -> CGImage {
+        // Earlier callers first attempt the existing CGWindow capture path.
+        guard #available(macOS 14.0, *) else {
+            throw NSError(domain: "Docky.WindowPreview", code: -1,
+                          userInfo: [NSLocalizedDescriptionKey: "ScreenCaptureKit screenshots require macOS 14."])
+        }
         return try await withCheckedThrowingContinuation { continuation in
             SCScreenshotManager.captureImage(contentFilter: contentFilter, configuration: configuration) { image, error in
                 if let error {
@@ -1349,14 +1354,14 @@ private final class LiveWindowPreviewSession: NSObject, SCStreamOutput {
         configuration.height = Int(captureSize.height)
         configuration.minimumFrameInterval = CMTime(value: 1, timescale: 30)
         configuration.queueDepth = 3
-        configuration.capturesAudio = false
+        if #available(macOS 13.0, *) { configuration.capturesAudio = false }
         if FeatureGate.shared.isAvailable(.streamMicrophoneCapture), #available(macOS 15.0, *) {
             configuration.captureMicrophone = false
         }
         configuration.showsCursor = false
         configuration.scalesToFit = false
-        configuration.ignoreShadowsSingleWindow = true
-        configuration.ignoreGlobalClipSingleWindow = true
+        if #available(macOS 14.0, *) { configuration.ignoreShadowsSingleWindow = true }
+        if #available(macOS 14.0, *) { configuration.ignoreGlobalClipSingleWindow = true }
 
         self.stream = SCStream(
             filter: SCContentFilter(desktopIndependentWindow: shareableWindow),

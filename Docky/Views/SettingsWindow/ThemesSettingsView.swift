@@ -71,8 +71,8 @@ struct ThemesSettingsView: View {
                 }
 
                 Section {
-                    Grid(horizontalSpacing: 12, verticalSpacing: 12) {
-                        GridRow {
+                    VStack(spacing: 12) {
+                        HStack(spacing: 12) {
                             themesActionButton(
                                 "Import Theme…",
                                 systemImage: "square.and.arrow.down",
@@ -84,7 +84,7 @@ struct ThemesSettingsView: View {
                                 action: exportTheme
                             )
                         }
-                        GridRow {
+                        HStack(spacing: 12) {
                             themesActionButton(
                                 "Reveal Themes Folder",
                                 systemImage: "folder",

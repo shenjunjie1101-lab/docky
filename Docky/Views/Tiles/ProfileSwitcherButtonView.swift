@@ -205,7 +205,7 @@ struct ProfileSwitcherButtonView: View {
             .frame(width: componentWidth, height: componentHeight)
             .animation(.easeOut(duration: 0.18), value: isVisible)
             .animation(.spring(response: 0.32, dampingFraction: 0.78), value: profileService.activeProfileID)
-            .onChange(of: isVisible) { _, newValue in
+            .onChange(of: isVisible) { newValue in
                 onActiveChange(newValue)
             }
             .padding(1)
@@ -260,10 +260,10 @@ struct ProfileSwitcherButtonView: View {
                 }
                 .padding(.leading, leadingStripPadding)
                 .padding(.trailing, trailingStripPadding)
-                .scrollTargetLayout()
+                .dockyScrollTargetLayout()
             }
-            .scrollTargetBehavior(.viewAligned(limitBehavior: .always))
-            .scrollPosition(id: $scrolledProfileID, anchor: .center)
+            .dockyScrollTargetBehavior(.viewAligned(limitBehavior: .always))
+            .dockyScrollPosition(id: $scrolledProfileID, anchor: .center)
             .frame(width: scrollViewportWidth, height: scrollViewportHeight)
             .modifier(ScrollSyncModifier(
                 scrolledID: $scrolledProfileID,
@@ -289,10 +289,10 @@ struct ProfileSwitcherButtonView: View {
                     }
                 }
                 .padding(.vertical, (viewportLength - ballSize) / 2)
-                .scrollTargetLayout()
+                .dockyScrollTargetLayout()
             }
-            .scrollTargetBehavior(.viewAligned(limitBehavior: .always))
-            .scrollPosition(id: $scrolledProfileID, anchor: .center)
+            .dockyScrollTargetBehavior(.viewAligned(limitBehavior: .always))
+            .dockyScrollPosition(id: $scrolledProfileID, anchor: .center)
             .frame(width: scrollViewportWidth, height: scrollViewportHeight)
             .modifier(ScrollSyncModifier(
                 scrolledID: $scrolledProfileID,
@@ -337,12 +337,12 @@ private struct ScrollSyncModifier: ViewModifier {
                 .onAppear {
                     scrolledID = profileService.activeProfileID
                 }
-                .onChange(of: scrolledID) { _, newID in
+                .onChange(of: scrolledID) { newID in
                     guard let newID, newID != profileService.activeProfileID else { return }
                     profileService.setActiveProfile(id: newID)
                     onLand()
                 }
-                .onChange(of: profileService.activeProfileID) { _, newID in
+                .onChange(of: profileService.activeProfileID) { newID in
                     if scrolledID != newID {
                         withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
                             scrolledID = newID

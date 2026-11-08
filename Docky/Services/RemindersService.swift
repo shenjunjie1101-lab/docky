@@ -46,11 +46,11 @@ final class RemindersService: ObservableObject {
     /// not-granted because the widget needs read access to show tasks.
     var permissionStatus: PermissionStatus {
         switch authorizationStatus {
-        case .fullAccess, .authorized:
+        case .authorized:
             return .granted
         case .notDetermined:
             return .notDetermined
-        case .denied, .restricted, .writeOnly:
+        case .denied, .restricted:
             return .denied
         @unknown default:
             return .denied
@@ -68,9 +68,9 @@ final class RemindersService: ObservableObject {
         lastErrorDescription = nil
 
         switch authorizationStatus {
-        case .fullAccess, .authorized:
+        case .authorized:
             loadReminders()
-        case .writeOnly:
+        case _ where authorizationStatus.rawValue == 4:
             snapshot = nil
             isLoading = false
             lastErrorDescription = "Reminders read access is needed to show your open tasks."
@@ -129,11 +129,16 @@ final class RemindersService: ObservableObject {
         refreshAuthorizationStatus()
 
         switch authorizationStatus {
-        case .fullAccess, .authorized:
+        case .authorized:
             return true
-        case .writeOnly, .denied, .restricted:
+        case .denied, .restricted:
             return false
         case .notDetermined:
+            if #unavailable(macOS 14.0) {
+                let granted = (try? await eventStore.requestAccess(to: .reminder)) ?? false
+                refreshAuthorizationStatus()
+                return granted
+            }
             return await withCheckedContinuation { continuation in
                 eventStore.requestFullAccessToReminders { [weak self] granted, _ in
                     guard let self else {

@@ -1,5 +1,58 @@
 import SwiftUI
 
+enum DockyScrollBehavior {
+    enum LimitBehavior { case always }
+    case paging
+    case viewAligned(limitBehavior: LimitBehavior)
+}
+
+extension View {
+    @ViewBuilder
+    func dockyScrollTargetLayout() -> some View {
+        if #available(macOS 14.0, *) { self.scrollTargetLayout() } else { self }
+    }
+
+    @ViewBuilder
+    func dockyScrollTargetBehavior(_ behavior: DockyScrollBehavior) -> some View {
+        if #available(macOS 14.0, *) {
+            switch behavior {
+            case .paging: self.scrollTargetBehavior(.paging)
+            case .viewAligned: self.scrollTargetBehavior(.viewAligned(limitBehavior: .always))
+            }
+        } else {
+            // Monterey uses ordinary trackpad scrolling and explicit page buttons.
+            self
+        }
+    }
+
+    @ViewBuilder
+    func dockyScrollPosition<ID: Hashable>(id: Binding<ID?>, anchor: UnitPoint? = nil) -> some View {
+        if #available(macOS 14.0, *) {
+            self.scrollPosition(id: id, anchor: anchor)
+        } else {
+            ScrollViewReader { proxy in
+                self.onChange(of: id.wrappedValue) { value in
+                    if let value { proxy.scrollTo(value, anchor: anchor) }
+                }
+                .onAppear {
+                    if let value = id.wrappedValue { proxy.scrollTo(value, anchor: anchor) }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    func dockyScrollClipDisabled() -> some View {
+        if #available(macOS 14.0, *) { self.scrollClipDisabled() } else { self }
+    }
+
+    @ViewBuilder
+    func dockyContentMargin(_ edge: Edge.Set, _ length: CGFloat) -> some View {
+        if #available(macOS 14.0, *) { self.contentMargins(edge, length, for: .scrollContent) }
+        else { self.padding(edge, length) }
+    }
+}
+
 extension View {
     @ViewBuilder
     func dockySettingsForm() -> some View {
