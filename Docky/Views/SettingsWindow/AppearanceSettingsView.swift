@@ -579,7 +579,7 @@ struct AppearanceSettingsView: View {
                 }
                 .disabled(!hasActiveBackgroundSource)
 
-                Text("Background fill drawn under every running app tile, independent of hover. Useful for taskbar-style \"highlighted active app\" looks.")
+                Text("为每个正在运行的应用项目绘制背景，不受鼠标悬停影响。可用于实现任务栏式的当前应用高亮效果。")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

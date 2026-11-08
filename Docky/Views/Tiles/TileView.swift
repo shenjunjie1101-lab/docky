@@ -2291,11 +2291,11 @@ struct TileView: View {
     private func reminderCompletionDetail(for item: ReminderItemSnapshot, now: Date) -> String {
         switch item.timingCategory(relativeTo: now) {
         case .overdue:
-            return "overdue"
+            return "已逾期"
         case .today:
-            return "today"
+            return "今天"
         case .upcoming:
-            return "upcoming"
+            return "即将到期"
         case .unscheduled:
             return item.listTitle
         }

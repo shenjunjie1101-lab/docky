@@ -415,7 +415,7 @@ struct BehaviorSettingsView: View {
                 Toggle("Disable Recent Apps", isOn: $preferences.hidesRecentApps)
                     .font(.headline)
 
-                Text("Hides recent / unpinned running apps even when \"Show Running Apps\" is on. Useful when you want a stable dock layout that doesn't shift as apps launch.")
+                Text("即使启用“显示正在运行的应用”，也不显示最近使用或未固定的运行应用，避免应用启动时改变程序坞布局。")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -450,7 +450,7 @@ struct BehaviorSettingsView: View {
                 Toggle("List Minimized Windows in Switcher & Previews", isOn: $preferences.includesMinimizedWindows)
                     .font(.headline)
 
-                Text("Include minimized windows in the window switcher and per-tile hover previews. They render dimmed with a \"(minimized)\" label so they stand out from active windows.")
+                Text("在窗口切换器和悬停预览中显示最小化窗口。它们会以较暗样式和“已最小化”标签显示，便于与活动窗口区分。")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

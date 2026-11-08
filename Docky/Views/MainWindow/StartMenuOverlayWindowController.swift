@@ -809,7 +809,7 @@ private enum SystemAction {
     var title: String {
         switch self {
         case .sleep: return "睡眠"
-        case .restart: return "Restart..."
+        case .restart: return "重新启动…"
         case .shutDown: return "关机…"
         case .logOut: return "退出登录…"
         }

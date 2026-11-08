@@ -566,7 +566,7 @@ struct CalendarWidgetTileView: View {
     private func relativeTimeText(for date: Date, now: Date) -> String {
         let interval = Int(date.timeIntervalSince(now))
         if interval <= 0 {
-            return "now"
+            return "现在"
         }
 
         let minutes = interval / 60
