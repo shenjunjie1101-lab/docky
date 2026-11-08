@@ -11,6 +11,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct FilePreviewImage: View {
     let url: URL
@@ -19,17 +20,19 @@ struct FilePreviewImage: View {
     @State private var loaded: LoadedThumbnail?
 
     var body: some View {
-        Image(nsImage: image)
-            .resizable()
-            .interpolation(.high)
-            .aspectRatio(contentMode: .fit)
-            .task(id: url) {
-                let thumbnail = await IconCacheService.shared.loadPreviewThumbnailAsync(
-                    forFileURL: url,
-                    maxPixelSize: maxPixelSize
-                )
-                loaded = thumbnail.map { LoadedThumbnail(url: url, image: $0) }
-            }
+        WithPerceptionTracking {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+                .task(id: url) {
+                    let thumbnail = await IconCacheService.shared.loadPreviewThumbnailAsync(
+                        forFileURL: url,
+                        maxPixelSize: maxPixelSize
+                    )
+                    loaded = thumbnail.map { LoadedThumbnail(url: url, image: $0) }
+                }
+        }
     }
 
     private var image: NSImage {

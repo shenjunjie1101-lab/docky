@@ -10,6 +10,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct ProfileSwitcherButtonView: View {
     let dockPosition: ResolvedDockWindowPosition
@@ -22,8 +23,8 @@ struct ProfileSwitcherButtonView: View {
     /// the dock doesn't autohide while the user is hovering the ball.
     var onActiveChange: (Bool) -> Void = { _ in }
 
-    @Bindable private var preferences = DockyPreferences.shared
-    @Bindable private var profileService = ProfileService.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var profileService = ProfileService.shared
     private let dockSettings = DockSettingsService.shared
     @ObservedObject private var layoutService = DockLayoutService.shared
     @State private var isHoveringZone = false
@@ -138,18 +139,18 @@ struct ProfileSwitcherButtonView: View {
     private var scrollViewportHeight: CGFloat {
         isHorizontalScroll ? ballSize : viewportLength
     }
-    
+
     private var maximumCornerRadius: CGFloat {
         let iconHeight = layoutService.scaled(dockSettings.displayTileSize)
         return (iconHeight + layoutService.scaled(preferences.effectiveTileVerticalPadding) * 2) / 2
     }
-    
+
     /// Per-corner radii used by every chrome shape (fill, glass clip,
     /// border). Each corner is the theme/user override clamped to the
     /// max curve, falling through to the uniform value when unset.
-    private var chromeCornerRadii: RectangleCornerRadii {
+    private var chromeCornerRadii: DockyCornerRadii {
         let cap = maximumCornerRadius
-        return RectangleCornerRadii(
+        return DockyCornerRadii(
             topLeading: min(preferences.effectiveWindowCornerRadiusTopLeading, cap),
             bottomLeading: min(preferences.effectiveWindowCornerRadiusBottomLeading, cap),
             bottomTrailing: min(preferences.effectiveWindowCornerRadiusBottomTrailing, cap),
@@ -158,55 +159,57 @@ struct ProfileSwitcherButtonView: View {
     }
 
     var body: some View {
-        ZStack {
-            // Always-on hover target. Renders behind the other layers and
-            // doesn't visually contribute — its only job is to catch
-            // hovers in the cross-axis rim that the scroll picker
-            // doesn't cover.
-            Color.black.opacity(0.001)
-                .frame(width: componentWidth, height: componentHeight)
-                .contentShape(Rectangle())
-                .onHover { hovering in
-                    isHoveringZone = hovering
-                }
-                .zIndex(-1)
-
-            // Layer 0 — tint capsule, painted under the selector.
-            Color(nsColor: preferences.effectiveWindowTintColor)
-                .frame(width: ballWidth, height: ballHeight)
-                .clipShape(Capsule())
-                .opacity(isVisible ? preferences.effectiveWindowTintOpacity : 0)
-                .allowsHitTesting(false)
-                .zIndex(0)
-
-            // Layer 1 — scroll picker text/icons; the only hit-testable
-            // visual so scrolls and taps land here.
-            profileScroller
-                .opacity(isVisible ? 1 : 0)
-                .onHover { hovering in
-                    isHoveringButton = hovering
-                }
-                .contextMenu {
-                    Button("Manage Profiles…") {
-                        SettingsNavigator.shared.requestPane(id: "profiles")
+        WithPerceptionTracking {
+            ZStack {
+                // Always-on hover target. Renders behind the other layers and
+                // doesn't visually contribute — its only job is to catch
+                // hovers in the cross-axis rim that the scroll picker
+                // doesn't cover.
+                Color.black.opacity(0.001)
+                    .frame(width: componentWidth, height: componentHeight)
+                    .contentShape(Rectangle())
+                    .onHover { hovering in
+                        isHoveringZone = hovering
                     }
-                }
-                .zIndex(1)
+                    .zIndex(-1)
 
-            // Layer 2 — glass capsule + border on top, non-interactive
-            // so scroll/tap pass through to the picker beneath.
-            ball
-                .allowsHitTesting(false)
-                .opacity(isVisible ? 1 : 0)
-                .zIndex(2)
+                // Layer 0 — tint capsule, painted under the selector.
+                Color(nsColor: preferences.effectiveWindowTintColor)
+                    .frame(width: ballWidth, height: ballHeight)
+                    .clipShape(Capsule())
+                    .opacity(isVisible ? preferences.effectiveWindowTintOpacity : 0)
+                    .allowsHitTesting(false)
+                    .zIndex(0)
+
+                // Layer 1 — scroll picker text/icons; the only hit-testable
+                // visual so scrolls and taps land here.
+                profileScroller
+                    .opacity(isVisible ? 1 : 0)
+                    .onHover { hovering in
+                        isHoveringButton = hovering
+                    }
+                    .contextMenu {
+                        Button("Manage Profiles…") {
+                            SettingsNavigator.shared.requestPane(id: "profiles")
+                        }
+                    }
+                    .zIndex(1)
+
+                // Layer 2 — glass capsule + border on top, non-interactive
+                // so scroll/tap pass through to the picker beneath.
+                ball
+                    .allowsHitTesting(false)
+                    .opacity(isVisible ? 1 : 0)
+                    .zIndex(2)
+            }
+            .frame(width: componentWidth, height: componentHeight)
+            .animation(.easeOut(duration: 0.18), value: isVisible)
+            .animation(.spring(response: 0.32, dampingFraction: 0.78), value: profileService.activeProfileID)
+            .onChange(of: isVisible) { newValue in
+                onActiveChange(newValue)
+            }
+            .padding(1)
         }
-        .frame(width: componentWidth, height: componentHeight)
-        .animation(.easeOut(duration: 0.18), value: isVisible)
-        .animation(.spring(response: 0.32, dampingFraction: 0.78), value: profileService.activeProfileID)
-        .onChange(of: isVisible) { _, newValue in
-            onActiveChange(newValue)
-        }
-        .padding(1)
     }
 
     private var isVisible: Bool {
@@ -220,7 +223,7 @@ struct ProfileSwitcherButtonView: View {
         hideAfterSelectionTask?.cancel()
         heldAfterSelection = true
         hideAfterSelectionTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1))
+            try? await dockySleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
             heldAfterSelection = false
         }
@@ -239,28 +242,30 @@ struct ProfileSwitcherButtonView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 24) {
                     ForEach(profileService.profiles) { profile in
-                        Text(profile.name)
-                            .font(.headline)
-                            .lineLimit(1)
-                            .fixedSize(horizontal: true, vertical: false)
-                            .foregroundStyle(.white)
-                            .blendMode(.difference)
-                            .opacity(profile.id == profileService.activeProfileID ? 1 : 0.5)
-                            .frame(height: ballSize)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                profileService.setActiveProfile(id: profile.id)
-                                scheduleHideAfterSelection()
-                            }
-                            .id(profile.id)
+                        WithPerceptionTracking {
+                            Text(profile.name)
+                                .font(.headline)
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
+                                .foregroundStyle(.white)
+                                .blendMode(.difference)
+                                .opacity(profile.id == profileService.activeProfileID ? 1 : 0.5)
+                                .frame(height: ballSize)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    profileService.setActiveProfile(id: profile.id)
+                                    scheduleHideAfterSelection()
+                                }
+                                .id(profile.id)
+                        }
                     }
                 }
                 .padding(.leading, leadingStripPadding)
                 .padding(.trailing, trailingStripPadding)
-                .scrollTargetLayout()
+                .dockyScrollTargetLayout()
             }
-            .scrollTargetBehavior(.viewAligned(limitBehavior: .always))
-            .scrollPosition(id: $scrolledProfileID, anchor: .center)
+            .dockyScrollTargetBehavior(.viewAligned(limitBehavior: .always))
+            .dockyScrollPosition(id: $scrolledProfileID, anchor: .center)
             .frame(width: scrollViewportWidth, height: scrollViewportHeight)
             .modifier(ScrollSyncModifier(
                 scrolledID: $scrolledProfileID,
@@ -271,25 +276,27 @@ struct ProfileSwitcherButtonView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 0) {
                     ForEach(profileService.profiles) { profile in
-                        Image(systemName: profile.symbolName)
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .blendMode(.difference)
-                            .opacity(profile.id == profileService.activeProfileID ? 1 : 0.5)
-                            .frame(width: ballSize, height: ballSize)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                profileService.setActiveProfile(id: profile.id)
-                                scheduleHideAfterSelection()
-                            }
-                            .id(profile.id)
+                        WithPerceptionTracking {
+                            Image(systemName: profile.symbolName)
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                                .blendMode(.difference)
+                                .opacity(profile.id == profileService.activeProfileID ? 1 : 0.5)
+                                .frame(width: ballSize, height: ballSize)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    profileService.setActiveProfile(id: profile.id)
+                                    scheduleHideAfterSelection()
+                                }
+                                .id(profile.id)
+                        }
                     }
                 }
                 .padding(.vertical, (viewportLength - ballSize) / 2)
-                .scrollTargetLayout()
+                .dockyScrollTargetLayout()
             }
-            .scrollTargetBehavior(.viewAligned(limitBehavior: .always))
-            .scrollPosition(id: $scrolledProfileID, anchor: .center)
+            .dockyScrollTargetBehavior(.viewAligned(limitBehavior: .always))
+            .dockyScrollPosition(id: $scrolledProfileID, anchor: .center)
             .frame(width: scrollViewportWidth, height: scrollViewportHeight)
             .modifier(ScrollSyncModifier(
                 scrolledID: $scrolledProfileID,
@@ -307,13 +314,15 @@ struct ProfileSwitcherButtonView: View {
         Color.clear
             .frame(width: ballWidth, height: ballHeight)
             .background {
-                if !preferences.effectiveDisablesGlassLook,
-                   FeatureGate.shared.isAvailable(.liquidGlass),
-                   #available(macOS 26.0, *) {
-                    LiquidGlassChromeView(
-                        variant: 19,
-                        cornerRadius: ballSize / 2
-                    )
+                WithPerceptionTracking {
+                    if !preferences.effectiveDisablesGlassLook,
+                       FeatureGate.shared.isAvailable(.liquidGlass),
+                       #available(macOS 26.0, *) {
+                        LiquidGlassChromeView(
+                            variant: 19,
+                            cornerRadius: ballSize / 2
+                        )
+                    }
                 }
             }
             .dockyGlassBorder(in: Capsule(), lineWidth: 1)
@@ -329,21 +338,23 @@ private struct ScrollSyncModifier: ViewModifier {
     let onLand: () -> Void
 
     func body(content: Content) -> some View {
-        content
-            .onAppear {
-                scrolledID = profileService.activeProfileID
-            }
-            .onChange(of: scrolledID) { _, newID in
-                guard let newID, newID != profileService.activeProfileID else { return }
-                profileService.setActiveProfile(id: newID)
-                onLand()
-            }
-            .onChange(of: profileService.activeProfileID) { _, newID in
-                if scrolledID != newID {
-                    withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
-                        scrolledID = newID
+        WithPerceptionTracking {
+            content
+                .onAppear {
+                    scrolledID = profileService.activeProfileID
+                }
+                .onChange(of: scrolledID) { newID in
+                    guard let newID, newID != profileService.activeProfileID else { return }
+                    profileService.setActiveProfile(id: newID)
+                    onLand()
+                }
+                .onChange(of: profileService.activeProfileID) { newID in
+                    if scrolledID != newID {
+                        withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) {
+                            scrolledID = newID
+                        }
                     }
                 }
-            }
+        }
     }
 }

@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Perception
 
 private enum SettingsPane: String, CaseIterable, Identifiable {
     case profiles
@@ -37,32 +38,32 @@ private enum SettingsPane: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .profiles: "Profiles"
-        case .appearanceGeneral: "General"
-        case .appearanceIndicators: "Indicators"
-        case .appearanceTileLayout: "Tile Layout"
-        case .appearanceWindowShape: "Window Shape"
-        case .appearanceWindowBackground: "Window Background"
-        case .appearanceWidgets: "Widgets"
-        case .appearanceThemes: "Themes"
-        case .appIcons: "App Icons"
-        case .behaviorGeneral: "General"
-        case .behaviorPlacement: "Placement"
-        case .behaviorVisibility: "Visibility"
-        case .behaviorAppTileClick: "App Tile Click"
-        case .behaviorAppFolders: "App Folders"
-        case .behaviorWidgets: "Widgets"
-        case .hiddenApps: "Hidden Apps"
-        case .launchpad: "Launchpad"
-        case .startMenu: "Start Menu"
-        case .windowManagement: "Window Management"
-        case .actions: "Actions"
-        case .externalWidgets: "Widget Store"
-        case .behaviorLaunch: "Launch"
-        case .behaviorSystemDock: "System Dock"
-        case .permissions: "Permissions"
-        case .updates: "Updates"
-        case .feedback: "Feedback"
+        case .profiles: String(localized: "Profiles")
+        case .appearanceGeneral: String(localized: "General")
+        case .appearanceIndicators: String(localized: "Indicators")
+        case .appearanceTileLayout: String(localized: "Tile Layout")
+        case .appearanceWindowShape: String(localized: "Window Shape")
+        case .appearanceWindowBackground: String(localized: "Window Background")
+        case .appearanceWidgets: String(localized: "Widgets")
+        case .appearanceThemes: String(localized: "Themes")
+        case .appIcons: String(localized: "App Icons")
+        case .behaviorGeneral: String(localized: "General")
+        case .behaviorPlacement: String(localized: "Placement")
+        case .behaviorVisibility: String(localized: "Visibility")
+        case .behaviorAppTileClick: "应用点击行为"
+        case .behaviorAppFolders: "应用文件夹"
+        case .behaviorWidgets: String(localized: "Widgets")
+        case .hiddenApps: String(localized: "Hidden Apps")
+        case .launchpad: String(localized: "Launchpad")
+        case .startMenu: String(localized: "Start Menu")
+        case .windowManagement: String(localized: "Window Management")
+        case .actions: "快捷操作"
+        case .externalWidgets: String(localized: "Widget Store")
+        case .behaviorLaunch: String(localized: "Launch")
+        case .behaviorSystemDock: String(localized: "System Dock")
+        case .permissions: String(localized: "Permissions")
+        case .updates: String(localized: "Updates")
+        case .feedback: "反馈"
         }
     }
 
@@ -137,8 +138,8 @@ private struct SettingsSection: Identifiable {
 }
 
 private let settingsSections: [SettingsSection] = [
-    SettingsSection(id: "profiles", title: "Profiles", panes: [.profiles]),
-    SettingsSection(id: "appearance", title: "Appearance", panes: [
+    SettingsSection(id: "profiles", title: String(localized: "Profiles"), panes: [.profiles]),
+    SettingsSection(id: "appearance", title: String(localized: "Appearance"), panes: [
         .appearanceThemes,
         .appearanceGeneral,
         .appearanceIndicators,
@@ -148,7 +149,7 @@ private let settingsSections: [SettingsSection] = [
         .appearanceWidgets,
         .appIcons
     ]),
-    SettingsSection(id: "behavior", title: "Behavior", panes: [
+    SettingsSection(id: "behavior", title: String(localized: "Behavior"), panes: [
         .behaviorGeneral,
         .behaviorPlacement,
         .behaviorVisibility,
@@ -157,20 +158,20 @@ private let settingsSections: [SettingsSection] = [
         .behaviorWidgets,
         .hiddenApps
     ]),
-    SettingsSection(id: "features", title: "Features", panes: [
+    SettingsSection(id: "features", title: String(localized: "Features"), panes: [
         .launchpad,
         .startMenu,
         .windowManagement,
         .actions,
         .externalWidgets
     ]),
-    SettingsSection(id: "system", title: "System", panes: [
+    SettingsSection(id: "system", title: String(localized: "System"), panes: [
         .behaviorLaunch,
         .behaviorSystemDock,
         .permissions,
         .updates
     ]),
-    SettingsSection(id: "support", title: "Support", panes: [
+    SettingsSection(id: "support", title: "支持", panes: [
         .feedback
     ])
 ]
@@ -181,7 +182,7 @@ private let settingsSections: [SettingsSection] = [
 /// divider context menu's "Send Feedback" entry today; can carry
 /// any future "jump to pane X" shortcuts the rest of the app needs.
 @MainActor
-@Observable
+@Perceptible
 final class SettingsNavigator {
     static let shared = SettingsNavigator()
     private init() {}
@@ -203,55 +204,58 @@ struct SettingsRootView: View {
     // Suppresses history pushes when the selection change originated from
     // a back/forward button rather than a fresh user navigation.
     @State private var isNavigatingHistory = false
-    @Bindable private var navigator = SettingsNavigator.shared
+    @Perception.Bindable private var navigator = SettingsNavigator.shared
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        NavigationSplitView {
-            List(selection: $selection) {
-                ForEach(settingsSections) { section in
-                    if let title = section.title {
-                        Section(title) {
-                            paneRows(section.panes)
-                        }
-                    } else {
-                        Section {
-                            paneRows(section.panes)
+            HSplitView {
+                List(selection: Binding<SettingsPane?>(get: { selection }, set: { if let pane = $0 { selection = pane } })) {
+                    ForEach(settingsSections) { section in
+                        WithPerceptionTracking {
+                            if let title = section.title {
+                                Section(title) {
+                                    paneRows(section.panes)
+                                }
+                            } else {
+                                Section {
+                                    paneRows(section.panes)
+                                }
+                            }
                         }
                     }
                 }
+                .frame(minWidth: 200, idealWidth: 220, maxWidth: 260)
+                .listStyle(.sidebar)
+                SettingsDetailView(pane: selection)
             }
-            .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
-            .listStyle(.sidebar)
-        } detail: {
-            SettingsDetailView(pane: selection)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                HStack(spacing: 2) {
-                    Button(action: goBack) {
-                        Image(systemName: "chevron.left")
-                    }
-                    .disabled(!canGoBack)
-                    .keyboardShortcut("[", modifiers: .command)
-                    .help("Back")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .toolbar {
+                ToolbarItem(placement: .navigation) {
+                    HStack(spacing: 2) {
+                        Button(action: goBack) {
+                            Image(systemName: "chevron.left")
+                        }
+                        .disabled(!canGoBack)
+                        .keyboardShortcut("[", modifiers: .command)
+                        .help("Back")
 
-                    Button(action: goForward) {
-                        Image(systemName: "chevron.right")
+                        Button(action: goForward) {
+                            Image(systemName: "chevron.right")
+                        }
+                        .disabled(!canGoForward)
+                        .keyboardShortcut("]", modifiers: .command)
+                        .help("Forward")
                     }
-                    .disabled(!canGoForward)
-                    .keyboardShortcut("]", modifiers: .command)
-                    .help("Forward")
                 }
             }
+            .onAppear { consumePendingPane() }
+            .onChange(of: navigator.pendingPaneID) { _ in consumePendingPane() }
+            .onChange(of: selection) { newPane in recordHistory(newPane) }
         }
-        .onAppear { consumePendingPane() }
-        .onChange(of: navigator.pendingPaneID) { _ in consumePendingPane() }
-        .onChange(of: selection) { newPane in recordHistory(newPane) }
     }
 
     private var canGoBack: Bool { historyIndex > 0 }
@@ -295,12 +299,14 @@ struct SettingsRootView: View {
     @ViewBuilder
     private func paneRows(_ panes: [SettingsPane]) -> some View {
         ForEach(panes) { pane in
-            HStack(spacing: 8) {
-                PaneIconBadge(symbol: pane.symbolName, color: pane.tileColor)
-                Text(pane.title)
-                Spacer(minLength: 8)
+            WithPerceptionTracking {
+                HStack(spacing: 8) {
+                    PaneIconBadge(symbol: pane.symbolName, color: pane.tileColor)
+                    Text(pane.title)
+                    Spacer(minLength: 8)
+                }
+                .tag(pane)
             }
-            .tag(pane)
         }
     }
 }
@@ -316,15 +322,19 @@ private struct PaneIconBadge: View {
     private static let cornerRadius: CGFloat = 5
 
     var body: some View {
-        let isDark = colorScheme == .dark
-        RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
-            .fill(isDark ? Color.black : color)
-            .frame(width: Self.tileSize, height: Self.tileSize)
-            .overlay {
-                Image(systemName: symbol)
-                    .font(.system(size: Self.symbolSize, weight: .semibold))
-                    .foregroundStyle(isDark ? color : Color.white)
-            }
+        WithPerceptionTracking {
+            let isDark = colorScheme == .dark
+            RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
+                .fill(isDark ? Color.black : color)
+                .frame(width: Self.tileSize, height: Self.tileSize)
+                .overlay {
+                    WithPerceptionTracking {
+                        Image(systemName: symbol)
+                            .font(.system(size: Self.symbolSize, weight: .semibold))
+                            .foregroundStyle(isDark ? color : Color.white)
+                    }
+                }
+        }
     }
 }
 
@@ -332,11 +342,13 @@ private struct SettingsDetailView: View {
     let pane: SettingsPane
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            selectedView
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 0) {
+                selectedView
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+            .navigationTitle(pane.title)
         }
-        .navigationTitle(pane.title)
     }
 
     @ViewBuilder

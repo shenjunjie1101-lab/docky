@@ -47,35 +47,35 @@ enum Permission: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .userFolders: return "Full Disk Access"
-        case .finderAutomation: return "Automation (Finder)"
-        case .accessibility: return "Accessibility"
-        case .systemEventsAutomation: return "Automation (System Events)"
-        case .screenCapture: return "Screen Recording"
-        case .location: return "Location"
-        case .calendar: return "Calendar"
-        case .reminders: return "Reminders"
+        case .userFolders: return "完全磁盘访问权限"
+        case .finderAutomation: return "自动化（访达）"
+        case .accessibility: return "辅助功能"
+        case .systemEventsAutomation: return "自动化（System Events）"
+        case .screenCapture: return "屏幕录制"
+        case .location: return String(localized: "Location")
+        case .calendar: return String(localized: "Calendar")
+        case .reminders: return String(localized: "Reminders")
         }
     }
 
     var explanation: String {
         switch self {
         case .userFolders:
-            return "Grant Full Disk Access so Docky can preview recent items from folders pinned to the Dock, including protected locations like Downloads, Documents, and Desktop. No data leaves your Mac."
+            return "授予完全磁盘访问权限，以便 Docky 预览固定文件夹中的最近项目，包括“下载”“文稿”和“桌面”等受保护位置。相关文件不会上传。"
         case .finderAutomation:
-            return "Docky uses Finder automation for reveal-in-Finder, open-folder, and Trash actions. macOS grants this separately from Full Disk Access, and you can request it here without waiting for the first Finder action to fail."
+            return "Docky 通过访达自动化执行“在访达中显示”、打开文件夹和废纸篓操作。此权限与完全磁盘访问权限分开授予，可以直接在这里请求，无需等首次操作失败后再授权。"
         case .accessibility:
-            return "Accessibility access lets Docky click menu bar items for curated menuClick actions, inspect app windows for Dock-like reopen behavior and window menus, and restore minimized windows beside the Trash. These actions are slower and more fragile than built-in actions, so Docky requests this only when needed."
+            return "辅助功能权限用于执行预设菜单点击操作、读取应用窗口、显示窗口菜单，以及恢复最小化窗口。这些操作比内置命令更慢，也更容易受系统或应用变化影响，因此仅在需要时请求权限。"
         case .systemEventsAutomation:
-            return "Docky uses System Events automation for curated menuClick actions. Requesting it here lets Docky click supported app menus without waiting for the first action to trigger a macOS prompt. Menu-click actions still require Accessibility too."
+            return "Docky 通过 System Events 自动化执行预设菜单点击操作。可以在这里提前授权，无需等首次操作触发系统提示。菜单点击操作还需要辅助功能权限。"
         case .screenCapture:
-            return "Grant Screen Recording so Docky can show thumbnail previews for minimized windows. Docky only captures the minimized window itself for its dock tile, and nothing leaves your Mac. macOS may require quitting and reopening Docky after you allow this."
+            return "授予屏幕录制权限，以便 Docky 显示最小化窗口的缩略图。预览在本机生成，不会上传。授权后，macOS 可能要求退出并重新打开 Docky。"
         case .location:
-            return "Grant location access so Docky can show local weather in the Weather widget. Your location is used on-device to fetch the forecast and is not stored by Docky."
+            return "授予定位权限，以便天气小组件显示本地天气。位置信息仅用于查询天气，Docky 不会保存你的位置。"
         case .calendar:
-            return "Grant Calendar access so the Calendar widget can show your upcoming events. Events are read on-device and never leave your Mac."
+            return "授予日历权限，以便日历小组件显示即将开始的日程。日程仅在本机读取，不会上传。"
         case .reminders:
-            return "Grant Reminders access so the Reminders widget can show your open tasks. Reminders are read on-device and never leave your Mac."
+            return "授予提醒事项权限，以便小组件显示未完成任务。提醒事项仅在本机读取，不会上传。"
         }
     }
 
@@ -320,10 +320,10 @@ final class PermissionsService: ObservableObject {
 
     func presentPermissionAlert(for permission: Permission, actionTitle: String) {
         let alert = NSAlert()
-        alert.messageText = permission.title + " is required"
-        alert.informativeText = "Allow Docky in Privacy & Security so it can perform \(actionTitle.lowercased())."
-        alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Cancel")
+        alert.messageText = permission.title + "尚未开启"
+        alert.informativeText = "请在“系统偏好设置 → 安全性与隐私 → 隐私”中允许 Docky，以便执行“\(actionTitle.lowercased())”。"
+        alert.addButton(withTitle: String(localized: "Open System Settings"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
         if alert.runModal() == .alertFirstButtonReturn {
             openSystemSettings(for: permission)
         }

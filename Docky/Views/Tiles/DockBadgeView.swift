@@ -8,6 +8,7 @@
 //
 
 import SwiftUI
+import Perception
 
 struct DockBadgeView: View {
     let text: String
@@ -21,12 +22,16 @@ struct DockBadgeView: View {
     var verticalOffsetFactor: CGFloat = 0.30
 
     var body: some View {
-        GeometryReader { proxy in
-            let side = min(proxy.size.width, proxy.size.height)
-            badge(forTileSide: side)
-                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
+        WithPerceptionTracking {
+            GeometryReader { proxy in
+                WithPerceptionTracking {
+                    let side = min(proxy.size.width, proxy.size.height)
+                    badge(forTileSide: side)
+                        .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
+                }
+            }
+            .allowsHitTesting(false)
         }
-        .allowsHitTesting(false)
     }
 
     @ViewBuilder
@@ -74,12 +79,16 @@ struct DockBadgeDotView: View {
     var verticalOffsetFactor: CGFloat = 0.30
 
     var body: some View {
-        GeometryReader { proxy in
-            let side = min(proxy.size.width, proxy.size.height)
-            dot(forTileSide: side)
-                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
+        WithPerceptionTracking {
+            GeometryReader { proxy in
+                WithPerceptionTracking {
+                    let side = min(proxy.size.width, proxy.size.height)
+                    dot(forTileSide: side)
+                        .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
+                }
+            }
+            .allowsHitTesting(false)
         }
-        .allowsHitTesting(false)
     }
 
     @ViewBuilder

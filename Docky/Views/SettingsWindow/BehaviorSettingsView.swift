@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Perception
 
 struct BehaviorSettingsView: View {
     enum Subsection {
@@ -19,41 +20,43 @@ struct BehaviorSettingsView: View {
 
     let subsection: Subsection
 
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @State private var isShowingResetConfirmation = false
 
     var body: some View {
-        Form {
-            switch subsection {
-            case .general:
-                generalSection
-            case .placement:
-                placementSection
-            case .visibility:
-                visibilitySection
-            case .appTileClick:
-                appTileClickSection
-            case .widgets:
-                widgetsSection
-            case .launch:
-                launchSection
-            case .systemDock:
-                systemDockSection
-            case .appFolders:
-                appFoldersSection
+        WithPerceptionTracking {
+            Form {
+                switch subsection {
+                case .general:
+                    generalSection
+                case .placement:
+                    placementSection
+                case .visibility:
+                    visibilitySection
+                case .appTileClick:
+                    appTileClickSection
+                case .widgets:
+                    widgetsSection
+                case .launch:
+                    launchSection
+                case .systemDock:
+                    systemDockSection
+                case .appFolders:
+                    appFoldersSection
+                }
             }
-        }
-        .formStyle(.grouped)
-        .confirmationDialog(
-            "Reset behavior settings?",
-            isPresented: $isShowingResetConfirmation
-        ) {
-            Button("Reset Behavior", role: .destructive) {
-                DockyPreferences.shared.resetBehaviorToDefaults()
+            .dockySettingsForm()
+            .confirmationDialog(
+                "Reset behavior settings?",
+                isPresented: $isShowingResetConfirmation
+            ) {
+                Button("Reset Behavior", role: .destructive) {
+                    DockyPreferences.shared.resetBehaviorToDefaults()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Placement, visibility, app-tile click, app folders, widgets, launch, and system-dock settings will return to their defaults. Appearance, app icons, and other settings are unaffected. This cannot be undone.")
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Placement, visibility, app-tile click, app folders, widgets, launch, and system-dock settings will return to their defaults. Appearance, app icons, and other settings are unaffected. This cannot be undone.")
         }
     }
 
@@ -91,7 +94,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Window Position", selection: $preferences.windowPosition) {
                         ForEach(DockWindowPosition.allCases) { position in
-                            Text(position.title).tag(position)
+                            WithPerceptionTracking {
+                                Text(position.title).tag(position)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -113,7 +118,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Display", selection: $preferences.windowDisplayTarget) {
                         ForEach(DockWindowDisplayTarget.allCases) { target in
-                            Text(target.title).tag(target)
+                            WithPerceptionTracking {
+                                Text(target.title).tag(target)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -135,7 +142,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Spaces", selection: $preferences.windowSpaceBehavior) {
                         ForEach(DockWindowSpaceBehavior.allCases) { behavior in
-                            Text(behavior.title).tag(behavior)
+                            WithPerceptionTracking {
+                                Text(behavior.title).tag(behavior)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -173,7 +182,7 @@ struct BehaviorSettingsView: View {
                     }
                     .labelsHidden()
 
-                    Text("\(String(format: "%.2f", preferences.autohideWindowDelay)) s")
+                    Text("\(String(format: "%.2f", preferences.autohideWindowDelay)) 秒")
                         .foregroundStyle(.secondary)
                         .frame(width: 56, alignment: .trailing)
                 }
@@ -186,21 +195,21 @@ struct BehaviorSettingsView: View {
             .disabled(!preferences.autohidesWindow)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Animation Duration")
+                Text("动画时长")
                     .font(.headline)
 
                 HStack {
                     Slider(value: $preferences.autohideAnimationDuration, in: 0...1, step: 0.05) {
-                        Text("Animation Duration")
+                        Text("动画时长")
                     }
                     .labelsHidden()
 
-                    Text("\(String(format: "%.2f", preferences.autohideAnimationDuration)) s")
+                    Text("\(String(format: "%.2f", preferences.autohideAnimationDuration)) 秒")
                         .foregroundStyle(.secondary)
                         .frame(width: 56, alignment: .trailing)
                 }
 
-                Text("How long the slide takes when Docky shows or hides its window. Set to 0 to snap instantly.")
+                Text("设置 Docky 窗口显示或隐藏时的滑动时长。设为 0 则立即切换，不播放动画。")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -227,7 +236,7 @@ struct BehaviorSettingsView: View {
                     }
                     .labelsHidden()
 
-                    Text("\(String(format: "%.2f", preferences.fullscreenRevealDelay)) s")
+                    Text("\(String(format: "%.2f", preferences.fullscreenRevealDelay)) 秒")
                         .foregroundStyle(.secondary)
                         .frame(width: 56, alignment: .trailing)
                 }
@@ -248,7 +257,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Maximized Windows", selection: $preferences.maximizedWindowBehavior) {
                         ForEach(MaximizedWindowBehavior.allCases) { behavior in
-                            Text(behavior.title).tag(behavior)
+                            WithPerceptionTracking {
+                                Text(behavior.title).tag(behavior)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -270,7 +281,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Overflow Behavior", selection: $preferences.overflowBehavior) {
                         ForEach(DockOverflowBehavior.allCases) { behavior in
-                            Text(behavior.title).tag(behavior)
+                            WithPerceptionTracking {
+                                Text(behavior.title).tag(behavior)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -292,7 +305,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Window Axis Size", selection: $preferences.windowAxisSizing) {
                         ForEach(DockWindowAxisSizing.allCases) { sizing in
-                            Text(sizing.title).tag(sizing)
+                            WithPerceptionTracking {
+                                Text(sizing.title).tag(sizing)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -327,10 +342,10 @@ struct BehaviorSettingsView: View {
             .padding(.vertical, 4)
 
             VStack(alignment: .leading, spacing: 8) {
-                Toggle("Dim Idle App Icons", isOn: $preferences.dimsIdleAppIcons)
+                Toggle("淡化闲置应用图标", isOn: $preferences.dimsIdleAppIcons)
                     .font(.headline)
 
-                Text("Fades an app's tile to half opacity while the app is hidden or has no windows open. Turn off to keep icons fully opaque regardless of state. Detecting open windows needs Accessibility permission.")
+                Text("应用已隐藏或没有打开的窗口时，将其图标不透明度降为一半。关闭后始终完全显示。检测打开的窗口需要辅助功能权限。")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -355,7 +370,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Folder Badges", selection: $preferences.folderBadgeMode) {
                         ForEach(FolderBadgeMode.allCases) { mode in
-                            Text(mode.title).tag(mode)
+                            WithPerceptionTracking {
+                                Text(mode.title).tag(mode)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -378,7 +395,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Per-App Badge Style", selection: $preferences.folderBadgePreviewStyle) {
                         ForEach(FolderBadgePreviewStyle.allCases) { style in
-                            Text(style.title).tag(style)
+                            WithPerceptionTracking {
+                                Text(style.title).tag(style)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -396,7 +415,7 @@ struct BehaviorSettingsView: View {
                 Toggle("Disable Recent Apps", isOn: $preferences.hidesRecentApps)
                     .font(.headline)
 
-                Text("Hides recent / unpinned running apps even when \"Show Running Apps\" is on. Useful when you want a stable dock layout that doesn't shift as apps launch.")
+                Text("即使启用“显示正在运行的应用”，也不显示最近使用或未固定的运行应用，避免应用启动时改变程序坞布局。")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -431,7 +450,7 @@ struct BehaviorSettingsView: View {
                 Toggle("List Minimized Windows in Switcher & Previews", isOn: $preferences.includesMinimizedWindows)
                     .font(.headline)
 
-                Text("Include minimized windows in the window switcher and per-tile hover previews. They render dimmed with a \"(minimized)\" label so they stand out from active windows.")
+                Text("在窗口切换器和悬停预览中显示最小化窗口。它们会以较暗样式和“已最小化”标签显示，便于与活动窗口区分。")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -451,7 +470,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("When App Is Already Active", selection: frontmostClickBehaviorBinding) {
                         ForEach(AppTileFrontmostClickBehavior.allCases) { behavior in
-                            Text(frontmostClickBehaviorTitle(behavior)).tag(behavior)
+                            WithPerceptionTracking {
+                                Text(frontmostClickBehaviorTitle(behavior)).tag(behavior)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -486,7 +507,9 @@ struct BehaviorSettingsView: View {
                 // `.four` is theme-only; skip it in the user-facing
                 // hover-preview span toggles.
                 ForEach(TileSpan.allCases.filter { $0 != .four }) { span in
-                    Toggle(spanTitle(for: span), isOn: spanBinding(for: span))
+                    WithPerceptionTracking {
+                        Toggle(spanTitle(for: span), isOn: spanBinding(for: span))
+                    }
                 }
 
                 Text("Choose which tile sizes trigger the expanded preview. Widgets pinned at other sizes stay at their pinned size on hover.")
@@ -508,7 +531,7 @@ struct BehaviorSettingsView: View {
 
                     Text(preferences.widgetHoverPreviewDelay == 0
                         ? "Off"
-                        : "\(String(format: "%.2f", preferences.widgetHoverPreviewDelay)) s")
+                        : "\(String(format: "%.2f", preferences.widgetHoverPreviewDelay)) 秒")
                         .foregroundStyle(.secondary)
                         .frame(width: 56, alignment: .trailing)
                 }
@@ -583,19 +606,19 @@ struct BehaviorSettingsView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Icon Size in Opened Folders")
+                    Text("已展开文件夹中的图标大小")
                         .font(.headline)
 
                     Spacer()
 
-                    Text("\(Int(preferences.appFolderIconSize)) pt")
+                    Text("\(Int(preferences.appFolderIconSize)) 磅")
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
 
                 Slider(value: $preferences.appFolderIconSize, in: 56...128, step: 1)
 
-                Text("Size of the app icons in an opened app folder. The folder window grows and shrinks with it. Default is 96 pt.")
+                Text("设置展开的应用文件夹中的图标大小，文件夹窗口也会随之调整。默认值为 96 磅。")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -605,10 +628,10 @@ struct BehaviorSettingsView: View {
 
     private func spanTitle(for span: TileSpan) -> String {
         switch span {
-        case .one: "Small"
-        case .two: "Medium"
-        case .three: "Large"
-        case .four: "Extra Large"
+        case .one: "小"
+        case .two: "中"
+        case .three: "大"
+        case .four: "特大"
         }
     }
 

@@ -23,13 +23,23 @@ extension NSRunningApplication {
     /// app, so it works whether or not Docky is `.accessory` or frontmost.
     @discardableResult
     func activateTransferringFrontmost(options: NSApplication.ActivationOptions = []) -> Bool {
-        let donor = NSWorkspace.shared.frontmostApplication ?? .current
-        if activate(from: donor, options: options) {
-            return true
+        if #available(macOS 14.0, *) {
+            let donor = NSWorkspace.shared.frontmostApplication ?? .current
+            if activate(from: donor, options: options) { return true }
+            // A donor may have quit or lost the front slot in the meantime.
+            return activate(options: options)
         }
 
-        // Donor may have quit or lost the front slot between the lookup and
-        // the call; a plain activate still succeeds while Docky is `.accessory`.
-        return activate(options: options)
+        // On Monterey, the browser remains active while a nonactivating dock
+        // handles a click. A plain activate can therefore be ignored for an
+        // already-running app. This user-initiated action must explicitly
+        // transfer focus even while another application is active.
+        return activate(options: Self.legacyDockActivationOptions(options))
+    }
+
+    static func legacyDockActivationOptions(
+        _ options: NSApplication.ActivationOptions
+    ) -> NSApplication.ActivationOptions {
+        options.union(.activateIgnoringOtherApps)
     }
 }

@@ -6,6 +6,7 @@
 import AppKit
 import CoreLocation
 import SwiftUI
+import Perception
 
 /// Dispatches a placed weather widget to one of two data sources: the device-location singleton when unconfigured, or a coordinate-keyed model (no permission) when pinned to a fixed city.
 struct WeatherWidgetTileView: View {
@@ -23,25 +24,27 @@ struct WeatherWidgetTileView: View {
     }
 
     var body: some View {
-        if let location = WeatherWidgetSettingsKey.configuredLocation(from: tile.settings) {
-            ConfiguredWeatherWidgetTileView(
-                location: location,
-                temperatureUnit: temperatureUnit,
-                cornerRadius: cornerRadius,
-                renderedSpan: renderedSpan,
-                isWithinStack: isWithinStack,
-                isExpanded: isExpanded,
-                isExpandedPreviewOpen: isExpandedPreviewOpen
-            )
-        } else {
-            DeviceWeatherWidgetTileView(
-                temperatureUnit: temperatureUnit,
-                cornerRadius: cornerRadius,
-                renderedSpan: renderedSpan,
-                isWithinStack: isWithinStack,
-                isExpanded: isExpanded,
-                isExpandedPreviewOpen: isExpandedPreviewOpen
-            )
+        WithPerceptionTracking {
+            if let location = WeatherWidgetSettingsKey.configuredLocation(from: tile.settings) {
+                ConfiguredWeatherWidgetTileView(
+                    location: location,
+                    temperatureUnit: temperatureUnit,
+                    cornerRadius: cornerRadius,
+                    renderedSpan: renderedSpan,
+                    isWithinStack: isWithinStack,
+                    isExpanded: isExpanded,
+                    isExpandedPreviewOpen: isExpandedPreviewOpen
+                )
+            } else {
+                DeviceWeatherWidgetTileView(
+                    temperatureUnit: temperatureUnit,
+                    cornerRadius: cornerRadius,
+                    renderedSpan: renderedSpan,
+                    isWithinStack: isWithinStack,
+                    isExpanded: isExpanded,
+                    isExpandedPreviewOpen: isExpandedPreviewOpen
+                )
+            }
         }
     }
 }
@@ -58,23 +61,25 @@ private struct DeviceWeatherWidgetTileView: View {
     @ObservedObject private var weather = WeatherService.shared
 
     var body: some View {
-        WeatherWidgetContentView(
-            snapshot: weather.snapshot?.converted(
-                from: WeatherService.baselineTemperatureUnit,
-                to: temperatureUnit
-            ),
-            isLoading: weather.isLoading,
-            lastErrorDescription: weather.lastErrorDescription,
-            permissionStatus: weather.permissionStatus,
-            authorizationStatus: weather.authorizationStatus,
-            cornerRadius: cornerRadius,
-            renderedSpan: renderedSpan,
-            isWithinStack: isWithinStack,
-            isExpanded: isExpanded,
-            isExpandedPreviewOpen: isExpandedPreviewOpen
-        )
-        .task {
-            weather.ensureFreshWeather()
+        WithPerceptionTracking {
+            WeatherWidgetContentView(
+                snapshot: weather.snapshot?.converted(
+                    from: WeatherService.baselineTemperatureUnit,
+                    to: temperatureUnit
+                ),
+                isLoading: weather.isLoading,
+                lastErrorDescription: weather.lastErrorDescription,
+                permissionStatus: weather.permissionStatus,
+                authorizationStatus: weather.authorizationStatus,
+                cornerRadius: cornerRadius,
+                renderedSpan: renderedSpan,
+                isWithinStack: isWithinStack,
+                isExpanded: isExpanded,
+                isExpandedPreviewOpen: isExpandedPreviewOpen
+            )
+            .task {
+                weather.ensureFreshWeather()
+            }
         }
     }
 }
@@ -109,24 +114,26 @@ private struct ConfiguredWeatherWidgetTileView: View {
     }
 
     var body: some View {
-        WeatherWidgetContentView(
-            snapshot: model.snapshot?.converted(
-                from: WeatherService.baselineTemperatureUnit,
-                to: temperatureUnit
-            ),
-            isLoading: model.isLoading,
-            lastErrorDescription: model.lastErrorDescription,
-            // A fixed coordinate needs no permission, so weather always shows.
-            permissionStatus: .granted,
-            authorizationStatus: .authorizedAlways,
-            cornerRadius: cornerRadius,
-            renderedSpan: renderedSpan,
-            isWithinStack: isWithinStack,
-            isExpanded: isExpanded,
-            isExpandedPreviewOpen: isExpandedPreviewOpen
-        )
-        .task {
-            model.ensureFreshWeather()
+        WithPerceptionTracking {
+            WeatherWidgetContentView(
+                snapshot: model.snapshot?.converted(
+                    from: WeatherService.baselineTemperatureUnit,
+                    to: temperatureUnit
+                ),
+                isLoading: model.isLoading,
+                lastErrorDescription: model.lastErrorDescription,
+                // A fixed coordinate needs no permission, so weather always shows.
+                permissionStatus: .granted,
+                authorizationStatus: .authorizedAlways,
+                cornerRadius: cornerRadius,
+                renderedSpan: renderedSpan,
+                isWithinStack: isWithinStack,
+                isExpanded: isExpanded,
+                isExpandedPreviewOpen: isExpandedPreviewOpen
+            )
+            .task {
+                model.ensureFreshWeather()
+            }
         }
     }
 }
@@ -148,47 +155,51 @@ private struct WeatherWidgetContentView: View {
     var isExpandedPreviewOpen: Bool = false
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        GeometryReader { proxy in
-            let layout = layout(in: proxy.size)
-            let expandedLayout = expandedLayout(in: proxy.size)
+            GeometryReader { proxy in
+                WithPerceptionTracking {
+                    let layout = layout(in: proxy.size)
+                    let expandedLayout = expandedLayout(in: proxy.size)
 
-            ZStack {
-                LinearGradient(
-                    colors: backgroundColors,
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-
-                if !isWithinStack {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
-                }
-
-                content(layout: layout)
-                    .opacity(isExpanded || isExpandedPreviewOpen ? 0 : 1)
-                    .animation(.easeOut(duration: 0.12), value: isExpanded)
-                    .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
-
-                if isExpanded {
-                    expandedContent(layout: expandedLayout)
-                        .transition(
-                            .opacity.animation(
-                                .easeInOut(duration: 0.22).delay(
-                                    0.22
-                                )
-                            ).combined(with: .scale).combined(with: .slide)
+                    ZStack {
+                        LinearGradient(
+                            colors: backgroundColors,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
+                        .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+
+                        if !isWithinStack {
+                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                        }
+
+                        content(layout: layout)
+                            .opacity(isExpanded || isExpandedPreviewOpen ? 0 : 1)
+                            .animation(.easeOut(duration: 0.12), value: isExpanded)
+                            .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
+
+                        if isExpanded {
+                            expandedContent(layout: expandedLayout)
+                                .transition(
+                                    .opacity.animation(
+                                        .easeInOut(duration: 0.22).delay(
+                                            0.22
+                                        )
+                                    ).combined(with: .scale).combined(with: .slide)
+                                )
+                        }
+                    }
+                    .animation(.easeInOut(duration: 0.22), value: isExpanded)
+                    .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
                 }
             }
-            .animation(.easeInOut(duration: 0.22), value: isExpanded)
-            .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         }
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 
     @ViewBuilder
@@ -270,10 +281,10 @@ private struct WeatherWidgetContentView: View {
         var parts: [String] = [snapshot.conditionDescription]
 
         if let high = snapshot.highTemperature {
-            parts.append("H: \(Int(high.rounded()))°")
+            parts.append("最高：\(Int(high.rounded()))°")
         }
         if let low = snapshot.lowTemperature {
-            parts.append("L: \(Int(low.rounded()))°")
+            parts.append("最低：\(Int(low.rounded()))°")
         }
 
         return parts.joined(separator: " • ")
@@ -284,7 +295,9 @@ private struct WeatherWidgetContentView: View {
         if !forecast.isEmpty {
             HStack(spacing: layout.forecastSpacing) {
                 ForEach(forecast.prefix(5)) { day in
-                    forecastColumn(day: day, layout: layout)
+                    WithPerceptionTracking {
+                        forecastColumn(day: day, layout: layout)
+                    }
                 }
             }
             .frame(maxWidth: .infinity)
@@ -429,7 +442,7 @@ private struct WeatherWidgetContentView: View {
     /// Drops the icon (or spinner) when larger widget text no longer
     /// leaves room for it, so the message itself stays readable.
     private func placeholder(layout: LayoutMetrics) -> some View {
-        ViewThatFits(in: .vertical) {
+        DockyViewThatFits(in: .vertical) {
             placeholderStack(layout: layout, showsIcon: true)
             placeholderStack(layout: layout, showsIcon: false)
         }
@@ -520,9 +533,9 @@ private struct WeatherWidgetContentView: View {
     private var placeholderTitle: String {
         switch authorizationStatus {
         case .denied, .restricted:
-            "Enable Location"
+            "启用定位"
         default:
-            isLoading ? "Loading Weather" : "Weather"
+            isLoading ? "正在载入天气" : String(localized: "Weather")
         }
     }
 

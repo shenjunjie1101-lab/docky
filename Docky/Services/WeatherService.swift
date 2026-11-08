@@ -128,10 +128,10 @@ final class WeatherService: NSObject, ObservableObject {
             snapshot = nil
         case .denied, .restricted:
             snapshot = nil
-            lastErrorDescription = "Location access is needed for local weather."
+            lastErrorDescription = "需要定位权限才能显示本地天气。"
         @unknown default:
             snapshot = nil
-            lastErrorDescription = "Weather is unavailable right now."
+            lastErrorDescription = "天气暂时不可用。"
         }
     }
 
@@ -176,7 +176,7 @@ final class WeatherService: NSObject, ObservableObject {
                 return
             } catch {
                 self.snapshot = nil
-                self.lastErrorDescription = "Couldn’t load weather."
+                self.lastErrorDescription = "无法载入天气。"
             }
 
             self.isLoading = false
@@ -383,14 +383,14 @@ extension WeatherService: CLLocationManagerDelegate {
             isAwaitingLocation = false
             isLoading = false
             snapshot = nil
-            lastErrorDescription = "Location access is needed for local weather."
+            lastErrorDescription = "需要定位权限才能显示本地天气。"
         case .notDetermined:
             break
         @unknown default:
             isAwaitingLocation = false
             isLoading = false
             snapshot = nil
-            lastErrorDescription = "Weather is unavailable right now."
+            lastErrorDescription = "天气暂时不可用。"
         }
     }
 
@@ -398,7 +398,7 @@ extension WeatherService: CLLocationManagerDelegate {
         guard let location = locations.last else {
             isAwaitingLocation = false
             isLoading = false
-            lastErrorDescription = "Couldn’t determine your location."
+            lastErrorDescription = "无法确定你的位置。"
             return
         }
 
@@ -412,11 +412,11 @@ extension WeatherService: CLLocationManagerDelegate {
 
         if let clError = error as? CLError, clError.code == .denied {
             snapshot = nil
-            lastErrorDescription = "Location access is needed for local weather."
+            lastErrorDescription = "需要定位权限才能显示本地天气。"
             return
         }
 
-        lastErrorDescription = "Couldn’t determine your location."
+        lastErrorDescription = "无法确定你的位置。"
     }
 
     private static func isAuthorizedStatus(_ status: CLAuthorizationStatus) -> Bool {
@@ -479,11 +479,11 @@ struct WeatherSnapshot: Equatable {
 
         return switch (high, low) {
         case let (high?, low?):
-            "H:\(high)° L:\(low)°"
+            "最高 \(high)° · 最低 \(low)°"
         case let (high?, nil):
-            "High \(high)°"
+            "最高 \(high)°"
         case let (nil, low?):
-            "Low \(low)°"
+            "最低 \(low)°"
         case (nil, nil):
             ""
         }
@@ -542,7 +542,7 @@ struct WeatherForecastDay: Equatable, Identifiable {
 
     var weekdayShortText: String {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("EEE")
         return formatter.string(from: date)
     }
@@ -558,7 +558,12 @@ private enum WeatherUnits: Equatable {
     case us
 
     static var current: WeatherUnits {
-        switch Locale.autoupdatingCurrent.measurementSystem {
+        let locale = Locale.autoupdatingCurrent
+        guard #available(macOS 13.0, *) else {
+            if locale.regionCode == "GB" { return .uk }
+            return locale.usesMetricSystem ? .metric : .us
+        }
+        return switch locale.measurementSystem {
         case .us:
             .us
         case .uk:
@@ -600,25 +605,25 @@ private enum WeatherCondition {
     static func description(for code: Int) -> String {
         switch code {
         case 0:
-            "Clear"
+            "晴"
         case 1:
-            "Mostly Clear"
+            "晴间多云"
         case 2:
-            "Partly Cloudy"
+            "局部多云"
         case 3:
-            "Overcast"
+            "阴"
         case 45, 48:
-            "Fog"
+            "雾"
         case 51, 53, 55, 56, 57:
-            "Drizzle"
+            "毛毛雨"
         case 61, 63, 65, 66, 67, 80, 81, 82:
-            "Rain"
+            "雨"
         case 71, 73, 75, 77, 85, 86:
-            "Snow"
+            "雪"
         case 95, 96, 99:
-            "Thunderstorm"
+            "雷暴"
         default:
-            "Weather"
+            String(localized: "Weather")
         }
     }
 

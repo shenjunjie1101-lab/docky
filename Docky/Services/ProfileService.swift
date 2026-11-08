@@ -15,9 +15,9 @@
 //
 
 import Foundation
-import Observation
+import Perception
 
-@Observable
+@Perceptible
 final class ProfileService {
     static let shared = ProfileService()
 
@@ -58,7 +58,7 @@ final class ProfileService {
     private func migrateFromLegacyTileStore() {
         let prefs = DockyPreferences.shared
         let initial = DockProfile(
-            name: "Default",
+            name: String(localized: "Default"),
             symbolName: "house.fill",
             pinnedItems: prefs.pinnedItems,
             trailingItems: prefs.trailingItems,

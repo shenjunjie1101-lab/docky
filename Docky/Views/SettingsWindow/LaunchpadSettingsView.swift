@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct LaunchpadSettingsView: View {
@@ -14,220 +15,224 @@ struct LaunchpadSettingsView: View {
     /// would hide the very surface they're standing on.
     var hidesAvailabilitySection: Bool = false
 
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @State private var isRecordingShortcut = false
 
     var body: some View {
-        Form {
-            if !hidesAvailabilitySection {
-                Section("Availability") {
+        WithPerceptionTracking {
+            Form {
+                if !hidesAvailabilitySection {
+                    Section("Availability") {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Toggle("Enable Launchpad", isOn: $preferences.enablesLaunchpadOverlay)
+                                .font(.headline)
+
+                            Text("Turn Docky's Launchpad overlay on or off without removing its shortcut or layout preferences.")
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+
+                Section("Shortcut") {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(alignment: .center, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Global Shortcut")
+                                    .font(.headline)
+
+                                Text("Optionally assign a global shortcut that toggles Docky's Launchpad overlay from anywhere.")
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+
+                            Spacer()
+
+                            ShortcutRecorderControl(
+                                shortcut: preferences.launchpadShortcut,
+                                isRecording: $isRecordingShortcut,
+                                resetShortcut: nil
+                            ) { shortcut in
+                                preferences.launchpadShortcut = shortcut
+                            }
+                            .disabled(!preferences.enablesLaunchpadOverlay)
+                        }
+
+                        Text("Leave this unset if you only want to open Launchpad from the Docky tile or context menu.")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 4)
+                }
+
+                Section("Layout") {
                     VStack(alignment: .leading, spacing: 8) {
-                        Toggle("Enable Launchpad", isOn: $preferences.enablesLaunchpadOverlay)
+                        HStack {
+                            Text("Scroll Direction")
+                                .font(.headline)
+
+                            Spacer()
+
+                            Picker("Scroll Direction", selection: $preferences.launchpadLayoutAxis) {
+                                ForEach(LaunchpadLayoutAxis.allCases) { axis in
+                                    WithPerceptionTracking {
+                                        Text(axis.title).tag(axis)
+                                    }
+                                }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.segmented)
+                            .fixedSize()
+                            .disabled(!preferences.enablesLaunchpadOverlay)
+                        }
+
+                        Text(preferences.launchpadLayoutAxis.summary)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Divider()
+
+                        HStack {
+                            Text("Grid Columns")
+                                .font(.headline)
+
+                            Spacer()
+
+                            Stepper("\(preferences.launchpadGridColumnCount)", value: $preferences.launchpadGridColumnCount, in: 1...12)
+                                .foregroundStyle(.secondary)
+                                .disabled(!preferences.enablesLaunchpadOverlay)
+                        }
+
+                        HStack {
+                            Text("Grid Rows")
+                                .font(.headline)
+
+                            Spacer()
+
+                            Stepper("\(preferences.launchpadGridRowCount)", value: $preferences.launchpadGridRowCount, in: 1...10)
+                                .foregroundStyle(.secondary)
+                                // Rows are only consulted in paged mode;
+                                // vertical mode grows as long as needed.
+                                .disabled(!preferences.enablesLaunchpadOverlay
+                                          || preferences.launchpadLayoutAxis == .vertical)
+                        }
+
+                        Text("Sets the Launchpad grid dimensions. Docky uses these counts when the icons fit on screen, defaulting to 7 columns × 5 rows. Row count is ignored when scroll direction is continuous.")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Divider()
+
+                        HStack {
+                            Text("Icon Size")
+                                .font(.headline)
+
+                            Spacer()
+
+                            Text("\(Int(preferences.launchpadBaseIconSize)) 磅")
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                        }
+
+                        Slider(
+                            value: $preferences.launchpadBaseIconSize,
+                            in: 48...192,
+                            step: 1
+                        )
+                        .disabled(!preferences.enablesLaunchpadOverlay)
+
+                        Text("Maximum icon edge on a 1440p screen. Smaller displays scale down from this value; larger ones are clamped to it. Default is 128 pt.")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Divider()
+
+                        HStack {
+                            Text("Column Spacing")
+                                .font(.headline)
+
+                            Spacer()
+
+                            Text("\(Int(preferences.launchpadColumnSpacing)) 磅")
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                        }
+
+                        Slider(
+                            value: $preferences.launchpadColumnSpacing,
+                            in: 0...96,
+                            step: 1
+                        )
+                        .disabled(!preferences.enablesLaunchpadOverlay)
+
+                        Text("Horizontal gap between icons at the reference height. Lower values pack icons tighter, higher values spread them out.")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 4)
+                }
+
+                Section("Appearance") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Transparency")
+                                .font(.headline)
+
+                            Spacer()
+
+                            Text("\(Int(preferences.launchpadOverlayTransparency * 100))%")
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                        }
+
+                        Slider(value: launchpadTransparencyBinding, in: 0...1, step: 0.01)
+                            .disabled(!preferences.enablesLaunchpadOverlay)
+
+                        Text("Adjusts how transparent the Launchpad backdrop is. Lower values darken the screen behind the grid; higher values let more of your desktop show through.")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 4)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Background Image")
                             .font(.headline)
 
-                        Text("Turn Docky's Launchpad overlay on or off without removing its shortcut or layout preferences.")
+                        HStack {
+                            Button("Choose Image…") {
+                                chooseBackgroundImage()
+                            }
+                            .disabled(!preferences.enablesLaunchpadOverlay)
+
+                            if preferences.launchpadBackgroundImagePath != nil {
+                                Button("Use Desktop Wallpaper") {
+                                    preferences.launchpadBackgroundImagePath = nil
+                                }
+                            }
+                        }
+
+                        if let name = selectedBackgroundImageName {
+                            Text(name)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Text("Pick an image to render behind the Launchpad grid. When unset, Docky uses the current desktop wallpaper. Combined with the transparency slider for the dim overlay above it.")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        Toggle("Blur Background Image", isOn: $preferences.launchpadBackgroundBlursImage)
+                            .disabled(!preferences.enablesLaunchpadOverlay)
+
+                        Text("Turn off to render the chosen image crisp. Default is on to soften the desktop wallpaper into a neutral backdrop.")
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(.vertical, 4)
                 }
             }
-
-            Section("Shortcut") {
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack(alignment: .center, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Global Shortcut")
-                                .font(.headline)
-
-                            Text("Optionally assign a global shortcut that toggles Docky's Launchpad overlay from anywhere.")
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-
-                        Spacer()
-
-                        ShortcutRecorderControl(
-                            shortcut: preferences.launchpadShortcut,
-                            isRecording: $isRecordingShortcut,
-                            resetShortcut: nil
-                        ) { shortcut in
-                            preferences.launchpadShortcut = shortcut
-                        }
-                        .disabled(!preferences.enablesLaunchpadOverlay)
-                    }
-
-                    Text("Leave this unset if you only want to open Launchpad from the Docky tile or context menu.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.vertical, 4)
-            }
-
-            Section("Layout") {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Scroll Direction")
-                            .font(.headline)
-
-                        Spacer()
-
-                        Picker("Scroll Direction", selection: $preferences.launchpadLayoutAxis) {
-                            ForEach(LaunchpadLayoutAxis.allCases) { axis in
-                                Text(axis.title).tag(axis)
-                            }
-                        }
-                        .labelsHidden()
-                        .pickerStyle(.segmented)
-                        .fixedSize()
-                        .disabled(!preferences.enablesLaunchpadOverlay)
-                    }
-
-                    Text(preferences.launchpadLayoutAxis.summary)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Divider()
-
-                    HStack {
-                        Text("Grid Columns")
-                            .font(.headline)
-
-                        Spacer()
-
-                        Stepper("\(preferences.launchpadGridColumnCount)", value: $preferences.launchpadGridColumnCount, in: 1...12)
-                            .foregroundStyle(.secondary)
-                            .disabled(!preferences.enablesLaunchpadOverlay)
-                    }
-
-                    HStack {
-                        Text("Grid Rows")
-                            .font(.headline)
-
-                        Spacer()
-
-                        Stepper("\(preferences.launchpadGridRowCount)", value: $preferences.launchpadGridRowCount, in: 1...10)
-                            .foregroundStyle(.secondary)
-                            // Rows are only consulted in paged mode;
-                            // vertical mode grows as long as needed.
-                            .disabled(!preferences.enablesLaunchpadOverlay
-                                      || preferences.launchpadLayoutAxis == .vertical)
-                    }
-
-                    Text("Sets the Launchpad grid dimensions. Docky uses these counts when the icons fit on screen, defaulting to 7 columns × 5 rows. Row count is ignored when scroll direction is continuous.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Divider()
-
-                    HStack {
-                        Text("Icon Size")
-                            .font(.headline)
-
-                        Spacer()
-
-                        Text("\(Int(preferences.launchpadBaseIconSize)) pt")
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
-                    }
-
-                    Slider(
-                        value: $preferences.launchpadBaseIconSize,
-                        in: 48...192,
-                        step: 1
-                    )
-                    .disabled(!preferences.enablesLaunchpadOverlay)
-
-                    Text("Maximum icon edge on a 1440p screen. Smaller displays scale down from this value; larger ones are clamped to it. Default is 128 pt.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Divider()
-
-                    HStack {
-                        Text("Column Spacing")
-                            .font(.headline)
-
-                        Spacer()
-
-                        Text("\(Int(preferences.launchpadColumnSpacing)) pt")
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
-                    }
-
-                    Slider(
-                        value: $preferences.launchpadColumnSpacing,
-                        in: 0...96,
-                        step: 1
-                    )
-                    .disabled(!preferences.enablesLaunchpadOverlay)
-
-                    Text("Horizontal gap between icons at the reference height. Lower values pack icons tighter, higher values spread them out.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.vertical, 4)
-            }
-
-            Section("Appearance") {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Transparency")
-                            .font(.headline)
-
-                        Spacer()
-
-                        Text("\(Int(preferences.launchpadOverlayTransparency * 100))%")
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
-                    }
-
-                    Slider(value: launchpadTransparencyBinding, in: 0...1, step: 0.01)
-                        .disabled(!preferences.enablesLaunchpadOverlay)
-
-                    Text("Adjusts how transparent the Launchpad backdrop is. Lower values darken the screen behind the grid; higher values let more of your desktop show through.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.vertical, 4)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Background Image")
-                        .font(.headline)
-
-                    HStack {
-                        Button("Choose Image…") {
-                            chooseBackgroundImage()
-                        }
-                        .disabled(!preferences.enablesLaunchpadOverlay)
-
-                        if preferences.launchpadBackgroundImagePath != nil {
-                            Button("Use Desktop Wallpaper") {
-                                preferences.launchpadBackgroundImagePath = nil
-                            }
-                        }
-                    }
-
-                    if let name = selectedBackgroundImageName {
-                        Text(name)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Text("Pick an image to render behind the Launchpad grid. When unset, Docky uses the current desktop wallpaper. Combined with the transparency slider for the dim overlay above it.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    Toggle("Blur Background Image", isOn: $preferences.launchpadBackgroundBlursImage)
-                        .disabled(!preferences.enablesLaunchpadOverlay)
-
-                    Text("Turn off to render the chosen image crisp. Default is on to soften the desktop wallpaper into a neutral backdrop.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.vertical, 4)
-            }
+            .dockySettingsForm()
         }
-        .formStyle(.grouped)
     }
 
     private var launchpadTransparencyBinding: Binding<CGFloat> {
@@ -284,7 +289,7 @@ struct LaunchpadSettingsView: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
-        panel.prompt = "Choose Image"
+        panel.prompt = "选择图片"
         panel.directoryURL = startingDirectoryForBackgroundImagePicker()
 
         // The launchpad overlay (`.mainMenu + 1`) and the launchpad

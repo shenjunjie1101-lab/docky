@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct CalendarWidgetTileView: View {
     @Environment(\.widgetTextScale) private var textScale
@@ -44,45 +45,49 @@ struct CalendarWidgetTileView: View {
     }
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            GeometryReader { proxy in
-                let layout = layout(in: proxy.size)
-                let expandedLayout = expandedLayout(in: proxy.size)
+            TimelineView(.periodic(from: .now, by: 60)) { context in
+                GeometryReader { proxy in
+                    WithPerceptionTracking {
+                        let layout = layout(in: proxy.size)
+                        let expandedLayout = expandedLayout(in: proxy.size)
 
-                ZStack {
-                    Color(nsColor: backgroundTintColor)
-                        .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                        ZStack {
+                            Color(nsColor: backgroundTintColor)
+                                .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                    if !isWithinStack {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
-                    }
+                            if !isWithinStack {
+                                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                    .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                            }
 
-                    content(layout: layout, now: context.date)
-                        .opacity(isExpandedPreviewOpen && isExpanded ? 0 : 1)
+                            content(layout: layout, now: context.date)
+                                .opacity(isExpandedPreviewOpen && isExpanded ? 0 : 1)
 
-                    if isExpanded {
-                        expandedContent(layout: expandedLayout, now: context.date)
-                            .transition(
-                                .opacity.animation(
-                                    .easeInOut(duration: 0.22).delay(0.22)
-                                ).combined(with: .scale).combined(with: .slide)
-                            )
+                            if isExpanded {
+                                expandedContent(layout: expandedLayout, now: context.date)
+                                    .transition(
+                                        .opacity.animation(
+                                            .easeInOut(duration: 0.22).delay(0.22)
+                                        ).combined(with: .scale).combined(with: .slide)
+                                    )
+                            }
+                        }
+                        .animation(.easeInOut(duration: 0.22), value: isExpanded)
+                        .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
                     }
                 }
-                .animation(.easeInOut(duration: 0.22), value: isExpanded)
-                .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
             }
-        }
-        .opacity(isExpandedPreviewOpen && !isExpanded ? 0.5 : 1)
-        .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .task {
-            calendar.ensureFreshEvent()
+            .opacity(isExpandedPreviewOpen && !isExpanded ? 0.5 : 1)
+            .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .task {
+                calendar.ensureFreshEvent()
+            }
         }
     }
 
@@ -122,7 +127,7 @@ struct CalendarWidgetTileView: View {
             Text(shortWeekdayText(for: now))
                 .font(.system(size: layout.captionFontSize * 1.25, weight: .semibold))
                 .foregroundStyle(Color.red)
-                .tracking(0.6)
+                .dockyTracking(0.6)
                 .offset(y: 2)
 
             Text(dayNumberText(for: now))
@@ -236,7 +241,7 @@ struct CalendarWidgetTileView: View {
             .font(.system(size: layout.headerFontSize, weight: .semibold))
             .foregroundStyle(Color.red)
             .lineLimit(1)
-            .tracking(0.4)
+            .dockyTracking(0.4)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -246,19 +251,23 @@ struct CalendarWidgetTileView: View {
         return ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: layout.sectionGroupSpacing) {
                 ForEach(sections) { section in
-                    VStack(alignment: .leading, spacing: layout.eventRowSpacing) {
-                        Text(section.title)
-                            .font(.system(size: layout.sectionTitleFontSize, weight: .semibold))
-                            .foregroundStyle(Color.primary.opacity(0.55))
-                            .tracking(0.5)
-                            .textCase(.uppercase)
+                    WithPerceptionTracking {
+                        VStack(alignment: .leading, spacing: layout.eventRowSpacing) {
+                            Text(section.title)
+                                .font(.system(size: layout.sectionTitleFontSize, weight: .semibold))
+                                .foregroundStyle(Color.primary.opacity(0.55))
+                                .dockyTracking(0.5)
+                                .textCase(.uppercase)
 
-                        ForEach(Array(section.events.enumerated()), id: \.offset) { _, event in
-                            ExpandedEventRow(
-                                event: event,
-                                scheduleText: expandedScheduleText(for: event, now: now),
-                                layout: layout
-                            )
+                            ForEach(Array(section.events.enumerated()), id: \.offset) { _, event in
+                                WithPerceptionTracking {
+                                    ExpandedEventRow(
+                                        event: event,
+                                        scheduleText: expandedScheduleText(for: event, now: now),
+                                        layout: layout
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -294,10 +303,10 @@ struct CalendarWidgetTileView: View {
     private func sectionTitle(for day: Date, now: Date) -> String {
         let calendarRef = Calendar.autoupdatingCurrent
         if calendarRef.isDate(day, inSameDayAs: now) {
-            return "Today"
+            return "今天"
         }
         if calendarRef.isDateInTomorrow(day) {
-            return "Tomorrow"
+            return "明天"
         }
         return sectionDayFormatter.string(from: day)
     }
@@ -340,7 +349,7 @@ struct CalendarWidgetTileView: View {
 
     private func expandedScheduleText(for event: CalendarEventSnapshot, now: Date) -> String {
         if event.isAllDay {
-            return "All day"
+            return "全天"
         }
 
         let start = timeFormatter.string(from: event.startDate)
@@ -350,14 +359,14 @@ struct CalendarWidgetTileView: View {
 
     private var headerDateFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("EEEE d MMM")
         return formatter
     }
 
     private var sectionDayFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("EEE d MMM")
         return formatter
     }
@@ -365,7 +374,7 @@ struct CalendarWidgetTileView: View {
     /// Drops the icon (or spinner) when larger widget text no longer
     /// leaves room for it, so the message itself stays readable.
     private func emptyState(layout: LayoutMetrics) -> some View {
-        ViewThatFits(in: .vertical) {
+        DockyViewThatFits(in: .vertical) {
             emptyStateStack(layout: layout, showsIcon: true)
             emptyStateStack(layout: layout, showsIcon: false)
         }
@@ -420,7 +429,7 @@ struct CalendarWidgetTileView: View {
                     NSWorkspace.shared.open(quickJoinURL)
                 }
                 .buttonStyle(.plain)
-                .underline()
+                .dockyUnderline()
                 .lineLimit(1)
             }
 
@@ -507,14 +516,14 @@ struct CalendarWidgetTileView: View {
 
     private var emptyTitle: String {
         if calendar.isLoading {
-            return "Loading Calendar"
+            return "正在载入日历"
         }
 
         if calendar.lastErrorDescription != nil {
-            return "Calendar Unavailable"
+            return "日历不可用"
         }
 
-        return "No Upcoming Events"
+        return "暂无即将开始的日程"
     }
 
     private var emptyDetail: String? {
@@ -522,12 +531,12 @@ struct CalendarWidgetTileView: View {
             return lastErrorDescription
         }
 
-        return "You’re clear for now."
+        return "目前没有待处理的日程。"
     }
 
     private func shortTimeText(for event: CalendarEventSnapshot, now: Date) -> String {
         if event.isAllDay {
-            return "ALL DAY"
+            return "全天"
         }
 
         if Calendar.autoupdatingCurrent.isDate(event.startDate, inSameDayAs: now) {
@@ -542,7 +551,7 @@ struct CalendarWidgetTileView: View {
 
         if event.isAllDay {
             return Calendar.autoupdatingCurrent.isDate(event.startDate, inSameDayAs: now)
-                ? "Today, all day"
+                ? "今天，全天"
                 : "\(dayFormatter.string(from: event.startDate)), all day"
         }
 
@@ -557,27 +566,27 @@ struct CalendarWidgetTileView: View {
     private func relativeTimeText(for date: Date, now: Date) -> String {
         let interval = Int(date.timeIntervalSince(now))
         if interval <= 0 {
-            return "now"
+            return "现在"
         }
 
         let minutes = interval / 60
         if minutes < 60 {
-            return "in \(minutes)m"
+            return "\(minutes) 分钟后"
         }
 
         let hours = minutes / 60
         if hours < 24 {
             let remainingMinutes = minutes % 60
-            return remainingMinutes == 0 ? "in \(hours)h" : "in \(hours)h \(remainingMinutes)m"
+            return remainingMinutes == 0 ? "\(hours) 小时后" : "\(hours) 小时 \(remainingMinutes) 分钟后"
         }
 
         let days = hours / 24
-        return days == 1 ? "tomorrow" : "in \(days)d"
+        return days == 1 ? "tomorrow" : "\(days) 天后"
     }
 
     private var timeFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.timeStyle = .short
         formatter.dateStyle = .none
         return formatter
@@ -585,14 +594,14 @@ struct CalendarWidgetTileView: View {
 
     private var shortDateTimeFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("MMM d j:mm")
         return formatter
     }
 
     private var dayFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("EEE MMM d")
         return formatter
     }
@@ -615,28 +624,28 @@ struct CalendarWidgetTileView: View {
 
     private var shortWeekdayFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("EEE")
         return formatter
     }
 
     private var dayNumberFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("d")
         return formatter
     }
 
     private var shortMonthFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("MMM")
         return formatter
     }
 
     private var fullDateFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.dateStyle = .full
         formatter.timeStyle = .none
         return formatter
@@ -688,67 +697,69 @@ private struct ExpandedEventRow: View {
     @State private var isHovered = false
 
     var body: some View {
-        Button(action: openInCalendar) {
-            HStack(alignment: .top, spacing: layout.eventRowGap) {
-                RoundedRectangle(cornerRadius: layout.accentWidth / 2, style: .continuous)
-                    .fill(Color(nsColor: event.color).opacity(0.95))
-                    .frame(width: layout.accentWidth)
+        WithPerceptionTracking {
+            Button(action: openInCalendar) {
+                HStack(alignment: .top, spacing: layout.eventRowGap) {
+                    RoundedRectangle(cornerRadius: layout.accentWidth / 2, style: .continuous)
+                        .fill(Color(nsColor: event.color).opacity(0.95))
+                        .frame(width: layout.accentWidth)
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(event.title)
-                        .font(.system(size: layout.eventTitleFontSize, weight: .semibold))
-                        .foregroundStyle(Color.primary.opacity(0.96))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(event.title)
+                            .font(.system(size: layout.eventTitleFontSize, weight: .semibold))
+                            .foregroundStyle(Color.primary.opacity(0.96))
+                            .lineLimit(1)
+                            .truncationMode(.tail)
 
-                    Text(scheduleText)
-                        .font(.system(size: layout.eventDetailFontSize, weight: .medium))
-                        .foregroundStyle(Color.primary.opacity(0.66))
-                        .lineLimit(1)
+                        Text(scheduleText)
+                            .font(.system(size: layout.eventDetailFontSize, weight: .medium))
+                            .foregroundStyle(Color.primary.opacity(0.66))
+                            .lineLimit(1)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .padding(.vertical, layout.eventRowVerticalPadding)
+                .padding(.horizontal, layout.eventRowHorizontalPadding)
+                .contentShape(RoundedRectangle(cornerRadius: layout.eventRowCornerRadius, style: .continuous))
+                .background(
+                    RoundedRectangle(cornerRadius: layout.eventRowCornerRadius, style: .continuous)
+                        .fill(Color.primary.opacity(isHovered ? 0.14 : 0.06))
+                )
+                .animation(.easeOut(duration: 0.12), value: isHovered)
+            }
+            .buttonStyle(.plain)
+            .onHover { isHovered = $0 }
+            .contextMenu {
+                Button("Open in Calendar") {
+                    openInCalendar()
                 }
 
-                Spacer(minLength: 0)
-            }
-            .padding(.vertical, layout.eventRowVerticalPadding)
-            .padding(.horizontal, layout.eventRowHorizontalPadding)
-            .contentShape(RoundedRectangle(cornerRadius: layout.eventRowCornerRadius, style: .continuous))
-            .background(
-                RoundedRectangle(cornerRadius: layout.eventRowCornerRadius, style: .continuous)
-                    .fill(Color.primary.opacity(isHovered ? 0.14 : 0.06))
-            )
-            .animation(.easeOut(duration: 0.12), value: isHovered)
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
-        .contextMenu {
-            Button("Open in Calendar") {
-                openInCalendar()
-            }
-
-            if let quickJoinURL = event.quickJoinURL {
-                Button("Join Meeting") {
-                    NSWorkspace.shared.open(quickJoinURL)
+                if let quickJoinURL = event.quickJoinURL {
+                    Button("Join Meeting") {
+                        NSWorkspace.shared.open(quickJoinURL)
+                    }
+                    Button("Copy Meeting Link") {
+                        let pasteboard = NSPasteboard.general
+                        pasteboard.clearContents()
+                        pasteboard.setString(quickJoinURL.absoluteString, forType: .string)
+                    }
                 }
-                Button("Copy Meeting Link") {
+
+                Divider()
+
+                Button("Copy Title") {
                     let pasteboard = NSPasteboard.general
                     pasteboard.clearContents()
-                    pasteboard.setString(quickJoinURL.absoluteString, forType: .string)
+                    pasteboard.setString(event.title, forType: .string)
                 }
-            }
 
-            Divider()
-
-            Button("Copy Title") {
-                let pasteboard = NSPasteboard.general
-                pasteboard.clearContents()
-                pasteboard.setString(event.title, forType: .string)
-            }
-
-            if !event.location.isEmpty {
-                Button("Copy Location") {
-                    let pasteboard = NSPasteboard.general
-                    pasteboard.clearContents()
-                    pasteboard.setString(event.location, forType: .string)
+                if !event.location.isEmpty {
+                    Button("Copy Location") {
+                        let pasteboard = NSPasteboard.general
+                        pasteboard.clearContents()
+                        pasteboard.setString(event.location, forType: .string)
+                    }
                 }
             }
         }

@@ -46,11 +46,11 @@ final class RemindersService: ObservableObject {
     /// not-granted because the widget needs read access to show tasks.
     var permissionStatus: PermissionStatus {
         switch authorizationStatus {
-        case .fullAccess, .authorized:
+        case .authorized:
             return .granted
         case .notDetermined:
             return .notDetermined
-        case .denied, .restricted, .writeOnly:
+        case .denied, .restricted:
             return .denied
         @unknown default:
             return .denied
@@ -68,12 +68,12 @@ final class RemindersService: ObservableObject {
         lastErrorDescription = nil
 
         switch authorizationStatus {
-        case .fullAccess, .authorized:
+        case .authorized:
             loadReminders()
-        case .writeOnly:
+        case _ where authorizationStatus.rawValue == 4:
             snapshot = nil
             isLoading = false
-            lastErrorDescription = "Reminders read access is needed to show your open tasks."
+            lastErrorDescription = "需要提醒事项读取权限才能显示未完成任务。"
         case .notDetermined:
             // Permission is requested lazily from the widget's Enable button,
             // never automatically on render. Leave the widget in its
@@ -83,11 +83,11 @@ final class RemindersService: ObservableObject {
         case .denied, .restricted:
             snapshot = nil
             isLoading = false
-            lastErrorDescription = "Enable Reminders access in Settings to show your open tasks."
+            lastErrorDescription = "请在设置中允许访问提醒事项，以显示未完成任务。"
         @unknown default:
             snapshot = nil
             isLoading = false
-            lastErrorDescription = "Reminders are unavailable right now."
+            lastErrorDescription = "提醒事项暂时不可用。"
         }
     }
 
@@ -110,7 +110,7 @@ final class RemindersService: ObservableObject {
             refresh(force: true)
             return true
         } catch {
-            lastErrorDescription = "Couldn’t update reminder."
+            lastErrorDescription = "无法更新提醒事项。"
             return false
         }
     }
@@ -129,11 +129,16 @@ final class RemindersService: ObservableObject {
         refreshAuthorizationStatus()
 
         switch authorizationStatus {
-        case .fullAccess, .authorized:
+        case .authorized:
             return true
-        case .writeOnly, .denied, .restricted:
+        case .denied, .restricted:
             return false
         case .notDetermined:
+            guard #available(macOS 14.0, *) else {
+                let granted = (try? await eventStore.requestAccess(to: .reminder)) ?? false
+                refreshAuthorizationStatus()
+                return granted
+            }
             return await withCheckedContinuation { continuation in
                 eventStore.requestFullAccessToReminders { [weak self] granted, _ in
                     guard let self else {
@@ -397,7 +402,7 @@ struct ReminderItemSnapshot: Identifiable, Equatable {
         let dueDateComponents = reminder.dueDateComponents
 
         identifier = reminder.calendarItemIdentifier
-        title = trimmedTitle.isEmpty ? "Untitled Reminder" : trimmedTitle
+        title = trimmedTitle.isEmpty ? "无标题提醒事项" : trimmedTitle
         dueDate = dueDateComponents?.date
         hasDueTime = dueDateComponents?.hour != nil || dueDateComponents?.minute != nil
         listTitle = reminder.calendar.title

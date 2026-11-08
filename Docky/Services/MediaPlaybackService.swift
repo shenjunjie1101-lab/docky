@@ -211,7 +211,7 @@ final class MediaPlaybackService: ObservableObject {
         statesByBundleIdentifier[resolvedBundleIdentifier] = updatedState
 
         mediaRemote.sendCommand(.togglePlayPause)
-        try? await Task.sleep(for: .milliseconds(120))
+        try? await dockySleep(for: .milliseconds(120))
         refresh()
     }
 
@@ -222,7 +222,7 @@ final class MediaPlaybackService: ObservableObject {
         }
 
         mediaRemote.sendCommand(.play)
-        try? await Task.sleep(for: .milliseconds(120))
+        try? await dockySleep(for: .milliseconds(120))
         refresh()
     }
 
@@ -233,7 +233,7 @@ final class MediaPlaybackService: ObservableObject {
         }
 
         mediaRemote.sendCommand(.nextTrack)
-        try? await Task.sleep(for: .milliseconds(120))
+        try? await dockySleep(for: .milliseconds(120))
         refresh()
     }
 
@@ -244,7 +244,7 @@ final class MediaPlaybackService: ObservableObject {
         }
 
         mediaRemote.sendCommand(.previousTrack)
-        try? await Task.sleep(for: .milliseconds(120))
+        try? await dockySleep(for: .milliseconds(120))
         refresh()
     }
 
@@ -381,7 +381,7 @@ final class MediaPlaybackService: ObservableObject {
 
     nonisolated private static func resolvedLyrics(from entry: LRCEntry) -> LyricsContent? {
         if entry.instrumental == true {
-            return LyricsContent(plain: "♪ Instrumental ♪", lines: [])
+            return LyricsContent(plain: "♪ 纯音乐 ♪", lines: [])
         }
         let synced = entry.syncedLyrics.map(parseLRC) ?? []
         let plain: String = {
@@ -455,7 +455,7 @@ final class MediaPlaybackService: ObservableObject {
 
         _ = try? AppleScriptService.shared.executeDescriptor(source: source)
         mediaRemote.invalidateFavoriteCache()
-        try? await Task.sleep(for: .milliseconds(120))
+        try? await dockySleep(for: .milliseconds(120))
         refresh()
     }
 
@@ -736,6 +736,8 @@ private final class MediaRemoteHelperProcess {
     private var bufferedOutput = Data()
 
     func startIfNeeded() {
+        // The bundled adapter binary was built with a macOS 15 minimum.
+        guard #available(macOS 15.0, *) else { return }
         guard process?.isRunning != true else {
             Self.logger.debug("startIfNeeded skipped; helper already running")
             return

@@ -5,29 +5,34 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct HiddenAppsSettingsView: View {
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
 
     var body: some View {
-        Form {
-            Section("Restore") {
-                Text("Apps hidden with \"Hide in Docky\" stay out of Docky's pinned and running app surfaces until you restore them here.")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if hiddenApps.isEmpty {
-                    Text("No apps are currently hidden from Docky.")
+        WithPerceptionTracking {
+            Form {
+                Section("Restore") {
+                    Text("Apps hidden with \"Hide in Docky\" stay out of Docky's pinned and running app surfaces until you restore them here.")
                         .foregroundStyle(.secondary)
-                } else {
-                    ForEach(hiddenApps) { app in
-                        HiddenAppRow(app: app)
-                            .padding(.vertical, 4)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if hiddenApps.isEmpty {
+                        Text("No apps are currently hidden from Docky.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(hiddenApps) { app in
+                            WithPerceptionTracking {
+                                HiddenAppRow(app: app)
+                                    .padding(.vertical, 4)
+                            }
+                        }
                     }
                 }
             }
+            .dockySettingsForm()
         }
-        .formStyle(.grouped)
     }
 
     private var hiddenApps: [HiddenAppSettingsEntry] {
@@ -61,29 +66,31 @@ struct HiddenAppsSettingsView: View {
 private struct HiddenAppRow: View {
     let app: HiddenAppSettingsEntry
 
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Image(nsImage: app.icon)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 36, height: 36)
+        WithPerceptionTracking {
+            HStack(alignment: .center, spacing: 12) {
+                Image(nsImage: app.icon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 36, height: 36)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(app.displayName)
-                    .font(.headline)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(app.displayName)
+                        .font(.headline)
 
-                Text(app.subtitle)
-                    .foregroundStyle(.secondary)
-                    .font(.caption)
-                    .textSelection(.enabled)
-            }
+                    Text(app.subtitle)
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                        .textSelection(.enabled)
+                }
 
-            Spacer()
+                Spacer()
 
-            Button("Show in Docky") {
-                preferences.setAppHiddenInDocky(bundleIdentifier: app.bundleIdentifier, isHidden: false)
+                Button("Show in Docky") {
+                    preferences.setAppHiddenInDocky(bundleIdentifier: app.bundleIdentifier, isHidden: false)
+                }
             }
         }
     }

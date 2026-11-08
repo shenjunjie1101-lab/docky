@@ -16,6 +16,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 private let feedbackDestinationEmail = "hello@quintero.gt"
@@ -27,87 +28,91 @@ struct FeedbackSettingsView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        Form {
-            Section("What's going on?") {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Describe the issue, idea, or feedback. The diagnostic bundle below is attached automatically so the maintainer can replicate your setup.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    TextEditor(text: $feedbackText)
-                        .font(.body)
-                        .frame(minHeight: 140)
-                        .overlay(alignment: .topLeading) {
-                            if feedbackText.isEmpty {
-                                Text("Describe the steps to reproduce, or what you'd like to see…")
-                                    .foregroundStyle(.tertiary)
-                                    .padding(.horizontal, 4)
-                                    .padding(.vertical, 8)
-                                    .allowsHitTesting(false)
+        WithPerceptionTracking {
+            Form {
+                Section("What's going on?") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Describe the issue, idea, or feedback. The diagnostic bundle below is attached automatically so the maintainer can replicate your setup.")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        TextEditor(text: $feedbackText)
+                            .font(.body)
+                            .frame(minHeight: 140)
+                            .overlay(alignment: .topLeading) {
+                                WithPerceptionTracking {
+                                    if feedbackText.isEmpty {
+                                        Text("Describe the steps to reproduce, or what you'd like to see…")
+                                            .foregroundStyle(.tertiary)
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 8)
+                                            .allowsHitTesting(false)
+                                    }
+                                }
                             }
-                        }
-                        .scrollContentBackground(.hidden)
-                        .background(Color(nsColor: .textBackgroundColor))
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
-                        )
-                }
-                .padding(.vertical, 4)
-            }
-
-            Section("Attachment (optional)") {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Button("Choose Screenshot / Video…") { chooseAttachment() }
-                        if attachmentURL != nil {
-                            Button("Clear") { attachmentURL = nil }
-                        }
-                        Spacer()
+                            .dockyHideScrollBackground()
+                            .background(Color(nsColor: .textBackgroundColor))
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                            )
                     }
-                    if let attachmentURL {
-                        Text(attachmentURL.lastPathComponent)
+                    .padding(.vertical, 4)
+                }
+
+                Section("Attachment (optional)") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Button("Choose Screenshot / Video…") { chooseAttachment() }
+                            if attachmentURL != nil {
+                                Button("Clear") { attachmentURL = nil }
+                            }
+                            Spacer()
+                        }
+                        if let attachmentURL {
+                            Text(attachmentURL.lastPathComponent)
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
+                        Text("Optional, a screen recording or screenshot helps explain UI issues. Images and videos are supported.")
                             .foregroundStyle(.secondary)
                             .font(.caption)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    Text("Optional, a screen recording or screenshot helps explain UI issues. Images and videos are supported.")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-                        .fixedSize(horizontal: false, vertical: true)
+                    .padding(.vertical, 4)
                 }
-                .padding(.vertical, 4)
-            }
 
-            Section("What gets sent") {
-                VStack(alignment: .leading, spacing: 4) {
-                    Label("Your message", systemImage: "text.alignleft")
-                    Label("Docky preferences (every `docky.*` UserDefaults key)", systemImage: "doc.text")
-                    Label("Live macOS Dock prefs (`com.apple.dock`)", systemImage: "dock.rectangle")
-                    Label("Basic system info (macOS version, screens, Docky build)", systemImage: "info.circle")
-                    if attachmentURL != nil {
-                        Label("Your attachment", systemImage: "paperclip")
+                Section("What gets sent") {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label("Your message", systemImage: "text.alignleft")
+                        Label("Docky preferences (every `docky.*` UserDefaults key)", systemImage: "doc.text")
+                        Label("Live macOS Dock prefs (`com.apple.dock`)", systemImage: "dock.rectangle")
+                        Label("Basic system info (macOS version, screens, Docky build)", systemImage: "info.circle")
+                        if attachmentURL != nil {
+                            Label("Your attachment", systemImage: "paperclip")
+                        }
                     }
+                    .foregroundStyle(.secondary)
+                    .font(.callout)
+                    .padding(.vertical, 4)
                 }
-                .foregroundStyle(.secondary)
-                .font(.callout)
-                .padding(.vertical, 4)
-            }
 
-            Section {
-                HStack {
-                    if let errorMessage {
-                        Text(errorMessage)
-                            .foregroundStyle(.red)
-                            .font(.caption)
+                Section {
+                    HStack {
+                        if let errorMessage {
+                            Text(errorMessage)
+                                .foregroundStyle(.red)
+                                .font(.caption)
+                        }
+                        Spacer()
+                        Button("Send Feedback") { sendFeedback() }
+                            .keyboardShortcut(.defaultAction)
+                            .disabled(isPreparing || feedbackText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
-                    Spacer()
-                    Button("Send Feedback") { sendFeedback() }
-                        .keyboardShortcut(.defaultAction)
-                        .disabled(isPreparing || feedbackText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
+            .dockySettingsForm()
         }
-        .formStyle(.grouped)
     }
 
     private func chooseAttachment() {
@@ -116,7 +121,7 @@ struct FeedbackSettingsView: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
-        panel.prompt = "Attach"
+        panel.prompt = "附加"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         attachmentURL = url
     }
@@ -133,7 +138,7 @@ struct FeedbackSettingsView: View {
             )
             present(items: [feedbackText as NSString, bundleURL as NSURL])
         } catch {
-            errorMessage = "Could not build feedback bundle: \(error.localizedDescription)"
+            errorMessage = "无法创建反馈诊断包：\(error.localizedDescription)"
         }
     }
 
@@ -141,7 +146,7 @@ struct FeedbackSettingsView: View {
     /// Mail.app with our address pre-filled). Falls back to a generic
     /// `NSSharingServicePicker` if Mail.app isn't configured.
     private func present(items: [Any]) {
-        let subject = "Docky Feedback (v\(Bundle.main.shortVersion))"
+        let subject = "Docky 反馈（版本 \(Bundle.main.shortVersion)）"
         if let mail = NSSharingService(named: .composeEmail) {
             mail.recipients = [feedbackDestinationEmail]
             mail.subject = subject
@@ -173,40 +178,40 @@ private enum FeedbackBundle {
         let timestamp = ISO8601DateFormatter().string(from: Date())
             .replacingOccurrences(of: ":", with: "-")
         let stagingRoot = fileManager.temporaryDirectory
-            .appending(path: "docky-feedback-\(timestamp)", directoryHint: .isDirectory)
+            .appendingPathComponent("docky-feedback-\(timestamp)", isDirectory: true)
         try fileManager.createDirectory(at: stagingRoot, withIntermediateDirectories: true)
 
         // 1. docky-defaults.plist, filtered to our namespace so we
         //    don't leak unrelated UserDefaults from other domains.
         let allDefaults = UserDefaults.standard.dictionaryRepresentation()
         let dockyDefaults = allDefaults.filter { $0.key.hasPrefix("docky.") }
-        try writePlist(dockyDefaults, to: stagingRoot.appending(path: "docky-defaults.plist"))
+        try writePlist(dockyDefaults, to: stagingRoot.appendingPathComponent("docky-defaults.plist"))
 
         // 2. com.apple.dock plist, exact snapshot of system dock prefs.
         if let dockPlist = DockPlistReader.read() {
-            try writePlist(dockPlist, to: stagingRoot.appending(path: "com.apple.dock.plist"))
+            try writePlist(dockPlist, to: stagingRoot.appendingPathComponent("com.apple.dock.plist"))
         }
 
         // 3. system.json, Mac specs (kept minimal: no usernames or
         //    paths). Enough to tell apart "M1 Air on macOS 14" vs
         //    "Mac Pro on macOS 26".
         let system = systemSnapshot()
-        try writeJSON(system, to: stagingRoot.appending(path: "system.json"))
+        try writeJSON(system, to: stagingRoot.appendingPathComponent("system.json"))
 
         // 4. feedback.txt, verbatim user message.
         try feedbackText
-            .write(to: stagingRoot.appending(path: "feedback.txt"), atomically: true, encoding: .utf8)
+            .write(to: stagingRoot.appendingPathComponent("feedback.txt"), atomically: true, encoding: .utf8)
 
         // 5. Optional asset, copied alongside (preserves original name).
         if let attachmentURL {
-            let dest = stagingRoot.appending(path: attachmentURL.lastPathComponent)
+            let dest = stagingRoot.appendingPathComponent(attachmentURL.lastPathComponent)
             try fileManager.copyItem(at: attachmentURL, to: dest)
         }
 
         // Zip the staging directory in place so the share sheet has
         // one cohesive attachment rather than a directory tree.
         let zipURL = stagingRoot.deletingLastPathComponent()
-            .appending(path: stagingRoot.lastPathComponent + ".zip")
+            .appendingPathComponent(stagingRoot.lastPathComponent + ".zip")
         try fileManager.removeItemIfExists(at: zipURL)
         try ditto(source: stagingRoot, destination: zipURL)
         return zipURL

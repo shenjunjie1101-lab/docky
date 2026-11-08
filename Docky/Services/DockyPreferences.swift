@@ -3,7 +3,7 @@
 //  Docky
 //
 //  Docky's own user-adjustable settings. Persisted to UserDefaults.
-//  Consume via `DockyPreferences.shared`; the class is `@Observable`
+//  Consume via `DockyPreferences.shared`; the class is `@Perceptible`
 //  so SwiftUI views auto-track only the properties they read in body
 //  and Combine consumers bridge through `observe(_:)` from
 //  `ObservationBridge.swift`.
@@ -11,7 +11,7 @@
 
 import AppKit
 import Foundation
-import Observation
+import Perception
 
 enum PinnedTileItemKind: String, Codable, Equatable {
     case app
@@ -998,7 +998,7 @@ enum LaunchpadSortMode: String, CaseIterable, Codable, Identifiable {
     }
 }
 
-@Observable final class DockyPreferences {
+@Perceptible final class DockyPreferences {
     static let shared = DockyPreferences()
 
     /// Set of `Keys.*` strings the user has explicitly customized. Each
@@ -3730,7 +3730,7 @@ enum LaunchpadSortMode: String, CaseIterable, Codable, Identifiable {
         static let windowPreviewHoverDelay: TimeInterval = 1.0
         static let windowPreviewLayout: WindowSwitcherLayout = .auto
         static let maximizedWindowBehavior: MaximizedWindowBehavior = .ignore
-        static let hidesSystemDock = true
+        static let hidesSystemDock = false
         static let overflowBehavior: DockOverflowBehavior = .rescale
         static let windowAxisSizing: DockWindowAxisSizing = .fitContent
         static let enablesWidgetHoverPreview = true

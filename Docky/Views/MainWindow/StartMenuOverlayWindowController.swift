@@ -18,6 +18,7 @@ import AppKit
 import Carbon
 import Combine
 import SwiftUI
+import Perception
 
 final class StartMenuOverlayWindowController: NSWindowController {
     private weak var mainWindow: MainWindow?
@@ -316,7 +317,7 @@ private struct StartMenuView: View {
     @ObservedObject private var launchpad = LaunchpadOverlayService.shared
     @ObservedObject private var recentApps = RecentAppsService.shared
     @ObservedObject private var service = StartMenuService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @State private var query = ""
     @FocusState private var searchFocused: Bool
 
@@ -350,7 +351,7 @@ private struct StartMenuView: View {
     }
 
     private var appsSectionTitle: String {
-        query.isEmpty ? "Recent Apps" : "Apps"
+        query.isEmpty ? "最近使用的应用" : String(localized: "Apps")
     }
 
     /// Map persisted bundle IDs to AppTile by resolving each via
@@ -428,15 +429,17 @@ private struct StartMenuView: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
-            mainPanel
-            sidePanel
-                .opacity(service.showsAllApps ? 1 : 0)
-                .scaleEffect(service.showsAllApps ? 1 : 0.97, anchor: .leading)
-                .allowsHitTesting(service.showsAllApps)
+        WithPerceptionTracking {
+            HStack(spacing: 8) {
+                mainPanel
+                sidePanel
+                    .opacity(service.showsAllApps ? 1 : 0)
+                    .scaleEffect(service.showsAllApps ? 1 : 0.97, anchor: .leading)
+                    .allowsHitTesting(service.showsAllApps)
+            }
+            .animation(.easeInOut(duration: 0.18), value: service.showsAllApps)
+            .onAppear { searchFocused = true }
         }
-        .animation(.easeInOut(duration: 0.18), value: service.showsAllApps)
-        .onAppear { searchFocused = true }
     }
 
     private var mainPanel: some View {
@@ -449,8 +452,10 @@ private struct StartMenuView: View {
             Color.clear
                 .dockyGlass(in: shape)
                 .overlay {
-                    shape.fill(Color(nsColor: preferences.effectiveWindowTintColor))
-                        .opacity(preferences.effectiveWindowTintOpacity)
+                    WithPerceptionTracking {
+                        shape.fill(Color(nsColor: preferences.effectiveWindowTintColor))
+                            .opacity(preferences.effectiveWindowTintOpacity)
+                    }
                 }
                 .dockyGlassBorder(in: shape)
 
@@ -481,8 +486,10 @@ private struct StartMenuView: View {
             Color.clear
                 .dockyGlass(in: shape)
                 .overlay {
-                    shape.fill(Color(nsColor: preferences.effectiveWindowTintColor))
-                        .opacity(preferences.effectiveWindowTintOpacity)
+                    WithPerceptionTracking {
+                        shape.fill(Color(nsColor: preferences.effectiveWindowTintColor))
+                            .opacity(preferences.effectiveWindowTintOpacity)
+                    }
                 }
                 .dockyGlassBorder(in: shape)
 
@@ -515,7 +522,9 @@ private struct StartMenuView: View {
             let columns = [GridItem(.adaptive(minimum: 88, maximum: 110), spacing: 10)]
             LazyVGrid(columns: columns, alignment: .leading, spacing: 10) {
                 ForEach(items) { folder in
-                    homeFolderCell(folder)
+                    WithPerceptionTracking {
+                        homeFolderCell(folder)
+                    }
                 }
             }
         }
@@ -549,10 +558,12 @@ private struct StartMenuView: View {
     private var recentsSection: some View {
         let items = Array(filteredRecents.prefix(8))
         if !items.isEmpty {
-            sectionHeader("Recents")
+            sectionHeader("最近使用")
             VStack(spacing: 4) {
                 ForEach(items, id: \.self) { url in
-                    recentRow(url: url)
+                    WithPerceptionTracking {
+                        recentRow(url: url)
+                    }
                 }
             }
         }
@@ -566,7 +577,9 @@ private struct StartMenuView: View {
             let columns = [GridItem(.adaptive(minimum: 88, maximum: 110), spacing: 10)]
             LazyVGrid(columns: columns, alignment: .leading, spacing: 10) {
                 ForEach(apps, id: \.bundleIdentifier) { app in
-                    appCell(app)
+                    WithPerceptionTracking {
+                        appCell(app)
+                    }
                 }
             }
         }
@@ -627,7 +640,9 @@ private struct StartMenuView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
                     ForEach(allAppsAlphabetical, id: \.bundleIdentifier) { app in
-                        allAppsRow(app)
+                        WithPerceptionTracking {
+                            allAppsRow(app)
+                        }
                     }
                 }
                 .padding(.horizontal, 8)
@@ -793,10 +808,10 @@ private enum SystemAction {
 
     var title: String {
         switch self {
-        case .sleep: return "Sleep"
-        case .restart: return "Restart..."
-        case .shutDown: return "Shut Down..."
-        case .logOut: return "Log Out..."
+        case .sleep: return "睡眠"
+        case .restart: return "重新启动…"
+        case .shutDown: return "关机…"
+        case .logOut: return "退出登录…"
         }
     }
 

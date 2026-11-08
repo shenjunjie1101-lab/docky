@@ -4,79 +4,86 @@
 //
 
 import SwiftUI
+import Perception
 
 struct ActionCatalogSettingsView: View {
     @ObservedObject private var catalog = MenuCatalogService.shared
 
     var body: some View {
-        Form {
-            Section("About Actions") {
-                Text("Actions are menu items Docky injects into each tile's right-click menu. A catalog package ships a curated bundle of them; once it's loaded, every action it defines is automatically available on the matching tile type. Apps, folders, the Trash, the Launchpad, and the divider all get their own set, with no per-tile setup needed.")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                Text("Action kinds Docky will execute: built-in commands, AppleScript, and macOS menu-bar clicks. The first time an app-targeted AppleScript or menu-click action runs, macOS may prompt for Automation permission.")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Section("Catalog Packages") {
-                if catalog.packageSummaries.isEmpty {
-                    Text("No catalog packages loaded.")
+        WithPerceptionTracking {
+            Form {
+                Section("About Actions") {
+                    Text("Actions are menu items Docky injects into each tile's right-click menu. A catalog package ships a curated bundle of them; once it's loaded, every action it defines is automatically available on the matching tile type. Apps, folders, the Trash, the Launchpad, and the divider all get their own set, with no per-tile setup needed.")
                         .foregroundStyle(.secondary)
-                } else {
-                    ForEach(catalog.packageSummaries) { package in
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Text(package.title)
-                                    .font(.headline)
-                                Spacer()
-                                Text(package.version)
-                                    .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Text("Action kinds Docky will execute: built-in commands, AppleScript, and macOS menu-bar clicks. The first time an app-targeted AppleScript or menu-click action runs, macOS may prompt for Automation permission.")
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Section("Catalog Packages") {
+                    if catalog.packageSummaries.isEmpty {
+                        Text("No catalog packages loaded.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(catalog.packageSummaries) { package in
+                            WithPerceptionTracking {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    HStack {
+                                        Text(package.title)
+                                            .font(.headline)
+                                        Spacer()
+                                        Text(package.version)
+                                            .foregroundStyle(.secondary)
+                                    }
+
+                                    Text("作者：\(package.author) • \(package.actionCount) 个操作 • \(package.reviewStatus == "reviewed" ? "已审核" : package.reviewStatus)")
+                                        .foregroundStyle(.secondary)
+
+                                    if let description = package.description {
+                                        Text(LocalizedStringKey(description))
+                                            .foregroundStyle(.secondary)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                }
+                                .padding(.vertical, 4)
                             }
+                        }
+                    }
+                }
 
-                            Text("by \(package.author) • \(package.actionCount) actions • \(package.reviewStatus)")
-                                .foregroundStyle(.secondary)
+                Section("Scripted Actions") {
+                    Text("Docky loads action definitions from bundled JSON. Future curated packages can add actions and append menu items at approved insertion points without replacing Docky's core menus.")
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                            if let description = package.description {
-                                Text(description)
+                    HStack {
+                        Text("Catalog Refresh")
+                            .font(.headline)
+
+                        Spacer()
+
+                        Button("Reload Catalog") {
+                            catalog.reload()
+                        }
+                    }
+                }
+
+                if !catalog.diagnostics.isEmpty {
+                    Section("Diagnostics") {
+                        ForEach(Array(catalog.diagnostics.enumerated()), id: \.offset) { item in
+                            WithPerceptionTracking {
+                                Text(item.element)
+                                    .font(.callout.monospaced())
                                     .foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
-                        .padding(.vertical, 4)
                     }
                 }
             }
-
-            Section("Scripted Actions") {
-                Text("Docky loads action definitions from bundled JSON. Future curated packages can add actions and append menu items at approved insertion points without replacing Docky's core menus.")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                HStack {
-                    Text("Catalog Refresh")
-                        .font(.headline)
-
-                    Spacer()
-
-                    Button("Reload Catalog") {
-                        catalog.reload()
-                    }
-                }
-            }
-
-            if !catalog.diagnostics.isEmpty {
-                Section("Diagnostics") {
-                    ForEach(Array(catalog.diagnostics.enumerated()), id: \.offset) { item in
-                        Text(item.element)
-                            .font(.callout.monospaced())
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
+            .dockySettingsForm()
         }
-        .formStyle(.grouped)
     }
 }

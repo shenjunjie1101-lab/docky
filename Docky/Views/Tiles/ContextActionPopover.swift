@@ -6,6 +6,7 @@
 import AppKit
 import ObjectiveC
 import SwiftUI
+import Perception
 
 struct ContextAction: Identifiable {
     enum Kind: Equatable {
@@ -157,6 +158,8 @@ struct ContextActionMenuPresenter: NSViewRepresentable {
         private var preferredEdge: NSRectEdge
         private var onPresentationChanged: (Bool) -> Void
         private var isInterruptingAutohide = false
+        private var isTrackingMenu = false
+        private var pendingAction: (() -> Void)?
 
         init(
             actionProvider: @escaping (NSEvent.ModifierFlags) -> [ContextAction],
@@ -229,14 +232,26 @@ struct ContextActionMenuPresenter: NSViewRepresentable {
             return nil
         }
 
-        private func popUpCartouche(menu: NSMenu, in view: NSView) {
+        func popUpCartouche(menu: NSMenu, in view: NSView) {
+            isTrackingMenu = true
             onPresentationChanged(true)
-            defer { onPresentationChanged(false) }
             beginAutohideInterruption(for: view)
-            defer { endAutohideInterruption() }
+            defer {
+                endAutohideInterruption()
+                onPresentationChanged(false)
+                isTrackingMenu = false
+                let handler = pendingAction
+                pendingAction = nil
+                if let handler {
+                    // Ungroup/removal destroys the SwiftUI view and its menu
+                    // anchor. Wait for AppKit's nested menu tracking loop and
+                    // this event-monitor callback to unwind before doing that.
+                    DispatchQueue.main.async { handler() }
+                }
+            }
 
             let selector = NSSelectorFromString("_popUpMenuRelativeToRect:inView:preferredEdge:")
-            if menu.responds(to: selector) {
+            if #available(macOS 26.0, *), menu.responds(to: selector) {
                 typealias Fn = @convention(c) (NSMenu, Selector, NSRect, NSView?, NSRectEdge) -> Void
                 let imp = menu.method(for: selector)
                 let fn = unsafeBitCast(imp, to: Fn.self)
@@ -336,7 +351,11 @@ struct ContextActionMenuPresenter: NSViewRepresentable {
 
         @objc private func runAction(_ sender: NSMenuItem) {
             guard let action = sender.representedObject as? ContextAction else { return }
-            action.handler()
+            if isTrackingMenu {
+                pendingAction = action.handler
+            } else {
+                DispatchQueue.main.async { action.handler() }
+            }
         }
     }
 }
@@ -424,29 +443,33 @@ struct MoreActionsButton: View {
     }
 
     var body: some View {
-        Button {
-            triggerCount &+= 1
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 26, height: 26)
-                .background(.ultraThinMaterial, in: Circle())
-                .overlay {
-                    Circle().strokeBorder(.white.opacity(0.25), lineWidth: 0.5)
-                }
-                .shadow(color: .black.opacity(0.4), radius: 3, y: 1)
-        }
-        .buttonStyle(.plain)
-        .help("More actions")
-        .background(
-            MoreActionsMenuAnchor(
-                trigger: triggerCount,
-                actionProvider: actionProvider,
-                preferredEdge: preferredEdge,
-                onPresentationChanged: onPresentationChanged
+        WithPerceptionTracking {
+            Button {
+                triggerCount &+= 1
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 26, height: 26)
+                    .background(.ultraThinMaterial, in: Circle())
+                    .overlay {
+                        WithPerceptionTracking {
+                            Circle().strokeBorder(.white.opacity(0.25), lineWidth: 0.5)
+                        }
+                    }
+                    .shadow(color: .black.opacity(0.4), radius: 3, y: 1)
+            }
+            .buttonStyle(.plain)
+            .help("More actions")
+            .background(
+                MoreActionsMenuAnchor(
+                    trigger: triggerCount,
+                    actionProvider: actionProvider,
+                    preferredEdge: preferredEdge,
+                    onPresentationChanged: onPresentationChanged
+                )
             )
-        )
+        }
     }
 }
 

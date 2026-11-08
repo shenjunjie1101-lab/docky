@@ -6,6 +6,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import Perception
 
 final class WindowSwitcherOverlayWindowController: NSWindowController {
     private weak var mainWindow: MainWindow?
@@ -208,7 +209,7 @@ private final class WindowSwitcherOverlayWindow: NSWindow {
 
 private struct WindowSwitcherOverlayView: View {
     @ObservedObject private var switcher = WindowSwitcherService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @ObservedObject private var permissions = PermissionsService.shared
 
     private let innerPreviewCornerRadius: CGFloat = 16
@@ -244,76 +245,84 @@ private struct WindowSwitcherOverlayView: View {
     }
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        GeometryReader { proxy in
-            ZStack {
-                // Stretches the ZStack to the GeometryReader's proposed size so
-                // the centered child (cards or list) is centered against the
-                // full screen, not the child's own bounds.
-                Color.clear.ignoresSafeArea()
+            GeometryReader { proxy in
+                WithPerceptionTracking {
+                    ZStack {
+                        // Stretches the ZStack to the GeometryReader's proposed size so
+                        // the centered child (cards or list) is centered against the
+                        // full screen, not the child's own bounds.
+                        Color.clear.ignoresSafeArea()
 
-                if switcher.windows.isEmpty {
-                    emptyStateCard
-                } else if resolvedLayout == .thumbnails {
-                    Color.black.opacity(switcher.focusedPreview == nil ? 0 : 0.6)
-                        .ignoresSafeArea()
+                        if switcher.windows.isEmpty {
+                            emptyStateCard
+                        } else if resolvedLayout == .thumbnails {
+                            Color.black.opacity(switcher.focusedPreview == nil ? 0 : 0.6)
+                                .ignoresSafeArea()
 
-                    if let focusedPreview = switcher.focusedPreview {
-                        FocusedWindowPreviewView(
-                            preview: focusedPreview,
-                            containerSize: proxy.size
-                        )
-                        .allowsHitTesting(false)
-                        .transition(.opacity)
+                            if let focusedPreview = switcher.focusedPreview {
+                                FocusedWindowPreviewView(
+                                    preview: focusedPreview,
+                                    containerSize: proxy.size
+                                )
+                                .allowsHitTesting(false)
+                                .transition(.opacity)
+                            }
+
+                            thumbnailLayout(containerSize: proxy.size)
+                        } else {
+                            listLayout
+                        }
                     }
-
-                    thumbnailLayout(containerSize: proxy.size)
-                } else {
-                    listLayout
+                    .animation(.easeInOut(duration: 0.18), value: switcher.focusedPreview?.windowIdentifier)
                 }
             }
-            .animation(.easeInOut(duration: 0.18), value: switcher.focusedPreview?.windowIdentifier)
         }
     }
 
     private func thumbnailLayout(containerSize: CGSize) -> some View {
         ScrollViewReader { scrollProxy in
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 18) {
-                    ForEach(Array(switcher.windows.enumerated()), id: \.element.id) { index, window in
-                        let total = switcher.windows.count
-                        let isFirst = index == 0
-                        let isLast = index == total - 1
-                        // Mirror of the list layout, rotated 90°: leading
-                        // corners hug chrome on the first card, trailing on
-                        // the last card; corners facing a neighbor get the
-                        // inner radius.
-                        let leadingRadius = isFirst ? edgeContentCornerRadius : innerContentCornerRadius
-                        let trailingRadius = isLast ? edgeContentCornerRadius : innerContentCornerRadius
-                        WindowSwitcherCard(
-                            window: window,
-                            isSelected: window.windowIdentifier == switcher.selectedWindowIdentifier,
-                            innerPreviewCornerRadius: innerPreviewCornerRadius,
-                            leadingCornerRadius: leadingRadius,
-                            trailingCornerRadius: trailingRadius
-                        )
-                        .id(window.windowIdentifier)
+            WithPerceptionTracking {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 18) {
+                        ForEach(Array(switcher.windows.enumerated()), id: \.element.id) { index, window in
+                            WithPerceptionTracking {
+                                let total = switcher.windows.count
+                                let isFirst = index == 0
+                                let isLast = index == total - 1
+                                // Mirror of the list layout, rotated 90°: leading
+                                // corners hug chrome on the first card, trailing on
+                                // the last card; corners facing a neighbor get the
+                                // inner radius.
+                                let leadingRadius = isFirst ? edgeContentCornerRadius : innerContentCornerRadius
+                                let trailingRadius = isLast ? edgeContentCornerRadius : innerContentCornerRadius
+                                WindowSwitcherCard(
+                                    window: window,
+                                    isSelected: window.windowIdentifier == switcher.selectedWindowIdentifier,
+                                    innerPreviewCornerRadius: innerPreviewCornerRadius,
+                                    leadingCornerRadius: leadingRadius,
+                                    trailingCornerRadius: trailingRadius
+                                )
+                                .id(window.windowIdentifier)
+                            }
+                        }
                     }
+                    .padding(interiorPadding)
                 }
-                .padding(interiorPadding)
-            }
-            .frame(maxWidth: max(0, containerSize.width - 80))
-            .fixedSize(horizontal: true, vertical: true)
-            .background(.primary.opacity(0.18))
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: containerCornerRadius, style: .continuous))
-            .onChange(of: switcher.selectedWindowIdentifier) { selection in
-                guard let selection else { return }
-                withAnimation(.easeInOut(duration: 0.14)) {
-                    scrollProxy.scrollTo(selection, anchor: .center)
+                .frame(maxWidth: max(0, containerSize.width - 80))
+                .fixedSize(horizontal: true, vertical: true)
+                .background(.primary.opacity(0.18))
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: containerCornerRadius, style: .continuous))
+                .onChange(of: switcher.selectedWindowIdentifier) { selection in
+                    guard let selection else { return }
+                    withAnimation(.easeInOut(duration: 0.14)) {
+                        scrollProxy.scrollTo(selection, anchor: .center)
+                    }
                 }
             }
         }
@@ -372,40 +381,46 @@ private struct WindowSwitcherListView: View {
     }
 
     var body: some View {
-        ScrollViewReader { scrollProxy in
-            ScrollView(.vertical, showsIndicators: false) {
-                LazyVStack(spacing: 2) {
-                    ForEach(Array(switcher.windows.enumerated()), id: \.element.id) { index, window in
-                        let total = switcher.windows.count
-                        let isFirst = index == 0
-                        let isLast = index == total - 1
-                        // Outer edge (top of first row, bottom of last row)
-                        // hugs the chrome; the inner edge — facing a neighbor
-                        // row — uses the half radius for visual continuity.
-                        let topRadius = isFirst ? edgeRowCornerRadius : innerRowCornerRadius
-                        let bottomRadius = isLast ? edgeRowCornerRadius : innerRowCornerRadius
-                        WindowSwitcherListRow(
-                            window: window,
-                            isSelected: window.windowIdentifier == switcher.selectedWindowIdentifier,
-                            height: rowHeight,
-                            topCornerRadius: topRadius,
-                            bottomCornerRadius: bottomRadius
-                        )
-                        .id(window.windowIdentifier)
+        WithPerceptionTracking {
+            ScrollViewReader { scrollProxy in
+                WithPerceptionTracking {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(spacing: 2) {
+                            ForEach(Array(switcher.windows.enumerated()), id: \.element.id) { index, window in
+                                WithPerceptionTracking {
+                                    let total = switcher.windows.count
+                                    let isFirst = index == 0
+                                    let isLast = index == total - 1
+                                    // Outer edge (top of first row, bottom of last row)
+                                    // hugs the chrome; the inner edge — facing a neighbor
+                                    // row — uses the half radius for visual continuity.
+                                    let topRadius = isFirst ? edgeRowCornerRadius : innerRowCornerRadius
+                                    let bottomRadius = isLast ? edgeRowCornerRadius : innerRowCornerRadius
+                                    WindowSwitcherListRow(
+                                        window: window,
+                                        isSelected: window.windowIdentifier == switcher.selectedWindowIdentifier,
+                                        height: rowHeight,
+                                        topCornerRadius: topRadius,
+                                        bottomCornerRadius: bottomRadius
+                                    )
+                                    .id(window.windowIdentifier)
+                                }
+                            }
+                        }
+                        .padding(interiorPadding)
                     }
-                }
-                .padding(interiorPadding)
-            }
-            .frame(width: listWidth)
-            .frame(maxHeight: CGFloat(maxVisibleRows) * rowHeight + 16)
-            .fixedSize(horizontal: true, vertical: true)
-            .background(.primary.opacity(0.18))
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .onChange(of: switcher.selectedWindowIdentifier) { selection in
-                guard let selection else { return }
-                withAnimation(.easeInOut(duration: 0.14)) {
-                    scrollProxy.scrollTo(selection, anchor: .center)
+                    .frame(width: listWidth)
+                    .frame(maxHeight: CGFloat(maxVisibleRows) * rowHeight + 16)
+                    .fixedSize(horizontal: true, vertical: true)
+                    .background(.primary.opacity(0.18))
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    .onChange(of: switcher.selectedWindowIdentifier) { selection in
+                        guard let selection else { return }
+                        withAnimation(.easeInOut(duration: 0.14)) {
+                            scrollProxy.scrollTo(selection, anchor: .center)
+                        }
+                    }
                 }
             }
         }
@@ -424,9 +439,9 @@ private struct WindowSwitcherListRow: View {
 
     private let iconSize: CGFloat = 28
 
-    private var rowShape: UnevenRoundedRectangle {
-        UnevenRoundedRectangle(
-            cornerRadii: RectangleCornerRadii(
+    private var rowShape: DockyRoundedRectangle {
+        DockyRoundedRectangle(
+            cornerRadii: DockyCornerRadii(
                 topLeading: topCornerRadius,
                 bottomLeading: bottomCornerRadius,
                 bottomTrailing: bottomCornerRadius,
@@ -443,56 +458,64 @@ private struct WindowSwitcherListRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(nsImage: IconCacheService.shared.displayedIcon(forBundleIdentifier: window.bundleIdentifier))
-                .resizable()
-                .interpolation(.high)
-                .frame(width: iconSize, height: iconSize)
+        WithPerceptionTracking {
+            HStack(spacing: 12) {
+                Image(nsImage: IconCacheService.shared.displayedIcon(forBundleIdentifier: window.bundleIdentifier))
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: iconSize, height: iconSize)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(displayTitle)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.primary.opacity(isSelected ? 1 : 0.85))
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(displayTitle)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.primary.opacity(isSelected ? 1 : 0.85))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
 
-                Text(window.appDisplayName)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.primary.opacity(isSelected ? 0.75 : 0.5))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            if window.isMinimized {
-                Image(systemName: "minus.diamond.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.primary.opacity(0.55))
-            }
-        }
-        .padding(.horizontal, 12)
-        .frame(height: height)
-        .background {
-            rowShape
-                .fill(isSelected ? .white.opacity(0.16) : .clear)
-                .overlay {
-                    rowShape
-                        .strokeBorder(isSelected ? .white.opacity(0.28) : .clear, lineWidth: 1)
+                    Text(window.appDisplayName)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.primary.opacity(isSelected ? 0.75 : 0.5))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                 }
-        }
-        .background {
-            ContextActionMenuPresenter(
-                actionProvider: contextActions(modifierFlags:),
-                onPresentationChanged: switcher.setContextMenuPresented
-            )
-        }
-        .contentShape(rowShape)
-        .onHover { isHovering in
-            if isHovering {
-                switcher.selectWindow(withIdentifier: window.windowIdentifier)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                if window.isMinimized {
+                    Image(systemName: "minus.diamond.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.primary.opacity(0.55))
+                }
             }
+            .padding(.horizontal, 12)
+            .frame(height: height)
+            .background {
+                WithPerceptionTracking {
+                    rowShape
+                        .fill(isSelected ? .white.opacity(0.16) : .clear)
+                        .overlay {
+                            WithPerceptionTracking {
+                                rowShape
+                                    .strokeBorder(isSelected ? .white.opacity(0.28) : .clear, lineWidth: 1)
+                            }
+                        }
+                }
+            }
+            .background {
+                WithPerceptionTracking {
+                    ContextActionMenuPresenter(
+                        actionProvider: contextActions(modifierFlags:),
+                        onPresentationChanged: switcher.setContextMenuPresented
+                    )
+                }
+            }
+            .contentShape(rowShape)
+            .onHover { isHovering in
+                if isHovering {
+                    switcher.selectWindow(withIdentifier: window.windowIdentifier)
+                }
+            }
+            .animation(.easeInOut(duration: 0.12), value: isSelected)
         }
-        .animation(.easeInOut(duration: 0.12), value: isSelected)
     }
 
     private func contextActions(modifierFlags: NSEvent.ModifierFlags) -> [ContextAction] {
@@ -535,13 +558,15 @@ private struct FocusedWindowPreviewView: View {
     let containerSize: CGSize
 
     var body: some View {
-        Image(nsImage: preview.image)
-            .resizable()
-            .interpolation(.high)
-            .frame(width: previewSize.width, height: previewSize.height)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .shadow(color: .black.opacity(0.35), radius: 28, y: 10)
-            .position(previewCenter)
+        WithPerceptionTracking {
+            Image(nsImage: preview.image)
+                .resizable()
+                .interpolation(.high)
+                .frame(width: previewSize.width, height: previewSize.height)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .shadow(color: .black.opacity(0.35), radius: 28, y: 10)
+                .position(previewCenter)
+        }
     }
 
     private var previewSize: CGSize {
@@ -573,9 +598,9 @@ private struct WindowSwitcherCard: View {
     private let previewWidth: CGFloat = 180
     private let previewHeight: CGFloat = 102
 
-    private var cardShape: UnevenRoundedRectangle {
-        UnevenRoundedRectangle(
-            cornerRadii: RectangleCornerRadii(
+    private var cardShape: DockyRoundedRectangle {
+        DockyRoundedRectangle(
+            cornerRadii: DockyCornerRadii(
                 topLeading: leadingCornerRadius,
                 bottomLeading: leadingCornerRadius,
                 bottomTrailing: trailingCornerRadius,
@@ -592,48 +617,56 @@ private struct WindowSwitcherCard: View {
     }
 
     var body: some View {
-        VStack(spacing: 12) {
-            previewSurface
+        WithPerceptionTracking {
+            VStack(spacing: 12) {
+                previewSurface
 
-            VStack(spacing: 4) {
-                Text(displayTitle)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.primary.opacity(0.96))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .opacity(isSelected ? 1 : 0.25)
+                VStack(spacing: 4) {
+                    Text(displayTitle)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.primary.opacity(0.96))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .opacity(isSelected ? 1 : 0.25)
 
-                Text(window.appDisplayName)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.primary.opacity(0.6))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .opacity(isSelected ? 1 : 0.12)
-            }
-            .frame(width: 180)
-        }
-        .padding(12)
-        .background {
-            cardShape
-                .fill(isSelected ? .white.opacity(0.14) : .white.opacity(0.0))
-                .overlay {
-                    cardShape
-                        .strokeBorder(isSelected ? .white.opacity(0.28) : .white.opacity(0.0), lineWidth: 1)
+                    Text(window.appDisplayName)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.primary.opacity(0.6))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .opacity(isSelected ? 1 : 0.12)
                 }
-        }
-        .background {
-            ContextActionMenuPresenter(
-                actionProvider: contextActions(modifierFlags:),
-                onPresentationChanged: switcher.setContextMenuPresented
-            )
-        }
-        .contentShape(cardShape)
-        .onHover { isHovering in
-            if isHovering {
-                switcher.selectWindow(withIdentifier: window.windowIdentifier)
+                .frame(width: 180)
             }
+            .padding(12)
+            .background {
+                WithPerceptionTracking {
+                    cardShape
+                        .fill(isSelected ? .white.opacity(0.14) : .white.opacity(0.0))
+                        .overlay {
+                            WithPerceptionTracking {
+                                cardShape
+                                    .strokeBorder(isSelected ? .white.opacity(0.28) : .white.opacity(0.0), lineWidth: 1)
+                            }
+                        }
+                }
+            }
+            .background {
+                WithPerceptionTracking {
+                    ContextActionMenuPresenter(
+                        actionProvider: contextActions(modifierFlags:),
+                        onPresentationChanged: switcher.setContextMenuPresented
+                    )
+                }
+            }
+            .contentShape(cardShape)
+            .onHover { isHovering in
+                if isHovering {
+                    switcher.selectWindow(withIdentifier: window.windowIdentifier)
+                }
+            }
+            .animation(.easeInOut(duration: 0.14), value: isSelected)
         }
-        .animation(.easeInOut(duration: 0.14), value: isSelected)
     }
 
     private var previewSurface: some View {
@@ -657,21 +690,25 @@ private struct WindowSwitcherCard: View {
         .opacity(window.isMinimized ? 0.7 : 1)
         .clipShape(RoundedRectangle(cornerRadius: innerPreviewCornerRadius/4, style: .continuous))
         .overlay {
-            if window.isMinimized {
-                minimizedBadge
+            WithPerceptionTracking {
+                if window.isMinimized {
+                    minimizedBadge
+                }
             }
         }
         .overlay(alignment: .topLeading) {
-            if isPreviewHovered || isMoreMenuPresented {
-                MoreActionsButton(
-                    onPresentationChanged: { presented in
-                        isMoreMenuPresented = presented
-                        switcher.setContextMenuPresented(presented)
-                    },
-                    actionProvider: contextActions(modifierFlags:)
-                )
-                .padding(6)
-                .transition(.opacity)
+            WithPerceptionTracking {
+                if isPreviewHovered || isMoreMenuPresented {
+                    MoreActionsButton(
+                        onPresentationChanged: { presented in
+                            isMoreMenuPresented = presented
+                            switcher.setContextMenuPresented(presented)
+                        },
+                        actionProvider: contextActions(modifierFlags:)
+                    )
+                    .padding(6)
+                    .transition(.opacity)
+                }
             }
         }
         .onHover { hovering in

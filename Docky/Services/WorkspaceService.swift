@@ -63,13 +63,13 @@ final class WorkspaceService: ObservableObject {
     /// after one miss (which left it permanently thumbnail-less), retry a
     /// few times with a short delay before giving up.
     private let maxMinimizedPreviewAttempts = 3
-    private let minimizedPreviewRetryDelay: Duration = .milliseconds(400)
+    private let minimizedPreviewRetryDelay: DockyDelay = .milliseconds(400)
 
     /// Delay between focusing a window and grabbing a fresh thumbnail of
     /// it. Long enough for the window to finish coming forward and render
     /// its current content, short enough to land before the user flips
     /// back to the switcher.
-    private let postFocusPreviewCaptureDelay: Duration = .milliseconds(250)
+    private let postFocusPreviewCaptureDelay: DockyDelay = .milliseconds(250)
 
     /// Backstop refresh interval for app-window thumbnails. Title-change
     /// invalidation handles the common case (browsers, IDEs); this catches
@@ -130,9 +130,15 @@ final class WorkspaceService: ObservableObject {
         // No AX windows can also mean every window is on another Space (AX
         // can't see those): activate to switch Spaces instead of reopening.
         if accessibilityGranted, allWindows.isEmpty {
+            // An AX lookup can be empty for a running third-party app even
+            // though it has a window. Try foreground activation as well as
+            // reopening it, rather than relying only on a reopen Apple event.
+            runningApp.unhide()
+            let didRequestActivation = runningApp.activateTransferringFrontmost(options: [.activateAllWindows])
             if hasWindowOnAnotherSpace(pid: runningApp.processIdentifier) {
-                runningApp.unhide()
-                runningApp.activateTransferringFrontmost(options: [.activateAllWindows])
+                if !didRequestActivation, let appURL = runningApp.bundleURL {
+                    openApplication(at: appURL)
+                }
             } else if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) {
                 openApplication(at: appURL)
             }
@@ -157,7 +163,10 @@ final class WorkspaceService: ObservableObject {
 
         // Default: bring the app forward.
         runningApp.unhide()
-        runningApp.activateTransferringFrontmost(options: [.activateAllWindows])
+        if !runningApp.activateTransferringFrontmost(options: [.activateAllWindows]),
+           let appURL = runningApp.bundleURL {
+            openApplication(at: appURL)
+        }
     }
 
     /// Whether the window server knows a live, ordinary window for `pid` that
@@ -315,7 +324,7 @@ final class WorkspaceService: ObservableObject {
 
         Task { [weak self] in
             guard let self else { return }
-            try? await Task.sleep(for: self.postFocusPreviewCaptureDelay)
+            try? await dockySleep(for: self.postFocusPreviewCaptureDelay)
             guard let preview = await self.captureAppWindowPreview(for: window) else { return }
 
             var updatedPreviews = self.appWindowPreviews
@@ -839,7 +848,7 @@ final class WorkspaceService: ObservableObject {
             // of times before giving up instead of leaving the window
             // permanently thumbnail-less after a single miss.
             guard attempt < self.maxMinimizedPreviewAttempts else { return }
-            try? await Task.sleep(for: self.minimizedPreviewRetryDelay)
+            try? await dockySleep(for: self.minimizedPreviewRetryDelay)
             guard self.minimizedWindows.contains(where: { $0.windowIdentifier == window.windowIdentifier }),
                   self.minimizedWindowPreviews[window.windowIdentifier] == nil else {
                 return
@@ -1006,14 +1015,14 @@ final class WorkspaceService: ObservableObject {
             let captureSize = constrainedCaptureSize(for: shareableWindow.frame.size)
             configuration.width = Int(captureSize.width)
             configuration.height = Int(captureSize.height)
-            configuration.capturesAudio = false
+            if #available(macOS 13.0, *) { configuration.capturesAudio = false }
             if FeatureGate.shared.isAvailable(.streamMicrophoneCapture), #available(macOS 15.0, *) {
                 configuration.captureMicrophone = false
             }
             configuration.showsCursor = false
             configuration.scalesToFit = true
-            configuration.ignoreShadowsSingleWindow = true
-            configuration.ignoreGlobalClipSingleWindow = true
+            if #available(macOS 14.0, *) { configuration.ignoreShadowsSingleWindow = true }
+            if #available(macOS 14.0, *) { configuration.ignoreGlobalClipSingleWindow = true }
 
             let filter = SCContentFilter(desktopIndependentWindow: shareableWindow)
             let cgImage = try await captureImage(contentFilter: filter, configuration: configuration)
@@ -1039,14 +1048,14 @@ final class WorkspaceService: ObservableObject {
             let captureSize = fullSizeCaptureSize(for: shareableWindow.frame.size, screenBounds: window.screenBounds)
             configuration.width = Int(captureSize.width)
             configuration.height = Int(captureSize.height)
-            configuration.capturesAudio = false
+            if #available(macOS 13.0, *) { configuration.capturesAudio = false }
             if FeatureGate.shared.isAvailable(.streamMicrophoneCapture), #available(macOS 15.0, *) {
                 configuration.captureMicrophone = false
             }
             configuration.showsCursor = false
             configuration.scalesToFit = false
-            configuration.ignoreShadowsSingleWindow = true
-            configuration.ignoreGlobalClipSingleWindow = true
+            if #available(macOS 14.0, *) { configuration.ignoreShadowsSingleWindow = true }
+            if #available(macOS 14.0, *) { configuration.ignoreGlobalClipSingleWindow = true }
 
             let filter = SCContentFilter(desktopIndependentWindow: shareableWindow)
             let cgImage = try await captureImage(contentFilter: filter, configuration: configuration)
@@ -1085,14 +1094,14 @@ final class WorkspaceService: ObservableObject {
             let captureSize = constrainedCaptureSize(for: shareableWindow.frame.size)
             configuration.width = Int(captureSize.width)
             configuration.height = Int(captureSize.height)
-            configuration.capturesAudio = false
+            if #available(macOS 13.0, *) { configuration.capturesAudio = false }
             if FeatureGate.shared.isAvailable(.streamMicrophoneCapture), #available(macOS 15.0, *) {
                 configuration.captureMicrophone = false
             }
             configuration.showsCursor = false
             configuration.scalesToFit = true
-            configuration.ignoreShadowsSingleWindow = true
-            configuration.ignoreGlobalClipSingleWindow = true
+            if #available(macOS 14.0, *) { configuration.ignoreShadowsSingleWindow = true }
+            if #available(macOS 14.0, *) { configuration.ignoreGlobalClipSingleWindow = true }
 
             let filter = SCContentFilter(desktopIndependentWindow: shareableWindow)
             let cgImage = try await captureImage(contentFilter: filter, configuration: configuration)
@@ -1268,6 +1277,11 @@ final class WorkspaceService: ObservableObject {
         contentFilter: SCContentFilter,
         configuration: SCStreamConfiguration
     ) async throws -> CGImage {
+        // Earlier callers first attempt the existing CGWindow capture path.
+        guard #available(macOS 14.0, *) else {
+            throw NSError(domain: "Docky.WindowPreview", code: -1,
+                          userInfo: [NSLocalizedDescriptionKey: "ScreenCaptureKit 截图功能需要 macOS 14 或更新版本。"])
+        }
         return try await withCheckedThrowingContinuation { continuation in
             SCScreenshotManager.captureImage(contentFilter: contentFilter, configuration: configuration) { image, error in
                 if let error {
@@ -1349,14 +1363,14 @@ private final class LiveWindowPreviewSession: NSObject, SCStreamOutput {
         configuration.height = Int(captureSize.height)
         configuration.minimumFrameInterval = CMTime(value: 1, timescale: 30)
         configuration.queueDepth = 3
-        configuration.capturesAudio = false
+        if #available(macOS 13.0, *) { configuration.capturesAudio = false }
         if FeatureGate.shared.isAvailable(.streamMicrophoneCapture), #available(macOS 15.0, *) {
             configuration.captureMicrophone = false
         }
         configuration.showsCursor = false
         configuration.scalesToFit = false
-        configuration.ignoreShadowsSingleWindow = true
-        configuration.ignoreGlobalClipSingleWindow = true
+        if #available(macOS 14.0, *) { configuration.ignoreShadowsSingleWindow = true }
+        if #available(macOS 14.0, *) { configuration.ignoreGlobalClipSingleWindow = true }
 
         self.stream = SCStream(
             filter: SCContentFilter(desktopIndependentWindow: shareableWindow),

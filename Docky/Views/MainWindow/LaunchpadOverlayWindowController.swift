@@ -6,6 +6,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import Perception
 
 final class LaunchpadOverlayWindowController: NSWindowController {
     private weak var mainWindow: MainWindow?
@@ -246,7 +247,7 @@ private struct LaunchpadCellFramePreference: PreferenceKey {
 
 private struct LaunchpadOverlayView: View {
     @ObservedObject private var overlay = LaunchpadOverlayService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @State private var searchText = ""
     @State private var selectedEntryID: String?
     @State private var visiblePageID: String?
@@ -310,235 +311,245 @@ private struct LaunchpadOverlayView: View {
     private let baseLabelHeight: CGFloat = 22
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        GeometryReader { proxy in
-            let topInset = searchBarTopInset + searchBarHeight + gridChromePadding
-            // Mirror the top so the gap from the grid bottom to the page
-            // indicator equals the gap from the search bar to the grid top.
-            let bottomInset = pageIndicatorBottomInset + pageIndicatorVisualHeight + gridChromePadding
-            // Linear scale off the 1440p reference (screen *height*).
-            // Clamped at 1.0 so icons never exceed `baseIconSize`, and at
-            // 0.5 so very small displays don't shrink the cell math
-            // beyond legibility.
-            let scale = max(0.5, min(1.0, proxy.size.height / referenceScreenHeight))
-            let iconSize = preferences.launchpadBaseIconSize * scale
-            let labelHeight = baseLabelHeight * scale
-            let cellSpacing = iconSize * 0.04
-            let scaledColumnSpacing = preferences.launchpadColumnSpacing * scale
-            let scaledMinRowSpacing = minRowSpacing * scale
-            let scaledHorizontalInset = horizontalInset * scale
-            // Square cells: the cell side equals the natural card height
-            // (icon + label + inter-spacing) so the grid item is aspect 1:1.
-            // The icon stays at `iconSize`, centered horizontally inside
-            // the square — the extra width becomes padding around the icon.
-            let cellHeight = iconSize + labelHeight + cellSpacing
-            let cellWidth = cellHeight
-            let usableWidth = max(0, proxy.size.width - scaledHorizontalInset * 2)
-            let usableHeight = max(0, proxy.size.height - topInset - bottomInset)
-            // Columns from the user preference, but clamped so the row
-            // doesn't overflow the screen on narrow displays.
-            let configuredColumns = max(1, preferences.launchpadGridColumnCount)
-            let configuredRows = max(1, preferences.launchpadGridRowCount)
-            let maxColumnsThatFit = max(1, Int((usableWidth + scaledColumnSpacing) / (cellWidth + scaledColumnSpacing)))
-            let maxRowsThatFit = max(1, Int((usableHeight + scaledMinRowSpacing) / (cellHeight + scaledMinRowSpacing)))
-            let pageColumns = max(1, min(configuredColumns, maxColumnsThatFit))
-            // Honor the configured row count, but never exceed what fits
-            // on screen — otherwise rows would overflow the page.
-            let pageRows = max(1, min(configuredRows, maxRowsThatFit))
-            // Stretch the grid to fill `usableHeight`: distribute any
-            // leftover vertical space across the inter-row gaps. The min
-            // is the floor, so when the configured rows already fill the
-            // height, spacing stays at the floor.
-            let extraVertical = max(0, usableHeight - cellHeight * CGFloat(pageRows))
-            let scaledRowSpacing = pageRows > 1
-                ? max(scaledMinRowSpacing, extraVertical / CGFloat(pageRows - 1))
-                : scaledMinRowSpacing
-            let isVertical = preferences.launchpadLayoutAxis == .vertical
-            let pageSize = pageColumns * pageRows
-            let pages = isVertical ? [] : paginate(displayedEntries, pageSize: pageSize)
-            // In vertical mode no page indicator / chevrons render, so
-            // the bottom of the grid only needs the small ambient
-            // padding the chrome reserves around all edges.
-            let resolvedBottomInset = isVertical ? gridChromePadding : bottomInset
+            GeometryReader { proxy in
+                WithPerceptionTracking {
+                    let topInset = searchBarTopInset + searchBarHeight + gridChromePadding
+                    // Mirror the top so the gap from the grid bottom to the page
+                    // indicator equals the gap from the search bar to the grid top.
+                    let bottomInset = pageIndicatorBottomInset + pageIndicatorVisualHeight + gridChromePadding
+                    // Linear scale off the 1440p reference (screen *height*).
+                    // Clamped at 1.0 so icons never exceed `baseIconSize`, and at
+                    // 0.5 so very small displays don't shrink the cell math
+                    // beyond legibility.
+                    let scale = max(0.5, min(1.0, proxy.size.height / referenceScreenHeight))
+                    let iconSize = preferences.launchpadBaseIconSize * scale
+                    let labelHeight = baseLabelHeight * scale
+                    let cellSpacing = iconSize * 0.04
+                    let scaledColumnSpacing = preferences.launchpadColumnSpacing * scale
+                    let scaledMinRowSpacing = minRowSpacing * scale
+                    let scaledHorizontalInset = horizontalInset * scale
+                    // Square cells: the cell side equals the natural card height
+                    // (icon + label + inter-spacing) so the grid item is aspect 1:1.
+                    // The icon stays at `iconSize`, centered horizontally inside
+                    // the square — the extra width becomes padding around the icon.
+                    let cellHeight = iconSize + labelHeight + cellSpacing
+                    let cellWidth = cellHeight
+                    let usableWidth = max(0, proxy.size.width - scaledHorizontalInset * 2)
+                    let usableHeight = max(0, proxy.size.height - topInset - bottomInset)
+                    // Columns from the user preference, but clamped so the row
+                    // doesn't overflow the screen on narrow displays.
+                    let configuredColumns = max(1, preferences.launchpadGridColumnCount)
+                    let configuredRows = max(1, preferences.launchpadGridRowCount)
+                    let maxColumnsThatFit = max(1, Int((usableWidth + scaledColumnSpacing) / (cellWidth + scaledColumnSpacing)))
+                    let maxRowsThatFit = max(1, Int((usableHeight + scaledMinRowSpacing) / (cellHeight + scaledMinRowSpacing)))
+                    let pageColumns = max(1, min(configuredColumns, maxColumnsThatFit))
+                    // Honor the configured row count, but never exceed what fits
+                    // on screen — otherwise rows would overflow the page.
+                    let pageRows = max(1, min(configuredRows, maxRowsThatFit))
+                    // Stretch the grid to fill `usableHeight`: distribute any
+                    // leftover vertical space across the inter-row gaps. The min
+                    // is the floor, so when the configured rows already fill the
+                    // height, spacing stays at the floor.
+                    let extraVertical = max(0, usableHeight - cellHeight * CGFloat(pageRows))
+                    let scaledRowSpacing = pageRows > 1
+                        ? max(scaledMinRowSpacing, extraVertical / CGFloat(pageRows - 1))
+                        : scaledMinRowSpacing
+                    let isVertical = preferences.launchpadLayoutAxis == .vertical
+                    let pageSize = pageColumns * pageRows
+                    let pages = isVertical ? [] : paginate(displayedEntries, pageSize: pageSize)
+                    // In vertical mode no page indicator / chevrons render, so
+                    // the bottom of the grid only needs the small ambient
+                    // padding the chrome reserves around all edges.
+                    let resolvedBottomInset = isVertical ? gridChromePadding : bottomInset
 
-            ZStack {
-                wallpaperBackground(in: proxy.size)
+                    ZStack {
+                        wallpaperBackground(in: proxy.size)
 
-                Color.black
-                    .opacity(1 - preferences.launchpadOverlayTransparency)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        overlay.dismiss()
-                    }
+                        Color.black
+                            .opacity(1 - preferences.launchpadOverlayTransparency)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                overlay.dismiss()
+                            }
 
-                if isVertical {
-                    verticalScrollView(
-                        cellWidth: cellWidth,
-                        cellHeight: cellHeight,
-                        iconSide: iconSize,
-                        columns: pageColumns,
-                        columnSpacing: scaledColumnSpacing,
-                        rowSpacing: scaledRowSpacing,
-                        horizontalInset: scaledHorizontalInset,
-                        topInset: topInset,
-                        bottomInset: resolvedBottomInset
-                    )
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    ScrollViewReader { scrollProxy in
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            LazyHStack(spacing: 0) {
-                                ForEach(pages.indices, id: \.self) { pageIndex in
-                                    pageGrid(
-                                        pageEntries: pages[pageIndex],
-                                        cellWidth: cellWidth,
-                                        cellHeight: cellHeight,
-                                        iconSide: iconSize,
-                                        pageWidth: proxy.size.width,
-                                        columns: pageColumns,
-                                        columnSpacing: scaledColumnSpacing,
-                                        rowSpacing: scaledRowSpacing,
-                                        horizontalInset: scaledHorizontalInset
-                                    )
-                                    .id("page-\(pageIndex)")
+                        if isVertical {
+                            verticalScrollView(
+                                cellWidth: cellWidth,
+                                cellHeight: cellHeight,
+                                iconSide: iconSize,
+                                columns: pageColumns,
+                                columnSpacing: scaledColumnSpacing,
+                                rowSpacing: scaledRowSpacing,
+                                horizontalInset: scaledHorizontalInset,
+                                topInset: topInset,
+                                bottomInset: resolvedBottomInset
+                            )
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else {
+                            ScrollViewReader { scrollProxy in
+                                WithPerceptionTracking {
+                                    ScrollView(.horizontal, showsIndicators: false) {
+                                        LazyHStack(spacing: 0) {
+                                            ForEach(pages.indices, id: \.self) { pageIndex in
+                                                WithPerceptionTracking {
+                                                    pageGrid(
+                                                        pageEntries: pages[pageIndex],
+                                                        cellWidth: cellWidth,
+                                                        cellHeight: cellHeight,
+                                                        iconSide: iconSize,
+                                                        pageWidth: proxy.size.width,
+                                                        columns: pageColumns,
+                                                        columnSpacing: scaledColumnSpacing,
+                                                        rowSpacing: scaledRowSpacing,
+                                                        horizontalInset: scaledHorizontalInset
+                                                    )
+                                                    .id("page-\(pageIndex)")
+                                                }
+                                            }
+                                        }
+                                        .dockyScrollTargetLayout()
+                                    }
+                                    .dockyScrollTargetBehavior(.paging)
+                                    .dockyScrollPosition(id: $visiblePageID, anchor: .leading)
+                                    .dockyScrollClipDisabled()
+                                    .padding(.top, topInset)
+                                    .padding(.bottom, resolvedBottomInset)
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .onChange(of: selectedEntryID) { selection in
+                                        guard let selection,
+                                              let pageIndex = pageIndex(for: selection, in: pages) else { return }
+                                        withAnimation(.easeInOut(duration: 0.18)) {
+                                            scrollProxy.scrollTo("page-\(pageIndex)", anchor: .leading)
+                                        }
+                                    }
+                                    .onChange(of: filteredEntries.map(\.id)) { _ in
+                                        synchronizeSelection()
+                                    }
                                 }
                             }
-                            .scrollTargetLayout()
                         }
-                        .scrollTargetBehavior(.paging)
-                        .scrollPosition(id: $visiblePageID, anchor: .leading)
-                        .scrollClipDisabled()
-                        .padding(.top, topInset)
-                        .padding(.bottom, resolvedBottomInset)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .onChange(of: selectedEntryID) { selection in
-                            guard let selection,
-                                  let pageIndex = pageIndex(for: selection, in: pages) else { return }
-                            withAnimation(.easeInOut(duration: 0.18)) {
-                                scrollProxy.scrollTo("page-\(pageIndex)", anchor: .leading)
+
+                        VStack {
+                            // ZStack so the surrounding band acts as a dismiss
+                            // target. The full-width clear layer sits behind the
+                            // capsule, so taps on the capsule (text field, clear,
+                            // gear) still route to their owners and only clicks
+                            // in the empty strip flow through to `overlay.dismiss`.
+                            // The capsule is bottom-anchored so it lands at the
+                            // same y-position the previous `.padding(.top:)` gave it.
+                            ZStack(alignment: .bottom) {
+                                Color.clear
+                                    .contentShape(Rectangle())
+                                    .onTapGesture { overlay.dismiss() }
+                                searchField
+                                    .frame(width: searchBarWidth, height: searchBarHeight)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: searchBarHeight + searchBarTopInset)
+
+                            Spacer()
+
+                            if !isVertical {
+                                pageIndicator(pageCount: pages.count, currentIndex: currentPageIndex(in: pages)) { index in
+                                    scrollToPage(index: index, pageCount: pages.count)
+                                }
+                                .padding(.bottom, pageIndicatorBottomInset)
                             }
                         }
-                        .onChange(of: filteredEntries.map(\.id)) { _ in
+
+                        if !isVertical {
+                            pageNavigationChevrons(pageCount: pages.count, currentIndex: currentPageIndex(in: pages))
+                        }
+
+                        if let renamingFolderID {
+                            folderRenameOverlay(folderID: renamingFolderID)
+                                .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                                .zIndex(2)
+                        }
+
+                        if let folder = expandedFolder {
+                            ExpandedFolderOverlay(
+                                folder: folder,
+                                folderLayoutID: folderLayoutID(for: folder),
+                                sourceCellSize: CGSize(width: cellWidth, height: cellHeight),
+                                sourceIconSide: iconSize,
+                                columnsPerPage: pageColumns,
+                                rowsPerPage: pageRows,
+                                isRenaming: $isRenamingExpandedFolder,
+                                renameDraft: $expandedFolderRenameDraft,
+                                onLaunch: { app in
+                                    launch(app)
+                                },
+                                onDismiss: {
+                                    dismissExpandedFolder()
+                                },
+                                onCommitRename: {
+                                    commitExpandedFolderRename()
+                                }
+                            )
+                            // Scale 1.3 → 1.0 with a fade gives the "falling on top"
+                            // feel the user asked for. Symmetric so dismiss reverses
+                            // it: scale 1.0 → 1.3 with a fade out.
+                            .transition(.scale(scale: 1.3).combined(with: .opacity))
+                            .zIndex(1)
+                        }
+
+                        // Floating copy of the dragged tile, anchored to the
+                        // cursor. The grid below keeps a translucent ghost in
+                        // the dragged item's preview slot, so siblings shift
+                        // around it while this duplicate follows the pointer.
+                        if let dragState,
+                           let entry = filteredEntries.first(where: { layoutItemID(for: $0) == dragState.layoutItemID }) {
+                            floatingDragPreview(for: entry, cellSize: CGSize(width: cellWidth, height: cellHeight), iconSide: iconSize)
+                                .position(dragState.location)
+                                .scaleEffect(1.08)
+                                .shadow(color: .black.opacity(0.35), radius: 22, y: 12)
+                                .opacity(0.95)
+                                .transition(.opacity)
+                                .allowsHitTesting(false)
+                                .zIndex(5)
+                        }
+                    }
+                    .coordinateSpace(name: Self.launchpadGridCoordinateSpace)
+                    .onPreferenceChange(LaunchpadCellFramePreference.self) { frames in
+                        cellFrames = frames
+                    }
+                    .ignoresSafeArea()
+                    .environment(\.colorScheme, preferredColorScheme)
+                    .onExitCommand {
+                        if isRenamingExpandedFolder {
+                            cancelExpandedFolderRename()
+                        } else if renamingFolderID != nil {
+                            dismissRename(save: false)
+                        } else if expandedFolder != nil {
+                            dismissExpandedFolder()
+                        } else {
+                            overlay.dismiss()
+                        }
+                    }
+                    .background {
+                        WithPerceptionTracking {
+                            LaunchpadOverlayKeyMonitor { event in
+                                handleKeyDown(event, columnCount: pageColumns, rowCount: pageRows)
+                            }
+                        }
+                    }
+                    .onAppear {
+                        isSearchFocused = true
+                        synchronizeSelection()
+                    }
+                    .onChange(of: overlay.isPresented) { isPresented in
+                        if isPresented {
+                            searchText = ""
+                            isSearchFocused = true
                             synchronizeSelection()
                         }
                     }
-                }
-
-                VStack {
-                    // ZStack so the surrounding band acts as a dismiss
-                    // target. The full-width clear layer sits behind the
-                    // capsule, so taps on the capsule (text field, clear,
-                    // gear) still route to their owners and only clicks
-                    // in the empty strip flow through to `overlay.dismiss`.
-                    // The capsule is bottom-anchored so it lands at the
-                    // same y-position the previous `.padding(.top:)` gave it.
-                    ZStack(alignment: .bottom) {
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .onTapGesture { overlay.dismiss() }
-                        searchField
-                            .frame(width: searchBarWidth, height: searchBarHeight)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: searchBarHeight + searchBarTopInset)
-
-                    Spacer()
-
-                    if !isVertical {
-                        pageIndicator(pageCount: pages.count, currentIndex: currentPageIndex(in: pages)) { index in
-                            scrollToPage(index: index, pageCount: pages.count)
-                        }
-                        .padding(.bottom, pageIndicatorBottomInset)
-                    }
-                }
-
-                if !isVertical {
-                    pageNavigationChevrons(pageCount: pages.count, currentIndex: currentPageIndex(in: pages))
-                }
-
-                if let renamingFolderID {
-                    folderRenameOverlay(folderID: renamingFolderID)
-                        .transition(.opacity.combined(with: .scale(scale: 0.96)))
-                        .zIndex(2)
-                }
-
-                if let folder = expandedFolder {
-                    ExpandedFolderOverlay(
-                        folder: folder,
-                        folderLayoutID: folderLayoutID(for: folder),
-                        sourceCellSize: CGSize(width: cellWidth, height: cellHeight),
-                        sourceIconSide: iconSize,
-                        columnsPerPage: pageColumns,
-                        rowsPerPage: pageRows,
-                        isRenaming: $isRenamingExpandedFolder,
-                        renameDraft: $expandedFolderRenameDraft,
-                        onLaunch: { app in
-                            launch(app)
-                        },
-                        onDismiss: {
-                            dismissExpandedFolder()
-                        },
-                        onCommitRename: {
-                            commitExpandedFolderRename()
-                        }
-                    )
-                    // Scale 1.3 → 1.0 with a fade gives the "falling on top"
-                    // feel the user asked for. Symmetric so dismiss reverses
-                    // it: scale 1.0 → 1.3 with a fade out.
-                    .transition(.scale(scale: 1.3).combined(with: .opacity))
-                    .zIndex(1)
-                }
-
-                // Floating copy of the dragged tile, anchored to the
-                // cursor. The grid below keeps a translucent ghost in
-                // the dragged item's preview slot, so siblings shift
-                // around it while this duplicate follows the pointer.
-                if let dragState,
-                   let entry = filteredEntries.first(where: { layoutItemID(for: $0) == dragState.layoutItemID }) {
-                    floatingDragPreview(for: entry, cellSize: CGSize(width: cellWidth, height: cellHeight), iconSide: iconSize)
-                        .position(dragState.location)
-                        .scaleEffect(1.08)
-                        .shadow(color: .black.opacity(0.35), radius: 22, y: 12)
-                        .opacity(0.95)
-                        .transition(.opacity)
-                        .allowsHitTesting(false)
-                        .zIndex(5)
-                }
-            }
-            .coordinateSpace(name: Self.launchpadGridCoordinateSpace)
-            .onPreferenceChange(LaunchpadCellFramePreference.self) { frames in
-                cellFrames = frames
-            }
-            .ignoresSafeArea()
-            .environment(\.colorScheme, preferredColorScheme)
-            .onExitCommand {
-                if isRenamingExpandedFolder {
-                    cancelExpandedFolderRename()
-                } else if renamingFolderID != nil {
-                    dismissRename(save: false)
-                } else if expandedFolder != nil {
-                    dismissExpandedFolder()
-                } else {
-                    overlay.dismiss()
-                }
-            }
-            .background {
-                LaunchpadOverlayKeyMonitor { event in
-                    handleKeyDown(event, columnCount: pageColumns, rowCount: pageRows)
-                }
-            }
-            .onAppear {
-                isSearchFocused = true
-                synchronizeSelection()
-            }
-            .onChange(of: overlay.isPresented) { isPresented in
-                if isPresented {
-                    searchText = ""
-                    isSearchFocused = true
-                    synchronizeSelection()
                 }
             }
         }
@@ -605,13 +616,15 @@ private struct LaunchpadOverlayView: View {
 
             LazyVGrid(columns: gridColumns, alignment: .leading, spacing: rowSpacing) {
                 ForEach(pageEntries) { entry in
-                    entryCell(
-                        for: entry,
-                        cellSize: CGSize(width: cellWidth, height: cellHeight),
-                        iconSide: iconSide
-                    )
-                    .frame(width: cellWidth, height: cellHeight)
-                    .id(entry.id)
+                    WithPerceptionTracking {
+                        entryCell(
+                            for: entry,
+                            cellSize: CGSize(width: cellWidth, height: cellHeight),
+                            iconSide: iconSide
+                        )
+                        .frame(width: cellWidth, height: cellHeight)
+                        .id(entry.id)
+                    }
                 }
             }
             .fixedSize(horizontal: true, vertical: false)
@@ -639,7 +652,7 @@ private struct LaunchpadOverlayView: View {
     /// `topInset` / `bottomInset` are applied as `.contentMargins`
     /// rather than outer paddings so the scroll viewport occupies
     /// the full chrome area, content can scroll behind the search
-    /// bar and dock chrome, and `.scrollClipDisabled()` lets cells
+    /// bar and dock chrome, and `.dockyScrollClipDisabled()` lets cells
     /// render past the viewport edges without getting clipped (e.g.
     /// during drag previews).
     @ViewBuilder
@@ -660,44 +673,48 @@ private struct LaunchpadOverlayView: View {
         )
 
         ScrollViewReader { scrollProxy in
-            ScrollView(.vertical, showsIndicators: false) {
-                HStack(alignment: .top, spacing: 0) {
-                    Spacer(minLength: horizontalInset)
+            WithPerceptionTracking {
+                ScrollView(.vertical, showsIndicators: false) {
+                    HStack(alignment: .top, spacing: 0) {
+                        Spacer(minLength: horizontalInset)
 
-                    LazyVGrid(columns: gridColumns, alignment: .leading, spacing: rowSpacing) {
-                        ForEach(displayedEntries) { entry in
-                            entryCell(
-                                for: entry,
-                                cellSize: CGSize(width: cellWidth, height: cellHeight),
-                                iconSide: iconSide
-                            )
-                            .frame(width: cellWidth, height: cellHeight)
-                            .id(entry.id)
+                        LazyVGrid(columns: gridColumns, alignment: .leading, spacing: rowSpacing) {
+                            ForEach(displayedEntries) { entry in
+                                WithPerceptionTracking {
+                                    entryCell(
+                                        for: entry,
+                                        cellSize: CGSize(width: cellWidth, height: cellHeight),
+                                        iconSide: iconSide
+                                    )
+                                    .frame(width: cellWidth, height: cellHeight)
+                                    .id(entry.id)
+                                }
+                            }
                         }
-                    }
-                    .fixedSize(horizontal: true, vertical: false)
+                        .fixedSize(horizontal: true, vertical: false)
 
-                    Spacer(minLength: horizontalInset)
+                        Spacer(minLength: horizontalInset)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .top)
+                    .background(
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture { overlay.dismiss() }
+                    )
                 }
-                .frame(maxWidth: .infinity, alignment: .top)
-                .background(
-                    Color.clear
-                        .contentShape(Rectangle())
-                        .onTapGesture { overlay.dismiss() }
-                )
-            }
-            .scrollPosition(id: $visibleEntryID, anchor: .top)
-            .scrollClipDisabled()
-            .contentMargins(.top, topInset, for: .scrollContent)
-            .contentMargins(.bottom, bottomInset, for: .scrollContent)
-            .onChange(of: selectedEntryID) { selection in
-                guard let selection else { return }
-                withAnimation(.easeInOut(duration: 0.18)) {
-                    scrollProxy.scrollTo(selection, anchor: .center)
+                .dockyScrollPosition(id: $visibleEntryID, anchor: .top)
+                .dockyScrollClipDisabled()
+                .dockyContentMargin(.top, topInset)
+                .dockyContentMargin(.bottom, bottomInset)
+                .onChange(of: selectedEntryID) { selection in
+                    guard let selection else { return }
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        scrollProxy.scrollTo(selection, anchor: .center)
+                    }
                 }
-            }
-            .onChange(of: filteredEntries.map(\.id)) { _ in
-                synchronizeSelection()
+                .onChange(of: filteredEntries.map(\.id)) { _ in
+                    synchronizeSelection()
+                }
             }
         }
     }
@@ -745,13 +762,15 @@ private struct LaunchpadOverlayView: View {
                 ForEach(0..<pageCount, id: \.self) { index in
                     // Visual dot stays 7pt but the click target is 22pt
                     // (via contentShape) so it's reachable with a mouse.
-                    Circle()
-                        .fill(.primary.opacity(index == currentIndex ? 0.85 : 0.3))
-                        .frame(width: 7, height: 7)
-                        .padding(8)
-                        .contentShape(Circle())
-                        .onTapGesture { onSelect(index) }
-                        .animation(.easeInOut(duration: 0.18), value: currentIndex)
+                    WithPerceptionTracking {
+                        Circle()
+                            .fill(.primary.opacity(index == currentIndex ? 0.85 : 0.3))
+                            .frame(width: 7, height: 7)
+                            .padding(8)
+                            .contentShape(Circle())
+                            .onTapGesture { onSelect(index) }
+                            .animation(.easeInOut(duration: 0.18), value: currentIndex)
+                    }
                 }
             }
         }
@@ -785,7 +804,7 @@ private struct LaunchpadOverlayView: View {
     /// binding, so `currentPageIndex` would stay stale and the next
     /// chevron click would re-target the same page. Wrapped in
     /// `withAnimation` so the transition is smooth despite the
-    /// `.scrollTargetBehavior(.paging)` snap.
+    /// `.dockyScrollTargetBehavior(.paging)` snap.
     private func scrollToPage(index: Int, pageCount: Int) {
         let clamped = max(0, min(index, pageCount - 1))
         withAnimation(.easeInOut(duration: 0.22)) {
@@ -861,10 +880,12 @@ private struct LaunchpadOverlayView: View {
         // cell the cursor is over.
         .background(
             GeometryReader { proxy in
-                Color.clear.preference(
-                    key: LaunchpadCellFramePreference.self,
-                    value: [layoutID: proxy.frame(in: .named(Self.launchpadGridCoordinateSpace))]
-                )
+                WithPerceptionTracking {
+                    Color.clear.preference(
+                        key: LaunchpadCellFramePreference.self,
+                        value: [layoutID: proxy.frame(in: .named(Self.launchpadGridCoordinateSpace))]
+                    )
+                }
             }
         )
         // `highPriorityGesture` instead of `simultaneousGesture`: when
@@ -1012,7 +1033,7 @@ private struct LaunchpadOverlayView: View {
         pendingMergeHoverID = hoveredID
         mergeDwellTask?.cancel()
         mergeDwellTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(mergeDwellDuration))
+            try? await dockySleep(for: .seconds(mergeDwellDuration))
             guard !Task.isCancelled,
                   pendingMergeHoverID == hoveredID,
                   var state = dragState,
@@ -1216,8 +1237,10 @@ private struct LaunchpadOverlayView: View {
             .frame(width: 340)
             .background(.thickMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .strokeBorder(.primary.opacity(0.08))
+                WithPerceptionTracking {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .strokeBorder(.primary.opacity(0.08))
+                }
             }
         }
     }
@@ -1407,14 +1430,18 @@ private struct LaunchpadOverlayView: View {
             Menu {
                 Picker("Sort", selection: $preferences.launchpadSortMode) {
                     ForEach(LaunchpadSortMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
+                        WithPerceptionTracking {
+                            Text(mode.title).tag(mode)
+                        }
                     }
                 }
                 .pickerStyle(.inline)
 
                 Picker("Navigation", selection: $preferences.launchpadLayoutAxis) {
                     ForEach(LaunchpadLayoutAxis.allCases) { axis in
-                        Text(axis.title).tag(axis)
+                        WithPerceptionTracking {
+                            Text(axis.title).tag(axis)
+                        }
                     }
                 }
                 .pickerStyle(.inline)
@@ -1578,27 +1605,29 @@ private struct LaunchpadAppCard: View {
     /// can be larger than the icon (extra width becomes horizontal padding
     /// around the icon).
     let iconSide: CGFloat
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
 
     var body: some View {
-        VStack(spacing: cellSpacing) {
-            AsyncAppIcon(
-                bundleIdentifier: app.bundleIdentifier,
-                overrideURL: preferences.effectiveAppIconOverrideURL(forBundleIdentifier: app.bundleIdentifier),
-                side: iconSide,
-                padding: overridePadding
-            )
+        WithPerceptionTracking {
+            VStack(spacing: cellSpacing) {
+                AsyncAppIcon(
+                    bundleIdentifier: app.bundleIdentifier,
+                    overrideURL: preferences.effectiveAppIconOverrideURL(forBundleIdentifier: app.bundleIdentifier),
+                    side: iconSide,
+                    padding: overridePadding
+                )
 
-            Text(app.displayName)
-                .font(.body)
-                .foregroundStyle(.primary.opacity(0.95))
-                .multilineTextAlignment(.center)
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .frame(maxWidth: .infinity)
+                Text(app.displayName)
+                    .font(.body)
+                    .foregroundStyle(.primary.opacity(0.95))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity)
+            }
+            .frame(width: cellSize.width, height: cellSize.height, alignment: .top)
+            .contentShape(Rectangle())
         }
-        .frame(width: cellSize.width, height: cellSize.height, alignment: .top)
-        .contentShape(Rectangle())
     }
 
     private var cellSpacing: CGFloat {
@@ -1628,25 +1657,27 @@ private struct AsyncAppIcon: View {
     @State private var image: NSImage?
 
     var body: some View {
-        Group {
-            if let image {
-                Image(nsImage: image)
-                    .resizable()
-                    .interpolation(.high)
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: side, height: side)
-                    .padding(padding)
-            } else {
-                RoundedRectangle(cornerRadius: side * 0.22, style: .continuous)
-                    .fill(.primary.opacity(0.06))
-                    .frame(width: side, height: side)
-                    .padding(padding)
+        WithPerceptionTracking {
+            Group {
+                if let image {
+                    Image(nsImage: image)
+                        .resizable()
+                        .interpolation(.high)
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: side, height: side)
+                        .padding(padding)
+                } else {
+                    RoundedRectangle(cornerRadius: side * 0.22, style: .continuous)
+                        .fill(.primary.opacity(0.06))
+                        .frame(width: side, height: side)
+                        .padding(padding)
+                }
             }
+            .task(id: cacheKey) {
+                await loadIcon()
+            }
+            .animation(.easeOut(duration: 0.12), value: image)
         }
-        .task(id: cacheKey) {
-            await loadIcon()
-        }
-        .animation(.easeOut(duration: 0.12), value: image)
     }
 
     private var cacheKey: String {
@@ -1680,25 +1711,27 @@ private struct LaunchpadFolderCard: View {
     /// drawn size as app tiles in the launchpad grid, regardless of how
     /// much horizontal padding the square cell adds.
     let tileSide: CGFloat
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
 
     private static let gridDimension = 3
 
     var body: some View {
-        VStack(spacing: cellSpacing) {
-            folderGrid
-                .frame(width: tileSide, height: tileSide)
+        WithPerceptionTracking {
+            VStack(spacing: cellSpacing) {
+                folderGrid
+                    .frame(width: tileSide, height: tileSide)
 
-            Text(folder.displayName)
-                .font(.body)
-                .foregroundStyle(.primary.opacity(0.95))
-                .multilineTextAlignment(.center)
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .frame(maxWidth: .infinity)
+                Text(folder.displayName)
+                    .font(.body)
+                    .foregroundStyle(.primary.opacity(0.95))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity)
+            }
+            .frame(width: cellSize.width, height: cellSize.height, alignment: .top)
+            .contentShape(Rectangle())
         }
-        .frame(width: cellSize.width, height: cellSize.height, alignment: .top)
-        .contentShape(Rectangle())
     }
 
     private var cellSpacing: CGFloat {
@@ -1737,12 +1770,14 @@ private struct LaunchpadFolderCard: View {
             // macOS Launchpad folder preview look.
             LazyVGrid(columns: columns, alignment: .leading, spacing: gap) {
                 ForEach(displayedApps, id: \.bundleIdentifier) { app in
-                    AsyncAppIcon(
-                        bundleIdentifier: app.bundleIdentifier,
-                        overrideURL: preferences.effectiveAppIconOverrideURL(forBundleIdentifier: app.bundleIdentifier),
-                        side: cellSide,
-                        padding: overrideIconPadding(for: app.bundleIdentifier, side: cellSide)
-                    )
+                    WithPerceptionTracking {
+                        AsyncAppIcon(
+                            bundleIdentifier: app.bundleIdentifier,
+                            overrideURL: preferences.effectiveAppIconOverrideURL(forBundleIdentifier: app.bundleIdentifier),
+                            side: cellSide,
+                            padding: overrideIconPadding(for: app.bundleIdentifier, side: cellSide)
+                        )
+                    }
                 }
             }
             .padding(innerPadding)
@@ -1843,60 +1878,64 @@ private struct ExpandedFolderOverlay: View {
     private var pageSize: Int { columnsPerPage * rowsPerPage }
 
     var body: some View {
-        GeometryReader { proxy in
-            // Cells in the expanded folder are exactly the same size as
-            // the launchpad cells behind it, so icons render at the same
-            // resolution. The card grows to fit `columnsPerPage` cells
-            // horizontally; vertically it hugs the rows actually used.
-            let cellSize = sourceCellSize
-            let pages = paginate(displayedApps, pageSize: pageSize)
-            let maxAppsOnAnyPage = pages.map(\.count).max() ?? 0
-            let usedRows = max(1, Int(ceil(Double(maxAppsOnAnyPage) / Double(max(columnsPerPage, 1)))))
-            let needsIndicator = pages.count > 1
-            let gridContentWidth = CGFloat(columnsPerPage) * cellSize.width
-                + CGFloat(max(0, columnsPerPage - 1)) * cardColumnSpacing
-            let gridContentHeight = CGFloat(usedRows) * cellSize.height
-                + CGFloat(max(0, usedRows - 1)) * cardRowSpacing
-            let indicatorReservedHeight: CGFloat = needsIndicator ? indicatorAreaHeight : 0
-            let cardWidth = min(
-                proxy.size.width,
-                gridContentWidth + cardHorizontalInset * 2
-            )
-            let cardHeight = min(
-                proxy.size.height,
-                gridContentHeight + indicatorReservedHeight + cardVerticalInset * 2
-            )
-            let gridHeight = max(0, cardHeight - indicatorReservedHeight - cardVerticalInset * 2)
-            // Same formula as `LaunchpadFolderCard.tileSide` → cornerRadius
-            // is `tileSide * 0.225`, identical to the folder icon's.
-            let folderTileSide = min(min(sourceCellSize.width, sourceCellSize.height) * 0.7, 160)
-            let cornerRadius = folderTileSide * 0.225
-
-            ZStack {
-                // Full-size ultra-thin material backdrop blurs the
-                // launchpad behind the expanded folder so the card has
-                // visual breathing room. Doubles as the tap-to-dismiss
-                // target — buttons inside the card consume their own
-                // taps so launches still go through.
-                Rectangle()
-                    .fill(.ultraThinMaterial)
-                    .contentShape(Rectangle())
-                    .onTapGesture { onDismiss() }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-                VStack(spacing: titleSpacing) {
-                    titleView(width: cardWidth)
-
-                    folderCard(
-                        width: cardWidth,
-                        height: cardHeight,
-                        cornerRadius: cornerRadius,
-                        cellSize: cellSize,
-                        gridHeight: gridHeight,
-                        pages: pages
+        WithPerceptionTracking {
+            GeometryReader { proxy in
+                // Cells in the expanded folder are exactly the same size as
+                // the launchpad cells behind it, so icons render at the same
+                // resolution. The card grows to fit `columnsPerPage` cells
+                // horizontally; vertically it hugs the rows actually used.
+                WithPerceptionTracking {
+                    let cellSize = sourceCellSize
+                    let pages = paginate(displayedApps, pageSize: pageSize)
+                    let maxAppsOnAnyPage = pages.map(\.count).max() ?? 0
+                    let usedRows = max(1, Int(ceil(Double(maxAppsOnAnyPage) / Double(max(columnsPerPage, 1)))))
+                    let needsIndicator = pages.count > 1
+                    let gridContentWidth = CGFloat(columnsPerPage) * cellSize.width
+                        + CGFloat(max(0, columnsPerPage - 1)) * cardColumnSpacing
+                    let gridContentHeight = CGFloat(usedRows) * cellSize.height
+                        + CGFloat(max(0, usedRows - 1)) * cardRowSpacing
+                    let indicatorReservedHeight: CGFloat = needsIndicator ? indicatorAreaHeight : 0
+                    let cardWidth = min(
+                        proxy.size.width,
+                        gridContentWidth + cardHorizontalInset * 2
                     )
+                    let cardHeight = min(
+                        proxy.size.height,
+                        gridContentHeight + indicatorReservedHeight + cardVerticalInset * 2
+                    )
+                    let gridHeight = max(0, cardHeight - indicatorReservedHeight - cardVerticalInset * 2)
+                    // Same formula as `LaunchpadFolderCard.tileSide` → cornerRadius
+                    // is `tileSide * 0.225`, identical to the folder icon's.
+                    let folderTileSide = min(min(sourceCellSize.width, sourceCellSize.height) * 0.7, 160)
+                    let cornerRadius = folderTileSide * 0.225
+
+                    ZStack {
+                        // Full-size ultra-thin material backdrop blurs the
+                        // launchpad behind the expanded folder so the card has
+                        // visual breathing room. Doubles as the tap-to-dismiss
+                        // target — buttons inside the card consume their own
+                        // taps so launches still go through.
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .contentShape(Rectangle())
+                            .onTapGesture { onDismiss() }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                        VStack(spacing: titleSpacing) {
+                            titleView(width: cardWidth)
+
+                            folderCard(
+                                width: cardWidth,
+                                height: cardHeight,
+                                cornerRadius: cornerRadius,
+                                cellSize: cellSize,
+                                gridHeight: gridHeight,
+                                pages: pages
+                            )
+                        }
+                        .frame(width: proxy.size.width, height: proxy.size.height, alignment: .center)
+                    }
                 }
-                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .center)
             }
         }
     }
@@ -1917,7 +1956,7 @@ private struct ExpandedFolderOverlay: View {
                 .onAppear {
                     isRenameFieldFocused = true
                 }
-                .onChange(of: isRenaming) { _, nowRenaming in
+                .onChange(of: isRenaming) { nowRenaming in
                     isRenameFieldFocused = nowRenaming
                 }
         } else {
@@ -1946,15 +1985,17 @@ private struct ExpandedFolderOverlay: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 0) {
                     ForEach(pages.indices, id: \.self) { index in
-                        pageGrid(apps: pages[index], cellSize: cellSize, pageWidth: width)
-                            .id("folder-page-\(index)")
+                        WithPerceptionTracking {
+                            pageGrid(apps: pages[index], cellSize: cellSize, pageWidth: width)
+                                .id("folder-page-\(index)")
+                        }
                     }
                 }
-                .scrollTargetLayout()
+                .dockyScrollTargetLayout()
             }
-            .scrollTargetBehavior(.paging)
-            .scrollPosition(id: $visiblePageID, anchor: .leading)
-            .scrollClipDisabled()
+            .dockyScrollTargetBehavior(.paging)
+            .dockyScrollPosition(id: $visiblePageID, anchor: .leading)
+            .dockyScrollClipDisabled()
             .frame(height: gridHeight)
 
             // Only reserve indicator height when the folder actually
@@ -1970,8 +2011,10 @@ private struct ExpandedFolderOverlay: View {
         .background(Color.primary.opacity(0.2))
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .strokeBorder(.white.opacity(0.1), lineWidth: 1)
+            WithPerceptionTracking {
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .strokeBorder(.white.opacity(0.1), lineWidth: 1)
+            }
         }
         .coordinateSpace(name: Self.gridCoordinateSpace)
         .onPreferenceChange(LaunchpadCellFramePreference.self) { frames in
@@ -1981,12 +2024,14 @@ private struct ExpandedFolderOverlay: View {
         // remaining icons reflow underneath. No placeholder ghost in the
         // origin slot — same as the top-level launchpad reorder.
         .overlay {
-            if let state = reorderDragState,
-               let app = folder.apps.first(where: { $0.bundleIdentifier == state.bundleIdentifier }) {
-                LaunchpadAppCard(app: app, cellSize: cellSize, iconSide: sourceIconSide)
-                    .frame(width: cellSize.width, height: cellSize.height)
-                    .position(state.location)
-                    .allowsHitTesting(false)
+            WithPerceptionTracking {
+                if let state = reorderDragState,
+                   let app = folder.apps.first(where: { $0.bundleIdentifier == state.bundleIdentifier }) {
+                    LaunchpadAppCard(app: app, cellSize: cellSize, iconSide: sourceIconSide)
+                        .frame(width: cellSize.width, height: cellSize.height)
+                        .position(state.location)
+                        .allowsHitTesting(false)
+                }
             }
         }
     }
@@ -2005,43 +2050,47 @@ private struct ExpandedFolderOverlay: View {
 
             LazyVGrid(columns: gridColumns, alignment: .leading, spacing: cardRowSpacing) {
                 ForEach(apps, id: \.bundleIdentifier) { app in
-                    Button {
-                        onLaunch(app)
-                    } label: {
-                        LaunchpadAppCard(app: app, cellSize: cellSize, iconSide: sourceIconSide)
-                            .opacity(reorderDragState?.bundleIdentifier == app.bundleIdentifier ? 0 : 1)
-                    }
-                    .buttonStyle(.plain)
-                    .background(
-                        GeometryReader { proxy in
-                            Color.clear.preference(
-                                key: LaunchpadCellFramePreference.self,
-                                value: [app.bundleIdentifier: proxy.frame(in: .named(Self.gridCoordinateSpace))]
-                            )
+                    WithPerceptionTracking {
+                        Button {
+                            onLaunch(app)
+                        } label: {
+                            LaunchpadAppCard(app: app, cellSize: cellSize, iconSide: sourceIconSide)
+                                .opacity(reorderDragState?.bundleIdentifier == app.bundleIdentifier ? 0 : 1)
                         }
-                    )
-                    .highPriorityGesture(
-                        DragGesture(
-                            minimumDistance: 6,
-                            coordinateSpace: .named(Self.gridCoordinateSpace)
+                        .buttonStyle(.plain)
+                        .background(
+                            GeometryReader { proxy in
+                                WithPerceptionTracking {
+                                    Color.clear.preference(
+                                        key: LaunchpadCellFramePreference.self,
+                                        value: [app.bundleIdentifier: proxy.frame(in: .named(Self.gridCoordinateSpace))]
+                                    )
+                                }
+                            }
                         )
-                        .onChanged { value in
-                            handleFolderReorderChange(bundleIdentifier: app.bundleIdentifier, value: value)
-                        }
-                        .onEnded { value in
-                            handleFolderReorderEnd(bundleIdentifier: app.bundleIdentifier, value: value)
-                        }
-                    )
-                    .contextMenu {
-                        let isPinned = TileStore.shared.isPinned(bundleIdentifier: app.bundleIdentifier)
-                        Button(isPinned ? "Remove from Docky" : "Add to Docky") {
-                            _ = TileStore.shared.setPinnedApp(
-                                bundleIdentifier: app.bundleIdentifier,
-                                pinned: !isPinned
+                        .highPriorityGesture(
+                            DragGesture(
+                                minimumDistance: 6,
+                                coordinateSpace: .named(Self.gridCoordinateSpace)
                             )
-                        }
-                        Button("Remove from Folder", role: .destructive) {
-                            LaunchpadLayoutService.shared.removeFromFolder(bundleID: app.bundleIdentifier)
+                            .onChanged { value in
+                                handleFolderReorderChange(bundleIdentifier: app.bundleIdentifier, value: value)
+                            }
+                            .onEnded { value in
+                                handleFolderReorderEnd(bundleIdentifier: app.bundleIdentifier, value: value)
+                            }
+                        )
+                        .contextMenu {
+                            let isPinned = TileStore.shared.isPinned(bundleIdentifier: app.bundleIdentifier)
+                            Button(isPinned ? "Remove from Docky" : "Add to Docky") {
+                                _ = TileStore.shared.setPinnedApp(
+                                    bundleIdentifier: app.bundleIdentifier,
+                                    pinned: !isPinned
+                                )
+                            }
+                            Button("Remove from Folder", role: .destructive) {
+                                LaunchpadLayoutService.shared.removeFromFolder(bundleID: app.bundleIdentifier)
+                            }
                         }
                     }
                 }
@@ -2157,10 +2206,12 @@ private struct ExpandedFolderOverlay: View {
         if pageCount > 1 {
             HStack(spacing: 8) {
                 ForEach(0..<pageCount, id: \.self) { index in
-                    Circle()
-                        .fill(.primary.opacity(index == currentPageIndex ? 0.85 : 0.3))
-                        .frame(width: 6, height: 6)
-                        .animation(.easeInOut(duration: 0.18), value: currentPageIndex)
+                    WithPerceptionTracking {
+                        Circle()
+                            .fill(.primary.opacity(index == currentPageIndex ? 0.85 : 0.3))
+                            .frame(width: 6, height: 6)
+                            .animation(.easeInOut(duration: 0.18), value: currentPageIndex)
+                    }
                 }
             }
         }

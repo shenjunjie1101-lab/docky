@@ -184,7 +184,7 @@ final class AppleScriptService {
     private func scriptError(from errorInfo: NSDictionary?) -> AppleScriptServiceError? {
         guard let errorInfo else { return nil }
         let number = errorInfo[NSAppleScript.errorNumber] as? Int
-        let message = (errorInfo[NSAppleScript.errorMessage] as? String) ?? "AppleScript execution failed."
+        let message = (errorInfo[NSAppleScript.errorMessage] as? String) ?? "AppleScript 执行失败。"
 
         if number == -1743 {
             return .permissionDenied
@@ -200,19 +200,19 @@ final class AppleScriptService {
         case .permissionDenied:
             PermissionsService.shared.updateFinderAutomation(status: .denied)
             presentAlert(
-                title: "Finder automation wasn’t allowed",
-                body: "Allow Docky to control Finder in Privacy & Security > Automation, or use the Automation (Finder) row in Docky Settings to request access again."
+                title: "未获准自动控制访达",
+                body: "请在“系统偏好设置 → 安全性与隐私 → 隐私 → 自动化”中允许 Docky 控制访达，或在 Docky 设置的“自动化（访达）”一行重新请求权限。"
             )
         case .accessibilityDenied:
-            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "Finder action")
+            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "访达操作")
         case .compilationFailed:
             presentAlert(
-                title: "Finder action failed",
-                body: "Docky couldn't prepare the AppleScript needed for this Finder action."
+                title: "访达操作失败",
+                body: "Docky 无法准备此访达操作所需的 AppleScript。"
             )
         case .executionFailed(let message):
             presentAlert(
-                title: "Finder action failed",
+                title: "访达操作失败",
                 body: message
             )
         }
@@ -241,7 +241,7 @@ final class AppleScriptService {
 
             if permissionRequirements.contains(.finderAutomation) {
                 presentAutomationAlert(
-                    targetApp: targetApp ?? "the target app",
+                    targetApp: targetApp ?? "目标应用",
                     actionTitle: actionTitle,
                     includesSystemEvents: false
                 )
@@ -253,20 +253,20 @@ final class AppleScriptService {
                 )
             } else {
                 presentAlert(
-                    title: "Script action wasn’t allowed",
-                    body: "macOS blocked \(actionTitle.lowercased())."
+                    title: "未获准执行脚本操作",
+                    body: "macOS 阻止了“\(actionTitle.lowercased())”。"
                 )
             }
         case .accessibilityDenied:
             PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: actionTitle)
         case .compilationFailed:
             presentAlert(
-                title: "Script action failed",
-                body: "Docky couldn't prepare the AppleScript needed for \(actionTitle.lowercased())."
+                title: "脚本操作失败",
+                body: "Docky 无法准备“\(actionTitle.lowercased())”所需的 AppleScript。"
             )
         case .executionFailed(let message):
             presentAlert(
-                title: "Script action failed",
+                title: "脚本操作失败",
                 body: message
             )
         }
@@ -341,19 +341,19 @@ final class AppleScriptService {
         case .permissionDenied:
             PermissionsService.shared.updateSystemEventsAutomation(status: .denied)
             presentAlert(
-                title: "System Events automation wasn’t allowed",
-                body: "Allow Docky to control System Events in Privacy & Security > Automation, or use the Automation (System Events) row in Docky Settings to request access again."
+                title: "未获准自动控制 System Events",
+                body: "请在“系统偏好设置 → 安全性与隐私 → 隐私 → 自动化”中允许 Docky 控制 System Events，或在 Docky 设置的“自动化（System Events）”一行重新请求权限。"
             )
         case .accessibilityDenied:
-            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "Request System Events Access")
+            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "请求 System Events 权限")
         case .compilationFailed:
             presentAlert(
-                title: "System Events action failed",
-                body: "Docky couldn't prepare the AppleScript needed to request System Events automation."
+                title: "System Events 操作失败",
+                body: "Docky 无法准备请求 System Events 自动化权限所需的 AppleScript。"
             )
         case .executionFailed(let message):
             presentAlert(
-                title: "System Events action failed",
+                title: "System Events 操作失败",
                 body: message
             )
         }

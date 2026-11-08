@@ -80,7 +80,7 @@ final class TileStore: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.rebuildTiles() }
             .store(in: &cancellables)
-        // `DockyPreferences` is `@Observable`. We observe each
+        // `DockyPreferences` is `@Perceptible`. We observe each
         // property bundle through `observeChanges` so the same change
         // signal fires only when the relevant property mutates.
         // (`.dropFirst()` skipped the Combine initial emission; the
@@ -528,9 +528,15 @@ final class TileStore: ObservableObject {
 
         let folderItem = preferences.pinnedItems[itemIndex]
         expandedInlineAppFolderIDs.remove(folderItem.id)
-        let replacementItems = folderItem.folderBundleIdentifiers.map(PinnedTileItem.app(bundleIdentifier:))
         var pinnedItems = preferences.pinnedItems
         pinnedItems.remove(at: itemIndex)
+        // Restored/imported layouts may already contain a member as a separate
+        // app, or contain a repeated member. Never emit duplicate SwiftUI IDs
+        // while replacing the folder with its member tiles.
+        let existingIDs = Set(pinnedItems.map(\.id))
+        let replacementItems = normalizedGroupedAppBundleIdentifiers(folderItem.folderBundleIdentifiers)
+            .map(PinnedTileItem.app(bundleIdentifier:))
+            .filter { !existingIDs.contains($0.id) }
         pinnedItems.insert(contentsOf: replacementItems, at: itemIndex)
         preferences.pinnedItems = pinnedItems
         refreshPinnedTilesFromPreferences()
@@ -569,11 +575,11 @@ final class TileStore: ObservableObject {
         }
 
         let alert = NSAlert()
-        alert.messageText = "Rename Folder"
-        alert.informativeText = "Choose a name for this app folder."
+        alert.messageText = String(localized: "Rename Folder")
+        alert.informativeText = "为这个应用文件夹输入名称。"
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "Rename")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "重命名")
+        alert.addButton(withTitle: String(localized: "Cancel"))
 
         let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
         textField.stringValue = item.folderDisplayName ?? "Folder"
@@ -2486,7 +2492,7 @@ final class TileStore: ObservableObject {
     private static func makeSmartStackTile(identifier: String, widgets: [WidgetTile]) -> SmartStackTile {
         SmartStackTile(
             identifier: identifier,
-            title: "Smart Stack",
+            title: String(localized: "Smart Stack"),
             widgets: widgets,
             span: .three
         )
@@ -2704,7 +2710,7 @@ final class TileStore: ObservableObject {
             .split(whereSeparator: \.isWhitespace)
             .joined(separator: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        return normalized.isEmpty ? "Folder" : normalized
+        return normalized.isEmpty ? String(localized: "Folder") : normalized
     }
 
     // MARK: - Parsing plist entries
@@ -2727,7 +2733,7 @@ final class TileStore: ObservableObject {
     }
 
     private static func parseAppTile(id: String, data: [String: Any]) -> Tile? {
-        let label = (data["file-label"] as? String) ?? "Unknown"
+        let label = (data["file-label"] as? String) ?? "未知"
         let fileData = data["file-data"] as? [String: Any]
         let urlString = fileData?["_CFURLString"] as? String
         let url = urlString.flatMap { URL(string: $0) }

@@ -6,6 +6,7 @@
 import AppKit
 import QuickLookUI
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct FolderPopoverView: View {
@@ -55,34 +56,38 @@ struct FolderPopoverView: View {
     }
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        bodyContent
-            .task(id: reloadKey) {
-                syncWatchedFolder()
-                await refreshEntries()
-                guard !Task.isCancelled else { return }
-                selectDefaultItemIfNeeded()
-                reportPopoverSize()
-            }
-            .background {
-                FolderPopoverKeyMonitor { event in
-                    handleKeyDown(event)
+            bodyContent
+                .task(id: reloadKey) {
+                    syncWatchedFolder()
+                    await refreshEntries()
+                    guard !Task.isCancelled else { return }
+                    selectDefaultItemIfNeeded()
+                    reportPopoverSize()
                 }
-            }
-            .onAppear {
-                syncWatchedFolder()
-                selectDefaultItemIfNeeded()
-                reportPopoverSize()
-            }
-            .onDisappear {
-                stopWatchingCurrentFolder()
-            }
-            .onChange(of: popoverSize) { _ in
-                reportPopoverSize()
-            }
+                .background {
+                    WithPerceptionTracking {
+                        FolderPopoverKeyMonitor { event in
+                            handleKeyDown(event)
+                        }
+                    }
+                }
+                .onAppear {
+                    syncWatchedFolder()
+                    selectDefaultItemIfNeeded()
+                    reportPopoverSize()
+                }
+                .onDisappear {
+                    stopWatchingCurrentFolder()
+                }
+                .onChange(of: popoverSize) { _ in
+                    reportPopoverSize()
+                }
+        }
     }
 
     @ViewBuilder
@@ -117,7 +122,7 @@ struct FolderPopoverView: View {
     private var openInFinderItem: FolderPopoverAction {
         FolderPopoverAction(
             id: "open-in-finder",
-            title: "Open in Finder",
+            title: String(localized: "Open in Finder"),
             systemImageName: "arrowshape.turn.up.right.circle"
         ) {
             openCurrentFolderInFinder()
@@ -128,12 +133,14 @@ struct FolderPopoverView: View {
         ScrollView(showsIndicators: false) {
             LazyVGrid(columns: gridColumns, spacing: gridItemSpacing) {
                 ForEach(popoverItems) { item in
-                    cardButton(for: item) {
-                        switch item {
-                        case .url(let itemURL):
-                            FolderPopoverItemView(url: itemURL)
-                        case .action(let action):
-                            FolderPopoverActionItemView(action: action)
+                    WithPerceptionTracking {
+                        cardButton(for: item) {
+                            switch item {
+                            case .url(let itemURL):
+                                FolderPopoverItemView(url: itemURL)
+                            case .action(let action):
+                                FolderPopoverActionItemView(action: action)
+                            }
                         }
                     }
                 }
@@ -162,8 +169,10 @@ struct FolderPopoverView: View {
                 selectedItemID = item.id
             }
             .background {
-                ContextActionMenuPresenter { _ in
-                    contextActions(for: itemURL)
+                WithPerceptionTracking {
+                    ContextActionMenuPresenter { _ in
+                        contextActions(for: itemURL)
+                    }
                 }
             }
             // Folder-only drop target: hover-dwell navigates into the folder
@@ -599,22 +608,24 @@ private struct FolderPopoverItemView: View {
     let url: URL
 
     var body: some View {
-        VStack(spacing: 8) {
-            FilePreviewImage(url: url, maxPixelSize: IconCacheService.gridThumbnailPixelExtent)
-                .frame(width: 112, height: 112)
+        WithPerceptionTracking {
+            VStack(spacing: 8) {
+                FilePreviewImage(url: url, maxPixelSize: IconCacheService.gridThumbnailPixelExtent)
+                    .frame(width: 112, height: 112)
 
-            Text(displayName)
-                .font(.callout)
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
+                Text(displayName)
+                    .font(.callout)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, minHeight: 158, alignment: .top)
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, minHeight: 158, alignment: .top)
-        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private var displayName: String {
@@ -626,24 +637,26 @@ private struct FolderPopoverActionItemView: View {
     let action: FolderPopoverAction
 
     var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: action.systemImageName)
-                .font(.system(size: 64, weight: .ultraLight))
-                .foregroundStyle(.primary)
-                .frame(width: 112, height: 112)
+        WithPerceptionTracking {
+            VStack(spacing: 8) {
+                Image(systemName: action.systemImageName)
+                    .font(.system(size: 64, weight: .ultraLight))
+                    .foregroundStyle(.primary)
+                    .frame(width: 112, height: 112)
 
-            Text(action.title)
-                .font(.callout)
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
+                Text(action.title)
+                    .font(.callout)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, minHeight: 158, alignment: .top)
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, minHeight: 158, alignment: .top)
-        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
 

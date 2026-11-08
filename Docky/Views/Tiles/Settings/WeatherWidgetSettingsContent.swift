@@ -6,6 +6,7 @@
 import CoreLocation
 import MapKit
 import SwiftUI
+import Perception
 
 struct WeatherWidgetSettingsContent: View {
     let tileID: String
@@ -22,21 +23,23 @@ struct WeatherWidgetSettingsContent: View {
     @State private var unitSelection: WeatherTemperatureUnitSelection = .automatic
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            currentLocationSection
-            searchSection
-            resultsSection
-            Divider()
-            temperatureUnitSection
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 14) {
+                currentLocationSection
+                searchSection
+                resultsSection
+                Divider()
+                temperatureUnitSection
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .task { loadCurrentSelection() }
+            .onDisappear { searchTask?.cancel() }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .task { loadCurrentSelection() }
-        .onDisappear { searchTask?.cancel() }
     }
 
     private var temperatureUnitSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Temperature")
+            Text("温度")
                 .font(.headline)
 
             Picker("", selection: $unitSelection) {
@@ -46,11 +49,11 @@ struct WeatherWidgetSettingsContent: View {
             }
             .labelsHidden()
             .pickerStyle(.segmented)
-            .onChange(of: unitSelection) { _, newValue in
+            .onChange(of: unitSelection) { newValue in
                 applyTemperatureUnit(newValue)
             }
 
-            Text("Automatic follows your system region.")
+            Text("自动模式跟随系统地区设置。")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -88,7 +91,7 @@ struct WeatherWidgetSettingsContent: View {
     private var searchSection: some View {
         TextField("Search for a city", text: $query)
             .textFieldStyle(.roundedBorder)
-            .onChange(of: query) { _, newValue in
+            .onChange(of: query) { newValue in
                 scheduleSearch(for: newValue)
             }
             .onSubmit {
@@ -106,28 +109,30 @@ struct WeatherWidgetSettingsContent: View {
         } else if !results.isEmpty {
             VStack(spacing: 0) {
                 ForEach(results) { result in
-                    Button { select(result) } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "mappin.circle")
-                                .foregroundStyle(.secondary)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(result.name)
-                                    .foregroundStyle(.primary)
-                                if let subtitle = result.subtitle, !subtitle.isEmpty {
-                                    Text(subtitle)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                    WithPerceptionTracking {
+                        Button { select(result) } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "mappin.circle")
+                                    .foregroundStyle(.secondary)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(result.name)
+                                        .foregroundStyle(.primary)
+                                    if let subtitle = result.subtitle, !subtitle.isEmpty {
+                                        Text(subtitle)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
                                 }
+                                Spacer(minLength: 0)
                             }
-                            Spacer(minLength: 0)
+                            .contentShape(Rectangle())
+                            .padding(.vertical, 5)
                         }
-                        .contentShape(Rectangle())
-                        .padding(.vertical, 5)
-                    }
-                    .buttonStyle(.plain)
+                        .buttonStyle(.plain)
 
-                    if result.id != results.last?.id {
-                        Divider()
+                        if result.id != results.last?.id {
+                            Divider()
+                        }
                     }
                 }
             }
@@ -142,9 +147,9 @@ struct WeatherWidgetSettingsContent: View {
 
     private var currentLocationDisplayName: String {
         if isConfigured {
-            return configuredName ?? "Custom Location"
+            return configuredName ?? "自定义位置"
         }
-        return "Current Location"
+        return "当前位置"
     }
 
     private func loadCurrentSelection() {

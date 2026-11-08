@@ -166,7 +166,7 @@ final class WidgetExpansionWindowController: NSWindowController, ObservableObjec
 
         pendingDismissTask?.cancel()
         pendingDismissTask = Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(120))
+            try? await dockySleep(for: .milliseconds(120))
             guard !Task.isCancelled else { return }
             guard self.currentTileID == sourceTileID, !self.isPreviewHovered else { return }
             self.dismiss(sourceTileID: sourceTileID)

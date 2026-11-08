@@ -21,7 +21,7 @@ final class MenuClickService {
 
         if action.requiresFrontmost {
             WorkspaceService.shared.activateOrOpen(bundleIdentifier: targetApp)
-            try? await Task.sleep(for: .milliseconds(250))
+            try? await dockySleep(for: .milliseconds(250))
         }
 
         let processName = runningApplicationName(for: targetApp)
@@ -73,8 +73,8 @@ final class MenuClickService {
 
     private func presentUnavailableAlert(targetApp: String, actionTitle: String) {
         let alert = NSAlert()
-        alert.messageText = "Menu action unavailable"
-        alert.informativeText = "Docky couldn't find a running process for \(targetApp) to perform \(actionTitle.lowercased())."
+        alert.messageText = "菜单操作不可用"
+        alert.informativeText = "Docky 找不到正在运行的 \(targetApp)，无法执行“\(actionTitle.lowercased())”。"
         alert.alertStyle = .warning
         alert.runModal()
     }

@@ -53,8 +53,8 @@ struct LaunchpadFolder: Codable, Equatable, Identifiable {
 /// Payload carried by Launchpad drag-and-drop operations. Identifies
 /// which item is moving and whether it came from the top-level grid
 /// or out of an open folder.
-struct LaunchpadDragPayload: Codable, Equatable, Transferable {
-    enum Source: Codable, Equatable {
+nonisolated struct LaunchpadDragPayload: Codable, Equatable, Sendable {
+    nonisolated enum Source: Codable, Equatable, Sendable {
         case topLevelApp(bundleID: String)
         case topLevelFolder(folderID: String)
         case folderApp(folderID: String, bundleID: String)
@@ -78,6 +78,10 @@ struct LaunchpadDragPayload: Codable, Equatable, Transferable {
         return nil
     }
 
+}
+
+@available(macOS 13.0, *)
+extension LaunchpadDragPayload: Transferable {
     static var transferRepresentation: some TransferRepresentation {
         CodableRepresentation(contentType: .data)
     }

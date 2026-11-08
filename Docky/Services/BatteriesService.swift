@@ -232,22 +232,22 @@ final class BatteriesService: ObservableObject {
     ) -> String? {
         if isCharging {
             if let timeToFull, timeToFull > 0 {
-                return "Charging • \(durationText(minutes: timeToFull)) until full"
+                return "正在充电 · 距离充满还有 \(durationText(minutes: timeToFull))"
             }
 
-            return "Charging"
+            return "正在充电"
         }
 
         if powerSourceState == kIOPSACPowerValue as String {
-            return "On power"
+            return "正在使用电源适配器"
         }
 
         if let timeToEmpty, timeToEmpty > 0 {
-            return "\(durationText(minutes: timeToEmpty)) remaining"
+            return "剩余 \(durationText(minutes: timeToEmpty))"
         }
 
         if powerSourceState == kIOPSBatteryPowerValue as String {
-            return "On battery"
+            return "正在使用电池"
         }
 
         return nil
@@ -256,33 +256,33 @@ final class BatteriesService: ObservableObject {
     private static func inferredAccessoryName(from properties: [String: Any]) -> String {
         if let notificationType = trimmedNonEmptyString(properties["ConnectionNotificationType"]) {
             if notificationType.hasPrefix("KB") {
-                return "Keyboard"
+                return "键盘"
             }
 
             if notificationType.hasPrefix("TP") {
-                return "Trackpad"
+                return "触控板"
             }
 
             if notificationType.hasPrefix("M") {
-                return "Mouse"
+                return "鼠标"
             }
         }
 
         if let ioClass = trimmedNonEmptyString(properties["IOClass"])?.lowercased() {
             if ioClass.contains("keyboard") {
-                return "Keyboard"
+                return "键盘"
             }
 
             if ioClass.contains("trackpad") {
-                return "Trackpad"
+                return "触控板"
             }
 
             if ioClass.contains("mouse") {
-                return "Mouse"
+                return "鼠标"
             }
         }
 
-        return "Accessory"
+        return "配件"
     }
 
     private static func accessoryKind(for name: String, properties: [String: Any]) -> BatteryDeviceSnapshot.Kind {
@@ -346,14 +346,14 @@ final class BatteriesService: ObservableObject {
         let remainingMinutes = minutes % 60
 
         if hours == 0 {
-            return "\(remainingMinutes)m"
+            return "\(remainingMinutes) 分钟"
         }
 
         if remainingMinutes == 0 {
-            return "\(hours)h"
+            return "\(hours) 小时"
         }
 
-        return "\(hours)h \(remainingMinutes)m"
+        return "\(hours) 小时 \(remainingMinutes) 分钟"
     }
 
     private static func boundedPercentage(_ value: Any?) -> Int? {

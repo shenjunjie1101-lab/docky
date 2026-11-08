@@ -14,17 +14,17 @@
 
 import CoreGraphics
 import Foundation
-import Observation
+import Perception
 
 /// Magnified icon side for one tile. Observed per tile so a size change
 /// re-renders only that tile.
-@Observable
+@Perceptible
 final class TileMagnificationSlot {
     /// Nil while the tile sits at its resting size.
     fileprivate(set) var iconSize: CGFloat?
 }
 
-@Observable
+@Perceptible
 final class TileMagnificationState {
     static let shared = TileMagnificationState()
 
@@ -54,10 +54,10 @@ final class TileMagnificationState {
     /// stays put as its neighbors grow.
     private(set) var anchorOffset: CGFloat = 0
 
-    @ObservationIgnored private var slots: [String: TileMagnificationSlot] = [:]
-    @ObservationIgnored private var context: Context?
-    @ObservationIgnored private var isResolveScheduled = false
-    @ObservationIgnored private let pointer = DockMagnificationService.shared
+    @PerceptionIgnored private var slots: [String: TileMagnificationSlot] = [:]
+    @PerceptionIgnored private var context: Context?
+    @PerceptionIgnored private var isResolveScheduled = false
+    @PerceptionIgnored private let pointer = DockMagnificationService.shared
 
     private init() {
         pointer.onUpdate = { [weak self] in

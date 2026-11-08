@@ -5,33 +5,36 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct FolderTileView: View {
     let tile: FolderTile
     let isOpen: Bool
     @ObservedObject private var permissions = PermissionsService.shared
     @ObservedObject private var folderAccess = FolderAccessService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @State private var preview: [URL] = []
 
     var body: some View {
-        content
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .task(id: reloadKey) {
-                let sorted = await FolderAccessService.shared.refreshedSortedContents(
-                    of: tile.url,
-                    sortMode: tile.sortMode
-                )
-                guard !Task.isCancelled else { return }
-                preview = Array(sorted.prefix(3))
-                preloadFanThumbnails(for: sorted)
-            }
-            .onAppear {
-                folderAccess.beginWatching(tile.url, ownerID: watcherOwnerID)
-            }
-            .onDisappear {
-                folderAccess.endWatching(tile.url, ownerID: watcherOwnerID)
-            }
+        WithPerceptionTracking {
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .task(id: reloadKey) {
+                    let sorted = await FolderAccessService.shared.refreshedSortedContents(
+                        of: tile.url,
+                        sortMode: tile.sortMode
+                    )
+                    guard !Task.isCancelled else { return }
+                    preview = Array(sorted.prefix(3))
+                    preloadFanThumbnails(for: sorted)
+                }
+                .onAppear {
+                    folderAccess.beginWatching(tile.url, ownerID: watcherOwnerID)
+                }
+                .onDisappear {
+                    folderAccess.endWatching(tile.url, ownerID: watcherOwnerID)
+                }
+        }
     }
 
     @ViewBuilder
@@ -42,7 +45,9 @@ struct FolderTileView: View {
             folderIcon
         } else {
             GeometryReader { geo in
-                contentsStack(in: geo.size)
+                WithPerceptionTracking {
+                    contentsStack(in: geo.size)
+                }
             }
         }
     }
@@ -61,11 +66,13 @@ struct FolderTileView: View {
 
     private var folderIcon: some View {
         GeometryReader { proxy in
-            Image(nsImage: resolvedFolderIconImage)
-                .resizable()
-                .interpolation(.high)
-                .aspectRatio(contentMode: .fit)
-                .padding(overrideIconPadding(in: proxy.size))
+            WithPerceptionTracking {
+                Image(nsImage: resolvedFolderIconImage)
+                    .resizable()
+                    .interpolation(.high)
+                    .aspectRatio(contentMode: .fit)
+                    .padding(overrideIconPadding(in: proxy.size))
+            }
         }
     }
 
@@ -100,12 +107,14 @@ struct FolderTileView: View {
 
         return ZStack {
             ForEach(Array(preview.enumerated()).reversed(), id: \.element) { pair in
-                let depth = CGFloat(pair.offset)
+                WithPerceptionTracking {
+                    let depth = CGFloat(pair.offset)
 
-                FilePreviewImage(url: pair.element, maxPixelSize: IconCacheService.tileThumbnailPixelExtent)
-                    .frame(width: side, height: side)
-                    .opacity(1.0 - (depth * 0.12))
-                    .offset(y: (centeredBaseOffset - CGFloat(pair.offset)) * verticalStep)
+                    FilePreviewImage(url: pair.element, maxPixelSize: IconCacheService.tileThumbnailPixelExtent)
+                        .frame(width: side, height: side)
+                        .opacity(1.0 - (depth * 0.12))
+                        .offset(y: (centeredBaseOffset - CGFloat(pair.offset)) * verticalStep)
+                }
             }
         }
         .frame(width: size.width, height: size.height, alignment: .center)
@@ -117,14 +126,16 @@ struct FolderTileView: View {
 
         return ZStack {
             ForEach(Array(offsets.enumerated()), id: \.offset) { index, offset in
-                Image(nsImage: IconCacheService.shared.previewIcon(forFileURL: tile.url))
-                    .resizable()
-                    .interpolation(.high)
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: side, height: side)
-                    .opacity(index == 1 ? 1 : 0.55)
-                    .offset(y: offset)
-                    .scaleEffect(index == 1 ? 1 : 0.92)
+                WithPerceptionTracking {
+                    Image(nsImage: IconCacheService.shared.previewIcon(forFileURL: tile.url))
+                        .resizable()
+                        .interpolation(.high)
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: side, height: side)
+                        .opacity(index == 1 ? 1 : 0.55)
+                        .offset(y: offset)
+                        .scaleEffect(index == 1 ? 1 : 0.92)
+                }
             }
         }
         .frame(width: size.width, height: size.height, alignment: .center)

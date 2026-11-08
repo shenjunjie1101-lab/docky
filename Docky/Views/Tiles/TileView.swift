@@ -11,6 +11,7 @@ import Combine
 import OSLog
 import QuickLookThumbnailing
 import SwiftUI
+import Perception
 
 struct TileView: View {
     private static let logger = Logger(subsystem: "gt.quintero.Docky", category: "TileTap")
@@ -27,7 +28,7 @@ struct TileView: View {
     let renderedTileSize: CGFloat?
     private let dockSettings = DockSettingsService.shared
     @ObservedObject private var layout = DockLayoutService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @ObservedObject private var workspace = WorkspaceService.shared
     // Not an @ObservedObject: media state is read only inside context-menu
     // and tap closures (never during `body`). Observing it here would
@@ -535,11 +536,13 @@ struct TileView: View {
     }
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        tileBody
+            tileBody
+        }
     }
 
     private var tileBody: some View {
@@ -557,20 +560,24 @@ struct TileView: View {
             .background(hoverBackground)
             .background(activeBackground)
             .overlay(alignment: runningIndicatorAlignment) {
-                runningIndicator
-                    .padding(runningIndicatorEdge, runningIndicatorInset)
-                    .offset(x: runningIndicatorOffsetVector.width, y: runningIndicatorOffsetVector.height)
+                WithPerceptionTracking {
+                    runningIndicator
+                        .padding(runningIndicatorEdge, runningIndicatorInset)
+                        .offset(x: runningIndicatorOffsetVector.width, y: runningIndicatorOffsetVector.height)
+                }
             }
             .overlay(alignment: .topTrailing) {
-                if let badgeText {
-                    DockBadgeView(text: badgeText)
-                        .padding(appliedTileIconPadding)
+                WithPerceptionTracking {
+                    if let badgeText {
+                        DockBadgeView(text: badgeText)
+                            .padding(appliedTileIconPadding)
+                    }
                 }
             }
             .contentShape(Rectangle())
             .onHover(perform: updateHoverState)
             .onTapGesture(perform: handleTap)
-            .onGeometryChange(for: CGRect.self) { proxy in
+            .dockyOnGeometryChange(for: CGRect.self) { proxy in
                 proxy.frame(in: .global)
             } action: { newFrame in
                 globalTileFrame = newFrame
@@ -631,98 +638,100 @@ struct TileView: View {
                 }
             }
             .background {
-                ContextActionMenuPresenter(
-                    actionProvider: contextActions(modifierFlags:),
-                    preferredEdge: inwardMenuEdge,
-                    onPresentationChanged: updateContextMenuPresentation
-                )
-
-                if let tooltipTitle {
-                    TileTooltipPopoverPresenter(
-                        title: tooltipTitle,
-                        isPresented: isTooltipPresented,
-                        preferredEdge: inwardPopoverEdge,
-                        repositionKey: effectiveTileSize
+                WithPerceptionTracking {
+                    ContextActionMenuPresenter(
+                        actionProvider: contextActions(modifierFlags:),
+                        preferredEdge: inwardMenuEdge,
+                        onPresentationChanged: updateContextMenuPresentation
                     )
-                    .allowsHitTesting(false)
-                }
 
-                if case .folder(let folder) = tile.content {
-                    if folderContentViewMode == .list {
-                        FolderListMenuPresenter(
-                            tile: FolderTile(
-                                url: folder.url,
-                                displayName: folder.displayName,
-                                displayMode: folderDisplayMode,
-                                contentViewMode: folderContentViewMode,
-                                sortMode: folderSortMode
-                            ),
-                            isPresented: $isFolderListMenuPresented,
-                            preferredEdge: inwardPopoverEdge
+                    if let tooltipTitle {
+                        TileTooltipPopoverPresenter(
+                            title: tooltipTitle,
+                            isPresented: isTooltipPresented,
+                            preferredEdge: inwardPopoverEdge,
+                            repositionKey: effectiveTileSize
                         )
-                    } else if folderContentViewMode == .fan,
-                              position == .bottom,
-                              case .loaded(let snapshotItems) = folderSnapshot,
-                              snapshotItems.count <= FolderFanView.maximumItemCount {
-                        // Fan mode: bottom-anchored parabolic overlay,
-                        // only when the folder fits in a single bow.
-                        // Larger folders silently fall through to the
-                        // grid popover below — `>10 items → grid` is
-                        // intentional per spec.
-                        // Keep the sort order as-is. The fan curve
-                        // already places item 0 at the bottom of the
-                        // arc (closest to the tile) and the last item
-                        // at the top — so the newest entry (sorted
-                        // first) sits near the tile and the oldest
-                        // ends up at the top of the fan naturally.
-                        let fanItems = FolderAccessService.shared.sortedItems(
-                            in: snapshotItems,
-                            sortMode: folderSortMode
-                        )
-                        FolderFanPresenter(
-                            folderURL: folder.url,
-                            items: fanItems,
-                            isPresented: $isFolderPopoverPresented
-                        )
-                    } else {
-                        FolderPopoverPresenter(
-                            tile: FolderTile(
-                                url: folder.url,
-                                displayName: folder.displayName,
-                                displayMode: folderDisplayMode,
-                                contentViewMode: folderContentViewMode,
-                                sortMode: folderSortMode
-                            ),
-                            initialSnapshot: folderSnapshot,
-                            isPresented: $isFolderPopoverPresented,
-                            preferredEdge: inwardPopoverEdge
-                        )
+                        .allowsHitTesting(false)
                     }
-                }
 
-                if case .appFolder(let folder) = tile.content {
-                    let presentedFolder = AppFolderTile(
-                        identifier: folder.identifier,
-                        displayName: folder.displayName,
-                        apps: folder.apps,
-                        displayMode: appFolderDisplayMode,
-                        contentViewMode: appFolderContentViewMode
-                    )
+                    if case .folder(let folder) = tile.content {
+                        if folderContentViewMode == .list {
+                            FolderListMenuPresenter(
+                                tile: FolderTile(
+                                    url: folder.url,
+                                    displayName: folder.displayName,
+                                    displayMode: folderDisplayMode,
+                                    contentViewMode: folderContentViewMode,
+                                    sortMode: folderSortMode
+                                ),
+                                isPresented: $isFolderListMenuPresented,
+                                preferredEdge: inwardPopoverEdge
+                            )
+                        } else if folderContentViewMode == .fan,
+                                  position == .bottom,
+                                  case .loaded(let snapshotItems) = folderSnapshot,
+                                  snapshotItems.count <= FolderFanView.maximumItemCount {
+                            // Fan mode: bottom-anchored parabolic overlay,
+                            // only when the folder fits in a single bow.
+                            // Larger folders silently fall through to the
+                            // grid popover below — `>10 items → grid` is
+                            // intentional per spec.
+                            // Keep the sort order as-is. The fan curve
+                            // already places item 0 at the bottom of the
+                            // arc (closest to the tile) and the last item
+                            // at the top — so the newest entry (sorted
+                            // first) sits near the tile and the oldest
+                            // ends up at the top of the fan naturally.
+                            let fanItems = FolderAccessService.shared.sortedItems(
+                                in: snapshotItems,
+                                sortMode: folderSortMode
+                            )
+                            FolderFanPresenter(
+                                folderURL: folder.url,
+                                items: fanItems,
+                                isPresented: $isFolderPopoverPresented
+                            )
+                        } else {
+                            FolderPopoverPresenter(
+                                tile: FolderTile(
+                                    url: folder.url,
+                                    displayName: folder.displayName,
+                                    displayMode: folderDisplayMode,
+                                    contentViewMode: folderContentViewMode,
+                                    sortMode: folderSortMode
+                                ),
+                                initialSnapshot: folderSnapshot,
+                                isPresented: $isFolderPopoverPresented,
+                                preferredEdge: inwardPopoverEdge
+                            )
+                        }
+                    }
 
-                    if appFolderContentViewMode == .list {
-                        AppFolderListMenuPresenter(
-                            tile: presentedFolder,
-                            tileID: tile.id,
-                            isPresented: $isAppFolderListMenuPresented,
-                            preferredEdge: inwardPopoverEdge
+                    if case .appFolder(let folder) = tile.content {
+                        let presentedFolder = AppFolderTile(
+                            identifier: folder.identifier,
+                            displayName: folder.displayName,
+                            apps: folder.apps,
+                            displayMode: appFolderDisplayMode,
+                            contentViewMode: appFolderContentViewMode
                         )
-                    } else if appFolderContentViewMode == .grid {
-                        AppFolderPopoverPresenter(
-                            tile: presentedFolder,
-                            tileID: tile.id,
-                            isPresented: $isAppFolderPopoverPresented,
-                            preferredEdge: inwardPopoverEdge
-                        )
+
+                        if appFolderContentViewMode == .list {
+                            AppFolderListMenuPresenter(
+                                tile: presentedFolder,
+                                tileID: tile.id,
+                                isPresented: $isAppFolderListMenuPresented,
+                                preferredEdge: inwardPopoverEdge
+                            )
+                        } else if appFolderContentViewMode == .grid {
+                            AppFolderPopoverPresenter(
+                                tile: presentedFolder,
+                                tileID: tile.id,
+                                isPresented: $isAppFolderPopoverPresented,
+                                preferredEdge: inwardPopoverEdge
+                            )
+                        }
                     }
                 }
             }
@@ -733,21 +742,25 @@ struct TileView: View {
         switch tile.content {
         case .app(let app) where app.displayedWidget != nil:
             GeometryReader { proxy in
-                displayedContent
-                    .frame(
-                        width: max(0, proxy.size.width - contentInsets.width * 2),
-                        height: max(0, proxy.size.height - contentInsets.height * 2)
-                    )
-                    .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                WithPerceptionTracking {
+                    displayedContent
+                        .frame(
+                            width: max(0, proxy.size.width - contentInsets.width * 2),
+                            height: max(0, proxy.size.height - contentInsets.height * 2)
+                        )
+                        .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                }
             }
         case .appFolder, .launchpad, .startMenu, .widget, .smartStack:
             GeometryReader { proxy in
-                displayedContent
-                    .frame(
-                        width: max(0, proxy.size.width - contentInsets.width * 2),
-                        height: max(0, proxy.size.height - contentInsets.height * 2)
-                    )
-                    .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                WithPerceptionTracking {
+                    displayedContent
+                        .frame(
+                            width: max(0, proxy.size.width - contentInsets.width * 2),
+                            height: max(0, proxy.size.height - contentInsets.height * 2)
+                        )
+                        .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                }
             }
         case .folder, .trash:
             displayedContent
@@ -757,7 +770,7 @@ struct TileView: View {
             displayedContent
                 .background(appFolderDropTargetBackdrop)
                 .padding(contentPaddingEdges, contentPadding)
-                .animation(.bouncy(duration: 0.4, extraBounce: 0.05), value: showsAppFolderDropBackdrop)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showsAppFolderDropBackdrop)
         }
     }
 
@@ -1185,18 +1198,18 @@ struct TileView: View {
             window.windowTitle
         case .appFolder(let folder):
             folder.displayName
-        case .launchpad(let launchpad):
-            launchpad.title
-        case .startMenu(let menu):
-            menu.title
+        case .launchpad:
+            String(localized: "Launchpad")
+        case .startMenu:
+            String(localized: "Start Menu")
         case .widget(let widget):
-            widget.title
+            widget.kind.title
         case .smartStack(let stack):
-            stack.title
+            stack.title == "Smart Stack" ? String(localized: "Smart Stack") : stack.title
         case .folder(let folder):
             folder.displayName
         case .trash:
-            "Trash"
+            String(localized: "Trash")
         case .spacer, .flexibleSpacer, .divider:
             nil
         }
@@ -1265,7 +1278,7 @@ struct TileView: View {
 
         let delay = max(0, preferences.windowPreviewHoverDelay)
         windowPreviewDelayTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(delay))
+            try? await dockySleep(for: .seconds(delay))
             guard !Task.isCancelled, self.isHovering else { return }
             WindowPreviewWindowController.shared.present(
                 forBundleIdentifiers: bundleIDs,
@@ -1333,7 +1346,7 @@ struct TileView: View {
         }
 
         widgetExpansionTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(max(0, preferences.widgetHoverPreviewDelay)))
+            try? await dockySleep(for: .seconds(max(0, preferences.widgetHoverPreviewDelay)))
             guard !Task.isCancelled else { return }
             guard self.isHovering, !self.isContextMenuPresented, !self.editMode.isActive else { return }
             WidgetExpansionWindowController.shared.present(
@@ -1639,26 +1652,26 @@ struct TileView: View {
             children.append(.divider)
             children.append(contentsOf: [
                 .action(
-                    "Left and Right",
+                    "左右并排",
                     image: contextMenuSymbol("rectangle.lefthalf.filled")
                 ) { _ = workspace.tile(windows: windows, layout: .leftRight) },
                 .action(
-                    "Right and Left",
+                    "右左并排",
                     image: contextMenuSymbol("rectangle.righthalf.filled")
                 ) { _ = workspace.tile(windows: windows, layout: .rightLeft) },
                 .action(
-                    "Top and Bottom",
+                    "上下排列",
                     image: contextMenuSymbol("rectangle.tophalf.filled")
                 ) { _ = workspace.tile(windows: windows, layout: .topBottom) },
                 .action(
-                    "Bottom and Top",
+                    "下上排列",
                     image: contextMenuSymbol("rectangle.bottomhalf.filled")
                 ) { _ = workspace.tile(windows: windows, layout: .bottomTop) },
             ])
             if windows.count >= 3 {
                 children.append(
                     .action(
-                        "Quarters",
+                        "四等分",
                         image: contextMenuSymbol("rectangle.split.2x2")
                     ) { _ = workspace.tile(windows: windows, layout: .quarters) }
                 )
@@ -1782,7 +1795,7 @@ struct TileView: View {
 
         var result = actions
         if let optionsIndex = result.firstIndex(where: {
-            $0.kind == .submenu && $0.title == "Options"
+            $0.kind == .submenu && $0.title == String(localized: "Options")
         }) {
             var children = result[optionsIndex].children
             if !children.isEmpty, children.last?.kind != .divider {
@@ -1837,7 +1850,7 @@ struct TileView: View {
                 workspace.hide(bundleIdentifier: app.bundleIdentifier)
             })
             actions.append(.action(
-                useForceQuit ? "Force Quit" : "Quit",
+                useForceQuit ? "强制退出" : "Quit",
                 isDestructive: useForceQuit
             ) {
                 workspace.quit(bundleIdentifier: app.bundleIdentifier, force: useForceQuit)
@@ -1927,7 +1940,7 @@ struct TileView: View {
         if !candidates.isEmpty {
             actions.append(.divider)
             actions.append(contentsOf: candidates.map { widget in
-                .action(widget.title, isOn: currentKind == widget.kind) {
+                .action(widget.kind.title, isOn: currentKind == widget.kind) {
                     TileStore.shared.setAppWidgetDisplay(
                         bundleIdentifier: app.bundleIdentifier,
                         kind: widget.kind
@@ -2091,7 +2104,7 @@ struct TileView: View {
             ])
 
             if let playbackState = mediaPlayback.state(for: widget.ownerBundleIdentifier), playbackState.supportsFavorite {
-                actions.append(.action(playbackState.isFavorite ? "Unfavorite" : "Favorite") {
+                actions.append(.action(playbackState.isFavorite ? "取消收藏" : "收藏") {
                     Task {
                         await mediaPlayback.setFavorite(!playbackState.isFavorite, for: widget.ownerBundleIdentifier)
                     }
@@ -2108,7 +2121,7 @@ struct TileView: View {
                 actions.append(settingsAction)
             }
             actions.append(.divider)
-            actions.append(widgetRemovalAction(for: widget, nonDockyTitle: "Remove Stack"))
+            actions.append(widgetRemovalAction(for: widget, nonDockyTitle: "移除叠放"))
             return actions
         case .weather:
             var actions: [ContextAction] = [
@@ -2247,7 +2260,7 @@ struct TileView: View {
         }
     }
 
-    private func widgetRemovalAction(for widget: WidgetTile, nonDockyTitle: String = "Remove Widget") -> ContextAction {
+    private func widgetRemovalAction(for widget: WidgetTile, nonDockyTitle: String = "移除小组件") -> ContextAction {
         if isDockyPinnedTile || isDockyTrailingTile {
             return .action(String(localized: "Remove from Dock")) {
                 removeDockyTile()
@@ -2278,11 +2291,11 @@ struct TileView: View {
     private func reminderCompletionDetail(for item: ReminderItemSnapshot, now: Date) -> String {
         switch item.timingCategory(relativeTo: now) {
         case .overdue:
-            return "overdue"
+            return "已逾期"
         case .today:
-            return "today"
+            return "今天"
         case .upcoming:
-            return "upcoming"
+            return "即将到期"
         case .unscheduled:
             return item.listTitle
         }
@@ -2292,7 +2305,7 @@ struct TileView: View {
         var actions: [ContextAction] = []
         let widgetVisibilityActions = TileStore.shared.smartStackWidgetCandidates(tileID: tile.id).map { widget in
             ContextAction.action(
-                widget.title,
+                widget.kind.title,
                 isOn: TileStore.shared.isSmartStackWidgetVisible(
                     tileID: tile.id,
                     ownerBundleIdentifier: widget.ownerBundleIdentifier
@@ -2371,13 +2384,13 @@ struct TileView: View {
     private func spanTitle(for span: TileSpan) -> String {
         switch span {
         case .one:
-            "1 Tile"
+            "1 格"
         case .two:
-            "2 Tiles"
+            "2 格"
         case .three:
-            "3 Tiles"
+            "3 格"
         case .four:
-            "4 Tiles"
+            "4 格"
         }
     }
 
@@ -2387,13 +2400,15 @@ private struct TileTooltipView: View {
     let title: String
 
     var body: some View {
-        Text(title)
-            .font(.callout.weight(.medium))
-            .foregroundStyle(.primary)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .fixedSize()
+        WithPerceptionTracking {
+            Text(title)
+                .font(.callout.weight(.medium))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .fixedSize()
+        }
     }
 }
 
@@ -2622,7 +2637,7 @@ private struct FolderListMenuPresenter: NSViewRepresentable {
             case .loaded(let itemURLs):
                 let sortedItemURLs = FolderAccessService.shared.sortedItems(in: itemURLs, sortMode: tile.sortMode)
                 if sortedItemURLs.isEmpty {
-                    let emptyItem = NSMenuItem(title: "No visible items", action: nil, keyEquivalent: "")
+                    let emptyItem = NSMenuItem(title: String(localized: "No visible items"), action: nil, keyEquivalent: "")
                     emptyItem.isEnabled = false
                     menu.addItem(emptyItem)
                 } else if sortedItemURLs.count > inlineItemLimit {
@@ -2630,7 +2645,7 @@ private struct FolderListMenuPresenter: NSViewRepresentable {
                         menu.addItem(menuItem(for: itemURL))
                     }
                     let overflowCount = sortedItemURLs.count - inlineItemLimit
-                    let showMoreItem = NSMenuItem(title: "Show More (\(overflowCount))", action: nil, keyEquivalent: "")
+                    let showMoreItem = NSMenuItem(title: "显示更多（\(overflowCount)）", action: nil, keyEquivalent: "")
                     let overflowMenu = NSMenu(title: showMoreItem.title)
                     for itemURL in sortedItemURLs.dropFirst(inlineItemLimit) {
                         overflowMenu.addItem(menuItem(for: itemURL))
@@ -2643,7 +2658,7 @@ private struct FolderListMenuPresenter: NSViewRepresentable {
                     }
                 }
             case .unreadable:
-                let unreadableItem = NSMenuItem(title: "Can't read folder contents", action: nil, keyEquivalent: "")
+                let unreadableItem = NSMenuItem(title: String(localized: "Can't read folder contents"), action: nil, keyEquivalent: "")
                 unreadableItem.isEnabled = false
                 menu.addItem(unreadableItem)
             }
@@ -2652,7 +2667,7 @@ private struct FolderListMenuPresenter: NSViewRepresentable {
                 menu.addItem(.separator())
             }
 
-            let openInFinderItem = NSMenuItem(title: "Open in Finder", action: #selector(openInFinder(_:)), keyEquivalent: "")
+            let openInFinderItem = NSMenuItem(title: String(localized: "Open in Finder"), action: #selector(openInFinder(_:)), keyEquivalent: "")
             openInFinderItem.target = self
             openInFinderItem.representedObject = folderURL
             menu.addItem(openInFinderItem)
@@ -3075,7 +3090,7 @@ func fileContextActions(for url: URL) -> [ContextAction] {
         },
         .divider,
         .action(
-            "Move to Trash",
+            "移到废纸篓",
             image: contextMenuSymbol("trash"),
             isDestructive: true
         ) {

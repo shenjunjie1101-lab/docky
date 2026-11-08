@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Perception
 
 struct WidgetSettingsView: View {
     let tileID: String
@@ -11,23 +12,25 @@ struct WidgetSettingsView: View {
     let onDone: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 0) {
+                header
 
-            Divider()
+                Divider()
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    content
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 14) {
+                        content
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(16)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .dockyGlass(.regular, in: .rect(cornerRadius: 14))
+            .dockyGlassBorder(in: .rect(cornerRadius: 14))
+            .clipShape(.rect(cornerRadius: 14))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .dockyGlass(.regular, in: .rect(cornerRadius: 14))
-        .dockyGlassBorder(in: .rect(cornerRadius: 14))
-        .clipShape(.rect(cornerRadius: 14))
     }
 
     private var header: some View {
@@ -78,13 +81,17 @@ struct ExternalWidgetSettingsForm: View {
     let schema: [WidgetSettingsField]
 
     var body: some View {
-        if schema.isEmpty {
-            Text("This widget has no settings.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        } else {
-            ForEach(schema) { field in
-                fieldView(for: field)
+        WithPerceptionTracking {
+            if schema.isEmpty {
+                Text("This widget has no settings.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(schema) { field in
+                    WithPerceptionTracking {
+                        fieldView(for: field)
+                    }
+                }
             }
         }
     }
@@ -149,11 +156,13 @@ struct WidgetSettingsRow<Control: View>: View {
     @ViewBuilder let control: () -> Control
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            control()
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                control()
+            }
         }
     }
 }
@@ -163,9 +172,11 @@ struct WidgetSettingsTextField: View {
     @Binding var text: String
 
     var body: some View {
-        WidgetSettingsRow(title: title) {
-            TextField("", text: $text)
-                .textFieldStyle(.roundedBorder)
+        WithPerceptionTracking {
+            WidgetSettingsRow(title: title) {
+                TextField("", text: $text)
+                    .textFieldStyle(.roundedBorder)
+            }
         }
     }
 }
@@ -177,14 +188,16 @@ struct WidgetSettingsNumberField: View {
     @State private var text: String = ""
 
     var body: some View {
-        WidgetSettingsRow(title: title) {
-            TextField("", text: $text)
-                .textFieldStyle(.roundedBorder)
-                .onAppear { text = value.map { formatted($0) } ?? "" }
-                .onChange(of: text) { newValue in
-                    let trimmed = newValue.trimmingCharacters(in: .whitespaces)
-                    value = trimmed.isEmpty ? nil : Double(trimmed)
-                }
+        WithPerceptionTracking {
+            WidgetSettingsRow(title: title) {
+                TextField("", text: $text)
+                    .textFieldStyle(.roundedBorder)
+                    .onAppear { text = value.map { formatted($0) } ?? "" }
+                    .onChange(of: text) { newValue in
+                        let trimmed = newValue.trimmingCharacters(in: .whitespaces)
+                        value = trimmed.isEmpty ? nil : Double(trimmed)
+                    }
+            }
         }
     }
 
@@ -199,14 +212,18 @@ struct WidgetSettingsPicker: View {
     @Binding var selection: String
 
     var body: some View {
-        WidgetSettingsRow(title: title) {
-            Picker("", selection: $selection) {
-                ForEach(options, id: \.value) { option in
-                    Text(option.label).tag(option.value)
+        WithPerceptionTracking {
+            WidgetSettingsRow(title: title) {
+                Picker("", selection: $selection) {
+                    ForEach(options, id: \.value) { option in
+                        WithPerceptionTracking {
+                            Text(option.label).tag(option.value)
+                        }
+                    }
                 }
+                .labelsHidden()
+                .pickerStyle(.menu)
             }
-            .labelsHidden()
-            .pickerStyle(.menu)
         }
     }
 }

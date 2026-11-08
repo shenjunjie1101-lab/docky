@@ -8,6 +8,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import Perception
 
 final class MainWindowContainerView: NSView {
     private let contentView = ClickThroughHostingView(rootView: MainWindowView())
@@ -16,7 +17,7 @@ final class MainWindowContainerView: NSView {
     private var bottomConstraint: NSLayoutConstraint!
     private var leadingConstraint: NSLayoutConstraint!
     private var trailingConstraint: NSLayoutConstraint!
-    private var pointerDisplayLink: CADisplayLink?
+    private var pointerDisplayLink: Timer?
     private var lastPolledPointerLocation: NSPoint?
     private var lastPointerMoveTime: CFTimeInterval = 0
     private static let pointerRestDuration: CFTimeInterval = 0.5
@@ -36,7 +37,7 @@ final class MainWindowContainerView: NSView {
         // The window frame is set explicitly by `MainWindow`. Without this,
         // a chrome grown by magnification raises the hosting view's minimum
         // size and Auto Layout stretches the window to fit it.
-        contentView.sizingOptions = []
+        if #available(macOS 13.0, *) { contentView.sizingOptions = [] }
         addSubview(contentView)
 
         topConstraint = contentView.topAnchor.constraint(equalTo: topAnchor)
@@ -72,9 +73,9 @@ final class MainWindowContainerView: NSView {
     /// Observation-framework wiring: every read inside the closure is
     /// tracked; the `onChange` callback fires once per change, then we
     /// re-register by recursing. Same pattern AppKit code elsewhere in
-    /// the project uses to bridge from `@Observable` into NSView land.
+    /// the project uses to bridge from `@Perceptible` into NSView land.
     private func observePreferencesForInsets() {
-        withObservationTracking {
+        withPerceptionTracking {
             _ = DockyPreferences.shared.effectiveWindowAxisSizing
             _ = DockyPreferences.shared.effectiveWindowContentInsetTop
             _ = DockyPreferences.shared.effectiveWindowContentInsetLeading
@@ -139,9 +140,9 @@ final class MainWindowContainerView: NSView {
     /// pointer rests, and the next mouse-moved event starts it again.
     private func startPointerPolling() {
         guard pointerDisplayLink == nil, DockSettingsService.shared.magnification else { return }
-        let link = displayLink(target: self, selector: #selector(pollPointer(_:)))
+        let link = Timer(timeInterval: 1.0 / 60.0, target: self, selector: #selector(pollPointer(_:)), userInfo: nil, repeats: true)
         // Not `.common`: the dock must hold still while a context menu tracks.
-        link.add(to: .main, forMode: .default)
+        RunLoop.main.add(link, forMode: .default)
         pointerDisplayLink = link
         lastPolledPointerLocation = nil
     }
@@ -151,7 +152,7 @@ final class MainWindowContainerView: NSView {
         pointerDisplayLink = nil
     }
 
-    @objc private func pollPointer(_ link: CADisplayLink) {
+    @objc private func pollPointer(_ link: Timer) {
         guard let window else {
             stopPointerPolling()
             return
@@ -159,8 +160,8 @@ final class MainWindowContainerView: NSView {
         let mouseLocation = NSEvent.mouseLocation
         if mouseLocation != lastPolledPointerLocation {
             lastPolledPointerLocation = mouseLocation
-            lastPointerMoveTime = link.timestamp
-        } else if link.timestamp - lastPointerMoveTime > Self.pointerRestDuration {
+            lastPointerMoveTime = CACurrentMediaTime()
+        } else if CACurrentMediaTime() - lastPointerMoveTime > Self.pointerRestDuration {
             stopPointerPolling()
             return
         }
@@ -233,7 +234,20 @@ final class MainWindow: NSPanel {
     override var canBecomeKey: Bool { Self.allowsKeyWindow }
     override var canBecomeMain: Bool { false }
 
-    override var level: NSWindow.Level { get { .mainMenu } set {} }
+    static func makeDockWindow() -> MainWindow {
+        // Decode-free construction matters: the old nib archives an NSWindow,
+        // which can reject the nonactivating-panel flag even with our custom
+        // NSPanel subclass. Construct an actual panel and install the same view.
+        let window = MainWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 64),
+            styleMask: [.borderless], backing: .buffered, defer: false)
+        window.hasShadow = false
+        window.isReleasedWhenClosed = false
+        window.contentView = MainWindowContainerView(frame: NSRect(origin: .zero, size: window.frame.size))
+        window.contentView?.wantsLayer = true
+        window.applyCurrentFrame(animated: false)
+        return window
+    }
 
     private enum VisibilityState {
         case visible
@@ -369,7 +383,19 @@ final class MainWindow: NSPanel {
 
     override func awakeFromNib() {
         super.awakeFromNib()
+        configurePersistentPanel()
         applyCurrentFrame(animated: false)
+    }
+
+    private func configurePersistentPanel() {
+        // Set AppKit's stored level so WindowServer actually raises the panel.
+        // Overriding the getter with a no-op setter only reports a high level;
+        // it can leave the native window at its ordinary level.
+        level = .mainMenu
+        // A dock must remain visible and interactive when another app is active.
+        // NSPanel otherwise defaults to hiding when its app deactivates.
+        hidesOnDeactivate = false
+        ignoresMouseEvents = false
     }
 
     private func performSetupIfNeeded() {
@@ -380,6 +406,7 @@ final class MainWindow: NSPanel {
         isOpaque = false
         isMovableByWindowBackground = false
         alphaValue = 0
+        configurePersistentPanel()
         // Magnification tracking lives on the content view's NSTrackingArea
         // (.mouseMoved + .activeAlways). Enabling mouseMoved on the window
         // itself ensures AppKit routes those events through the responder
@@ -435,7 +462,7 @@ final class MainWindow: NSPanel {
     }
 
     private func observeFrameInputs() {
-        // DockyPreferences is now `@Observable` so we read its
+        // DockyPreferences is now `@Perceptible` so we read its
         // properties through `observeChanges` (Observation framework
         // auto-tracks). DockSettingsService / DockDragService /
         // DockEditModeService are still ObservableObject; their

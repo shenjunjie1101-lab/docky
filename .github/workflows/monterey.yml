@@ -1,0 +1,87 @@
+name: Monterey compatibility build
+
+on:
+  push:
+    branches: [compat/macos-12.6, compat/macos-12.6-zh-cn, fix/monterey-window-layer]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monterey-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check Chinese translations and action integrity
+        run: python3 scripts/validate_chinese_localization.py
+      - name: Select Xcode 26
+        shell: bash
+        run: |
+          for xcode_path in /Applications/Xcode_26*.app; do
+            if [[ -d "$xcode_path" ]]; then
+              echo "DEVELOPER_DIR=$xcode_path/Contents/Developer" >> "$GITHUB_ENV"
+            fi
+          done
+      - uses: actions/cache/restore@v4
+        with:
+          path: build
+          key: monterey-xcode263-${{ github.sha }}
+          restore-keys: monterey-xcode263-
+      - name: Prepare classic Mac icon
+        run: bash scripts/prepare_monterey_icon.sh
+      - name: Build for macOS 12.6 on Apple Silicon
+        shell: bash
+        run: |
+          set -o pipefail
+          xcodebuild -version
+          xcodebuild -project Docky.xcodeproj -scheme Docky \
+            -configuration Release -destination 'generic/platform=macOS' \
+            -derivedDataPath build -skipMacroValidation -skipPackagePluginValidation \
+            MACOSX_DEPLOYMENT_TARGET=12.6 \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO \
+            build 2>&1 | tee build.log
+      - name: Verify and package the app
+        run: bash scripts/package_monterey.sh
+      - name: Check switching from browser to already-running apps
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          subprocess.run(['build/Build/Products/Release/Docky.app/Contents/MacOS/Docky',
+                          '--app-activation-smoke-test'], check=True, timeout=120)
+          PY
+      - name: Check native dock layer above other applications
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          subprocess.run(['build/Build/Products/Release/Docky.app/Contents/MacOS/Docky',
+                          '--window-layer-smoke-test'], check=True, timeout=120)
+          PY
+      - name: Verify Chinese resources and render UI previews
+        run: build/Build/Products/Release/Docky.app/Contents/MacOS/Docky --localization-smoke-test
+      - name: Upload Monterey test build
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Docky-Monterey-12.6-arm64-zh-CN
+          path: dist/
+          retention-days: 30
+      - name: Collect build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monterey-build-log
+          path: build.log
+          retention-days: 14
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: build
+          key: monterey-xcode263-${{ github.sha }}

@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct SystemStatusWidgetTileView: View {
     @Environment(\.widgetTextScale) private var textScale
@@ -19,29 +20,33 @@ struct SystemStatusWidgetTileView: View {
     @ObservedObject private var systemStatus = SystemStatusService.shared
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        GeometryReader { proxy in
-            let metrics = visibleMetrics
-            let layout = layout(in: proxy.size, visibleMetricCount: max(1, metrics.count))
+            GeometryReader { proxy in
+                WithPerceptionTracking {
+                    let metrics = visibleMetrics
+                    let layout = layout(in: proxy.size, visibleMetricCount: max(1, metrics.count))
 
-            ZStack {
-                Color(nsColor: backgroundTintColor)
-                    .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    ZStack {
+                        Color(nsColor: backgroundTintColor)
+                            .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                if !isWithinStack {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                        if !isWithinStack {
+                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                        }
+
+                        content(metrics: metrics, layout: layout)
+                    }
                 }
-
-                content(metrics: metrics, layout: layout)
             }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .task {
-            systemStatus.ensureFreshStatus()
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .task {
+                systemStatus.ensureFreshStatus()
+            }
         }
     }
 
@@ -57,7 +62,7 @@ struct SystemStatusWidgetTileView: View {
     /// Rings with their labels when there's room; when larger widget text
     /// no longer fits, the labels go and the rings alone show the levels.
     private func indicatorStrip(metrics: [SystemStatusMetricSnapshot], layout: LayoutMetrics) -> some View {
-        ViewThatFits(in: .vertical) {
+        DockyViewThatFits(in: .vertical) {
             indicatorRow(metrics: metrics, layout: layout, showsLabels: true)
             indicatorRow(metrics: metrics, layout: layout, showsLabels: false)
         }
@@ -67,7 +72,9 @@ struct SystemStatusWidgetTileView: View {
     private func indicatorRow(metrics: [SystemStatusMetricSnapshot], layout: LayoutMetrics, showsLabels: Bool) -> some View {
         HStack(alignment: .center, spacing: layout.contentGap) {
             ForEach(metrics) { metric in
-                metricIndicator(metric: metric, layout: layout, showsLabel: showsLabels)
+                WithPerceptionTracking {
+                    metricIndicator(metric: metric, layout: layout, showsLabel: showsLabels)
+                }
             }
         }
         .padding(layout.contentPadding)
@@ -113,7 +120,7 @@ struct SystemStatusWidgetTileView: View {
     /// Drops the icon (or spinner) when larger widget text no longer
     /// leaves room for it, so the message itself stays readable.
     private func emptyState(layout: LayoutMetrics) -> some View {
-        ViewThatFits(in: .vertical) {
+        DockyViewThatFits(in: .vertical) {
             emptyStateStack(layout: layout, showsIcon: true)
             emptyStateStack(layout: layout, showsIcon: false)
         }

@@ -1,0 +1,39 @@
+name: Package verified Monterey test build
+
+on:
+  push:
+    branches: [compat/macos-12.6-test]
+    paths: [.github/workflows/repackage-monterey.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  package:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify executable sources match the successful build
+        run: git diff --exit-code e203aff83ebad94a66192f111f3342d2d0270d38 -- Docky DockyDockWatchdog Config
+      - uses: actions/download-artifact@v4
+        with:
+          name: Docky-Monterey-12.6-arm64
+          run-id: 42472530784
+          github-token: ${{ github.token }}
+          path: incoming
+      - name: Unpack verified app
+        run: |
+          mkdir -p build/Build/Products/Release
+          ditto -x -k incoming/Docky-0.9.7-Monterey-12.6-arm64.zip build/Build/Products/Release
+      - name: Normalize version, verify and sign package
+        run: bash scripts/package_monterey.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Docky-Monterey-12.6-arm64-verified
+          path: dist/
+          retention-days: 30

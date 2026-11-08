@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 enum NowPlayingWidgetSettings {
     /// `.string` bundle id of the tracked media app; absent = "Automatic" (resolve from the widget's owner bundle id).
@@ -32,22 +33,26 @@ struct NowPlayingWidgetSettingsContent: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Picker("Media App", selection: selectionBinding) {
-                Text("Automatic").tag(Self.automaticTag)
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 6) {
+                Picker("Media App", selection: selectionBinding) {
+                    Text("Automatic").tag(Self.automaticTag)
 
-                Divider()
+                    Divider()
 
-                ForEach(mediaApps) { app in
-                    Text(app.displayName).tag(app.bundleIdentifier)
+                    ForEach(mediaApps) { app in
+                        WithPerceptionTracking {
+                            Text(app.displayName).tag(app.bundleIdentifier)
+                        }
+                    }
                 }
-            }
-            .labelsHidden()
+                .labelsHidden()
 
-            Text("Automatic follows whichever app is currently playing. Choose a specific app to always show its playback.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+                Text("Automatic follows whichever app is currently playing. Choose a specific app to always show its playback.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 

@@ -10,6 +10,7 @@
 //
 
 import SwiftUI
+import Perception
 
 struct WidgetTextSizePreview: View {
     static let baseTileSize: CGFloat = 80
@@ -18,41 +19,43 @@ struct WidgetTextSizePreview: View {
     @State private var span: TileSpan = .three
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(spacing: 14) {
-                Picker("Widget Size", selection: $span) {
-                    Text("1x").tag(TileSpan.one)
-                    Text("2x").tag(TileSpan.two)
-                    Text("3x").tag(TileSpan.three)
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 12) {
+                VStack(spacing: 14) {
+                    Picker("Widget Size", selection: $span) {
+                        Text("1x").tag(TileSpan.one)
+                        Text("2x").tag(TileSpan.two)
+                        Text("3x").tag(TileSpan.three)
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .fixedSize()
+
+                    SmartStackTileView(
+                        tile: previewStack,
+                        cornerRadius: cornerRadius,
+                        renderedSpan: span
+                    )
+                    .id(span)
+                    .frame(
+                        width: max(0, tileWidth - contentPadding * 2),
+                        height: max(0, Self.baseTileSize - contentPadding * 2)
+                    )
+                    .frame(width: tileWidth, height: Self.baseTileSize)
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .fixedSize()
+                .padding(16)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color.primary.opacity(0.05))
+                )
 
-                SmartStackTileView(
-                    tile: previewStack,
-                    cornerRadius: cornerRadius,
-                    renderedSpan: span
-                )
-                .id(span)
-                .frame(
-                    width: max(0, tileWidth - contentPadding * 2),
-                    height: max(0, Self.baseTileSize - contentPadding * 2)
-                )
-                .frame(width: tileWidth, height: Self.baseTileSize)
+                Text("Scroll over the stack to flip through every widget.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            .padding(16)
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.primary.opacity(0.05))
-            )
-
-            Text("Scroll over the stack to flip through every widget.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            .padding(.vertical, 4)
         }
-        .padding(.vertical, 4)
     }
 
     /// A smart stack holding every widget that renders at the chosen
@@ -64,7 +67,7 @@ struct WidgetTextSizePreview: View {
             .map { $0.makeTile(span: span) }
         return SmartStackTile(
             identifier: "settings.widgetTextSizePreview",
-            title: "Smart Stack",
+            title: String(localized: "Smart Stack"),
             widgets: widgets,
             span: span
         )

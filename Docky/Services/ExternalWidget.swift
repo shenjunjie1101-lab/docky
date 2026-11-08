@@ -30,7 +30,7 @@ import SwiftUI
     var includesInSmartStack: Bool { get }
 
     /// Author shown in the Widget Store row. Optional for compatibility
-    /// with older widgets; defaults to "Unknown".
+    /// with older widgets; defaults to "未知".
     @objc optional var author: String { get }
 
     /// Marketing version string shown in the Widget Store row (e.g. "1.2.0").
@@ -99,7 +99,7 @@ final class ExternalWidgetRegistration {
             isExpandable: plugin.isExpandable,
             includesInPalette: plugin.includesInPalette,
             includesInSmartStack: plugin.includesInSmartStack,
-            author: plugin.author ?? "Unknown",
+            author: plugin.author ?? "未知",
             version: plugin.version ?? "1.0",
             settingsSchema: settingsSchema
         )

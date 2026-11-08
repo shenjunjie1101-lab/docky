@@ -6,6 +6,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct AppFolderTileView: View {
@@ -14,7 +15,7 @@ struct AppFolderTileView: View {
     let suppressesGroupedOpenedBackdrop: Bool
     private let dockSettings = DockSettingsService.shared
     @ObservedObject private var layout = DockLayoutService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @ObservedObject private var store = TileStore.shared
     @ObservedObject private var workspace = WorkspaceService.shared
     @ObservedObject private var dockBadges = DockBadgeService.shared
@@ -102,12 +103,14 @@ struct AppFolderTileView: View {
     }
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        content
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
     }
 
     private var showsBackdrop: Bool {
@@ -121,21 +124,23 @@ struct AppFolderTileView: View {
     @ViewBuilder
     private var content: some View {
         GeometryReader { geo in
-            displayContent(in: geo.size)
-                .background(
-                    Color.primary.opacity(showsBackdrop ? 0.2 : 0)
-                        .clipShape(.rect(cornerRadius: cornerRadius, style: .continuous))
-                        .padding(.top, position.isVertical ? 0 : -4)
-                        .padding(.bottom, position.isVertical ? 0 : -3)
-                        .frame(
-                            width: position.isVertical ? groupedOpenedBackdropCrossAxisExtent(in: geo.size) : groupedOpenedBackdropExtent,
-                            height: position.isVertical ? groupedOpenedBackdropExtent : nil
-                        )
-                        .offset(
-                            x: position.isVertical ? 0 : groupedOpenedBackdropHorizontalXOffset,
-                            y: position.isVertical ? groupedOpenedBackdropOffset + groupedOpenedBackdropVerticalYOffset : 0
-                        )
-                )
+            WithPerceptionTracking {
+                displayContent(in: geo.size)
+                    .background(
+                        Color.primary.opacity(showsBackdrop ? 0.2 : 0)
+                            .clipShape(.rect(cornerRadius: cornerRadius, style: .continuous))
+                            .padding(.top, position.isVertical ? 0 : -4)
+                            .padding(.bottom, position.isVertical ? 0 : -3)
+                            .frame(
+                                width: position.isVertical ? groupedOpenedBackdropCrossAxisExtent(in: geo.size) : groupedOpenedBackdropExtent,
+                                height: position.isVertical ? groupedOpenedBackdropExtent : nil
+                            )
+                            .offset(
+                                x: position.isVertical ? 0 : groupedOpenedBackdropHorizontalXOffset,
+                                y: position.isVertical ? groupedOpenedBackdropOffset + groupedOpenedBackdropVerticalYOffset : 0
+                            )
+                    )
+            }
         }
     }
 
@@ -185,8 +190,10 @@ struct AppFolderTileView: View {
                 .background(.ultraThinMaterial)
                 .clipShape(.rect(cornerRadius: cornerRadius, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(.white.opacity(0.1), lineWidth: 1)
+                    WithPerceptionTracking {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .strokeBorder(.white.opacity(0.1), lineWidth: 1)
+                    }
                 }
                 .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
                 .padding(.top, 1)
@@ -194,28 +201,32 @@ struct AppFolderTileView: View {
 
             VStack(spacing: gap) {
                 ForEach(0..<2, id: \.self) { row in
-                    HStack(spacing: gap) {
-                        ForEach(0..<2, id: \.self) { column in
-                            let index = row * 2 + column
-                            Group {
-                                if index < displayedApps.count {
-                                    gridIcon(
-                                        forBundleIdentifier: displayedApps[index].bundleIdentifier,
-                                        side: side
-                                    )
-                                } else {
-                                    if preferences.effectiveTileClipShape == .circle {
-                                        let inset = preferences.effectiveTileClipShape == .circle ? floor(side * 3 / 32) : 0
-                                        Circle()
-                                            .fill(.primary.opacity(0.06))
-                                            .padding(inset)
-                                    } else {
-                                        RoundedRectangle(cornerRadius: min(cornerRadius, 8), style: .continuous)
-                                            .fill(.primary.opacity(0.06))
+                    WithPerceptionTracking {
+                        HStack(spacing: gap) {
+                            ForEach(0..<2, id: \.self) { column in
+                                WithPerceptionTracking {
+                                    let index = row * 2 + column
+                                    Group {
+                                        if index < displayedApps.count {
+                                            gridIcon(
+                                                forBundleIdentifier: displayedApps[index].bundleIdentifier,
+                                                side: side
+                                            )
+                                        } else {
+                                            if preferences.effectiveTileClipShape == .circle {
+                                                let inset = preferences.effectiveTileClipShape == .circle ? floor(side * 3 / 32) : 0
+                                                Circle()
+                                                    .fill(.primary.opacity(0.06))
+                                                    .padding(inset)
+                                            } else {
+                                                RoundedRectangle(cornerRadius: min(cornerRadius, 8), style: .continuous)
+                                                    .fill(.primary.opacity(0.06))
+                                            }
+                                        }
                                     }
+                                    .frame(width: side, height: side)
                                 }
                             }
-                            .frame(width: side, height: side)
                         }
                     }
                 }
@@ -234,13 +245,15 @@ struct AppFolderTileView: View {
 
             ZStack {
                 ForEach(Array(additionalApps.enumerated()), id: \.element.bundleIdentifier) { index, app in
-                    let depth = additionalApps.count - index
-                    appStackTile(for: app, in: size, chromeInset: chromeInset)
-                        .rotationEffect(.degrees(stackRotationDegrees(for: depth)))
-                        .offset(
-                            x: stackOffset(for: depth),
-                            y: stackOffset(for: depth + 1)
-                        )
+                    WithPerceptionTracking {
+                        let depth = additionalApps.count - index
+                        appStackTile(for: app, in: size, chromeInset: chromeInset)
+                            .rotationEffect(.degrees(stackRotationDegrees(for: depth)))
+                            .offset(
+                                x: stackOffset(for: depth),
+                                y: stackOffset(for: depth + 1)
+                            )
+                    }
                 }
 
                 appStackTile(for: topApp, in: size, chromeInset: chromeInset)
@@ -284,7 +297,9 @@ struct AppFolderTileView: View {
         // Painted after the clip so the badge can sit outside a circular
         // icon's edge without being cut off.
         .overlay(alignment: .topTrailing) {
-            previewBadge(forBundleIdentifier: bundleIdentifier)
+            WithPerceptionTracking {
+                previewBadge(forBundleIdentifier: bundleIdentifier)
+            }
         }
     }
 
@@ -359,7 +374,7 @@ struct AppFolderPopoverView: View {
     let tileID: String
     @Binding var isPresented: Bool
     let onPopoverSizeChange: (CGSize) -> Void
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @ObservedObject private var dockBadges = DockBadgeService.shared
     @ObservedObject private var workspace = WorkspaceService.shared
     @State private var isEditingTitle = false
@@ -402,60 +417,64 @@ struct AppFolderPopoverView: View {
     }
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        VStack(spacing: 0) {
-            HStack {
-                titleView
+            VStack(spacing: 0) {
+                HStack {
+                    titleView
 
-                Spacer(minLength: 0)
+                    Spacer(minLength: 0)
 
-                reorderToggle
-            }
-            .padding(.horizontal, Self.contentPadding)
-            .padding(.top, 16)
-            .frame(height: Self.headerHeight)
+                    reorderToggle
+                }
+                .padding(.horizontal, Self.contentPadding)
+                .padding(.top, 16)
+                .frame(height: Self.headerHeight)
 
-            ScrollView(showsIndicators: false) {
-                ZStack(alignment: .topLeading) {
-                    LazyVGrid(columns: gridColumns, spacing: Self.itemSpacing) {
-                        ForEach(displayedApps, id: \.bundleIdentifier) { app in
-                            gridCell(for: app)
+                ScrollView(showsIndicators: false) {
+                    ZStack(alignment: .topLeading) {
+                        LazyVGrid(columns: gridColumns, spacing: Self.itemSpacing) {
+                            ForEach(displayedApps, id: \.bundleIdentifier) { app in
+                                WithPerceptionTracking {
+                                    gridCell(for: app)
+                                }
+                            }
                         }
-                    }
-                    .padding(Self.contentPadding)
-                    .coordinateSpace(name: Self.gridCoordinateSpace)
-                    .onPreferenceChange(AppFolderCellFramePreference.self) { frames in
-                        cellFrames = frames
-                    }
+                        .padding(Self.contentPadding)
+                        .coordinateSpace(name: Self.gridCoordinateSpace)
+                        .onPreferenceChange(AppFolderCellFramePreference.self) { frames in
+                            cellFrames = frames
+                        }
 
-                    // The dragged icon renders as a free-floating overlay
-                    // that follows the cursor. Its grid slot is hidden so
-                    // siblings can reflow into the freed space without a
-                    // ghost placeholder.
-                    if let dragState,
-                       let app = tile.apps.first(where: { $0.bundleIdentifier == dragState.bundleIdentifier }) {
-                        iconImage(for: app)
-                            .position(dragState.location)
-                            .allowsHitTesting(false)
+                        // The dragged icon renders as a free-floating overlay
+                        // that follows the cursor. Its grid slot is hidden so
+                        // siblings can reflow into the freed space without a
+                        // ghost placeholder.
+                        if let dragState,
+                           let app = tile.apps.first(where: { $0.bundleIdentifier == dragState.bundleIdentifier }) {
+                            iconImage(for: app)
+                                .position(dragState.location)
+                                .allowsHitTesting(false)
+                        }
                     }
                 }
             }
-        }
-        .frame(width: popoverSize.width, height: popoverSize.height)
-        .onAppear {
-            onPopoverSizeChange(popoverSize)
-        }
-        .onChange(of: tile.apps.count) { _ in
-            onPopoverSizeChange(popoverSize)
-        }
-        .onChange(of: isPresented) { presented in
-            // Reset reorder mode when the popover closes so re-opening
-            // always starts in the standard launch-on-tap state.
-            if !presented, isReorderMode {
-                isReorderMode = false
+            .frame(width: popoverSize.width, height: popoverSize.height)
+            .onAppear {
+                onPopoverSizeChange(popoverSize)
+            }
+            .onChange(of: tile.apps.count) { _ in
+                onPopoverSizeChange(popoverSize)
+            }
+            .onChange(of: isPresented) { presented in
+                // Reset reorder mode when the popover closes so re-opening
+                // always starts in the standard launch-on-tap state.
+                if !presented, isReorderMode {
+                    isReorderMode = false
+                }
             }
         }
     }
@@ -490,11 +509,15 @@ struct AppFolderPopoverView: View {
         }
         .buttonStyle(.plain)
         .background {
-            GeometryReader { proxy in
-                Color.clear.preference(
-                    key: AppFolderCellFramePreference.self,
-                    value: [app.bundleIdentifier: proxy.frame(in: .named(Self.gridCoordinateSpace))]
-                )
+            WithPerceptionTracking {
+                GeometryReader { proxy in
+                    WithPerceptionTracking {
+                        Color.clear.preference(
+                            key: AppFolderCellFramePreference.self,
+                            value: [app.bundleIdentifier: proxy.frame(in: .named(Self.gridCoordinateSpace))]
+                        )
+                    }
+                }
             }
         }
         .modifier(AppFolderItemDragModifier(
@@ -517,8 +540,10 @@ struct AppFolderPopoverView: View {
             }
         ))
         .background {
-            ContextActionMenuPresenter { modifierFlags in
-                appContextActions(for: app, modifierFlags: modifierFlags)
+            WithPerceptionTracking {
+                ContextActionMenuPresenter { modifierFlags in
+                    appContextActions(for: app, modifierFlags: modifierFlags)
+                }
             }
         }
     }
@@ -532,15 +557,19 @@ struct AppFolderPopoverView: View {
             .frame(width: Self.itemWidth, height: Self.itemHeight)
             .padding(overrideIconPadding(for: app.bundleIdentifier, side: Self.itemWidth))
             .overlay(alignment: .bottom) {
-                runningIndicator(for: app.bundleIdentifier)
+                WithPerceptionTracking {
+                    runningIndicator(for: app.bundleIdentifier)
+                }
             }
             // The opened folder always shows the real per-app count,
             // regardless of the tile's combined/per-app preference — these
             // icons stay large enough that the number is always legible.
             .overlay(alignment: .topTrailing) {
-                if preferences.showsAppBadges,
-                   let badge = dockBadges.badge(forBundleIdentifier: app.bundleIdentifier) {
-                    DockBadgeView(text: badge)
+                WithPerceptionTracking {
+                    if preferences.showsAppBadges,
+                       let badge = dockBadges.badge(forBundleIdentifier: app.bundleIdentifier) {
+                        DockBadgeView(text: badge)
+                    }
                 }
             }
     }
@@ -941,7 +970,7 @@ struct AppFolderListMenuPresenter: NSViewRepresentable {
                 menu.addItem(.separator())
             }
 
-            let openAll = NSMenuItem(title: "Open All", action: #selector(openAllApps), keyEquivalent: "")
+            let openAll = NSMenuItem(title: String(localized: "Open All"), action: #selector(openAllApps), keyEquivalent: "")
             openAll.target = self
             openAll.isEnabled = !tile.apps.isEmpty
             menu.addItem(openAll)
@@ -1008,7 +1037,7 @@ struct AppFolderListMenuPresenter: NSViewRepresentable {
 
         private func popUp(menu: NSMenu, in view: NSView) {
             let selector = NSSelectorFromString("_popUpMenuRelativeToRect:inView:preferredEdge:")
-            if menu.responds(to: selector) {
+            if #available(macOS 26.0, *), menu.responds(to: selector) {
                 typealias Fn = @convention(c) (NSMenu, Selector, NSRect, NSView?, NSRectEdge) -> Void
                 let imp = menu.method(for: selector)
                 let fn = unsafeBitCast(imp, to: Fn.self)
@@ -1271,15 +1300,17 @@ private struct AppFolderItemDragModifier: ViewModifier {
     let openDroppedFiles: ([NSItemProvider], AppTile) -> Void
 
     func body(content: Content) -> some View {
-        if isReorderMode {
-            content
-        } else {
-            content
-                .onDrag { beginDragOutOfFolder(app) }
-                .onDrop(of: [UTType.fileURL.identifier], isTargeted: nil) { providers in
-                    openDroppedFiles(providers, app)
-                    return true
-                }
+        WithPerceptionTracking {
+            if isReorderMode {
+                content
+            } else {
+                content
+                    .onDrag { beginDragOutOfFolder(app) }
+                    .onDrop(of: [UTType.fileURL.identifier], isTargeted: nil) { providers in
+                        openDroppedFiles(providers, app)
+                        return true
+                    }
+            }
         }
     }
 }
@@ -1294,18 +1325,20 @@ private struct AppFolderReorderGestureModifier: ViewModifier {
     let onEnd: (DragGesture.Value) -> Void
 
     func body(content: Content) -> some View {
-        if isReorderMode {
-            content
-                .highPriorityGesture(
-                    DragGesture(
-                        minimumDistance: 6,
-                        coordinateSpace: .named(coordinateSpace)
+        WithPerceptionTracking {
+            if isReorderMode {
+                content
+                    .highPriorityGesture(
+                        DragGesture(
+                            minimumDistance: 6,
+                            coordinateSpace: .named(coordinateSpace)
+                        )
+                        .onChanged { onChange($0) }
+                        .onEnded { onEnd($0) }
                     )
-                    .onChanged { onChange($0) }
-                    .onEnded { onEnd($0) }
-                )
-        } else {
-            content
+            } else {
+                content
+            }
         }
     }
 }

@@ -12,10 +12,10 @@ import AppKit
 import Combine
 import CoreGraphics
 import Foundation
-import Observation
+import Perception
 import QuartzCore
 
-@Observable
+@Perceptible
 final class DockMagnificationService {
     static let shared = DockMagnificationService()
 
@@ -38,23 +38,23 @@ final class DockMagnificationService {
     /// but visually very close.
     private static let rampDuration: CFTimeInterval = 0.15
 
-    @ObservationIgnored private var rampSource: CGFloat = 0
-    @ObservationIgnored private var rampTarget: CGFloat = 0
-    @ObservationIgnored private var rampStart: CFTimeInterval = 0
-    @ObservationIgnored private var rampTimer: Timer?
+    @PerceptionIgnored private var rampSource: CGFloat = 0
+    @PerceptionIgnored private var rampTarget: CGFloat = 0
+    @PerceptionIgnored private var rampStart: CFTimeInterval = 0
+    @PerceptionIgnored private var rampTimer: Timer?
 
     /// Newest pointer position that has not been published yet. Mouse
     /// events can arrive several times per display frame; publishing each
     /// one re-renders the dock for positions that never reach the screen.
-    @ObservationIgnored private var pendingLocation: CGPoint?
-    @ObservationIgnored private var lastPublishTime: CFTimeInterval = 0
-    @ObservationIgnored private var publishTimer: Timer?
-    @ObservationIgnored private var frameInterval = DockMagnificationService.fastestFrameInterval()
-    @ObservationIgnored private var screenObserver: NSObjectProtocol?
+    @PerceptionIgnored private var pendingLocation: CGPoint?
+    @PerceptionIgnored private var lastPublishTime: CFTimeInterval = 0
+    @PerceptionIgnored private var publishTimer: Timer?
+    @PerceptionIgnored private var frameInterval = DockMagnificationService.fastestFrameInterval()
+    @PerceptionIgnored private var screenObserver: NSObjectProtocol?
     /// Called after the pointer location or ramp strength changes, so
     /// `TileMagnificationState` can resolve tile sizes without any view
     /// having to observe the pointer.
-    @ObservationIgnored var onUpdate: (() -> Void)?
+    @PerceptionIgnored var onUpdate: (() -> Void)?
 
     private init() {
         screenObserver = NotificationCenter.default.addObserver(

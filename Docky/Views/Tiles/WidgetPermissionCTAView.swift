@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Perception
 
 /// Call-to-action shown in place of a widget's content while its underlying
 /// permission is missing. Widget-tied permissions (calendar, reminders,
@@ -34,23 +35,27 @@ struct WidgetPermissionCTAView: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            let minSide = max(min(proxy.size.width, proxy.size.height), 1)
-            let iconSize = min(max(minSide * (isExpanded ? 0.16 : 0.24), 16), isExpanded ? 40 : 30)
-            let reasonSize = min(max(minSide * 0.11, 10), 14) * textScale
-            let spacing = min(max(minSide * 0.06, 4), 12)
+        WithPerceptionTracking {
+            GeometryReader { proxy in
+                WithPerceptionTracking {
+                    let minSide = max(min(proxy.size.width, proxy.size.height), 1)
+                    let iconSize = min(max(minSide * (isExpanded ? 0.16 : 0.24), 16), isExpanded ? 40 : 30)
+                    let reasonSize = min(max(minSide * 0.11, 10), 14) * textScale
+                    let spacing = min(max(minSide * 0.06, 4), 12)
 
-            // Larger widget text can outgrow the tile. Step down until it
-            // fits: drop the icon, then shorten the reason, then show only
-            // the button so access can always be granted.
-            ViewThatFits(in: .vertical) {
-                stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: true, reasonLines: 2)
-                stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 2)
-                stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 1)
-                stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 0)
+                    // Larger widget text can outgrow the tile. Step down until it
+                    // fits: drop the icon, then shorten the reason, then show only
+                    // the button so access can always be granted.
+                    DockyViewThatFits(in: .vertical) {
+                        stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: true, reasonLines: 2)
+                        stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 2)
+                        stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 1)
+                        stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 0)
+                    }
+                    .padding(min(max(minSide * 0.1, 8), 20))
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                }
             }
-            .padding(min(max(minSide * 0.1, 8), 20))
-            .frame(width: proxy.size.width, height: proxy.size.height)
         }
     }
 
@@ -110,7 +115,7 @@ struct WidgetPermissionCTAView: View {
     private var buttonTitle: String {
         switch status {
         case .denied:
-            return "Open Settings"
+            return String(localized: "Open Settings")
         case .notDetermined, .granted:
             return enableTitle
         }
@@ -118,18 +123,18 @@ struct WidgetPermissionCTAView: View {
 
     private var enableTitle: String {
         switch permission {
-        case .location: return "Enable Location"
-        case .calendar: return "Enable Calendar"
-        case .reminders: return "Enable Reminders"
-        default: return "Enable Access"
+        case .location: return "启用定位"
+        case .calendar: return "启用日历"
+        case .reminders: return "启用提醒事项"
+        default: return "允许访问"
         }
     }
 
     private var reasonText: String {
         switch permission {
-        case .location: return "Show local weather in the dock."
-        case .calendar: return "Show your upcoming events."
-        case .reminders: return "Show your open tasks."
+        case .location: return "在程序坞中显示本地天气。"
+        case .calendar: return "显示即将开始的日程。"
+        case .reminders: return "显示未完成任务。"
         default: return permission.explanation
         }
     }

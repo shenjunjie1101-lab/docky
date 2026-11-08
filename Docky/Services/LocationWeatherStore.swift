@@ -110,7 +110,7 @@ final class ConfiguredWeatherModel: ObservableObject {
                 return
             } catch {
                 // Keep any previously loaded snapshot visible on a transient failure.
-                self.lastErrorDescription = "Couldn’t load weather."
+                self.lastErrorDescription = "无法载入天气。"
             }
 
             self.isLoading = false

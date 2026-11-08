@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Perception
 
 struct ShortcutRecorderControl: View {
     let shortcut: KeyboardShortcut
@@ -12,35 +13,39 @@ struct ShortcutRecorderControl: View {
     let onChange: (KeyboardShortcut) -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
-            Button(isRecording ? "Type Shortcut" : shortcut.displayString) {
-                isRecording = true
-            }
-            .buttonStyle(.borderedProminent)
+        WithPerceptionTracking {
+            HStack(spacing: 8) {
+                Button(isRecording ? "输入快捷键" : shortcut.displayString) {
+                    isRecording = true
+                }
+                .buttonStyle(.borderedProminent)
 
-            Button(resetShortcut == nil ? "Clear" : "Reset") {
-                onChange(resetShortcut ?? .empty)
-                isRecording = false
-            }
-            .buttonStyle(.bordered)
-            .disabled(isRecording && shortcut == (resetShortcut ?? .empty))
-        }
-        .background {
-            ShortcutRecorderMonitor(
-                isRecording: isRecording,
-                onShortcut: { event in
-                    guard let shortcut = KeyboardShortcut.from(event: event) else {
-                        return false
-                    }
-
-                    onChange(shortcut)
-                    isRecording = false
-                    return true
-                },
-                onCancel: {
+                Button(resetShortcut == nil ? "Clear" : "Reset") {
+                    onChange(resetShortcut ?? .empty)
                     isRecording = false
                 }
-            )
+                .buttonStyle(.bordered)
+                .disabled(isRecording && shortcut == (resetShortcut ?? .empty))
+            }
+            .background {
+                WithPerceptionTracking {
+                    ShortcutRecorderMonitor(
+                        isRecording: isRecording,
+                        onShortcut: { event in
+                            guard let shortcut = KeyboardShortcut.from(event: event) else {
+                                return false
+                            }
+
+                            onChange(shortcut)
+                            isRecording = false
+                            return true
+                        },
+                        onCancel: {
+                            isRecording = false
+                        }
+                    )
+                }
+            }
         }
     }
 }

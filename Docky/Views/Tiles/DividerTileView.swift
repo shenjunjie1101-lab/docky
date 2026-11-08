@@ -5,27 +5,34 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct DividerTileView: View {
     let tileID: String
     private let dockSettings = DockSettingsService.shared
     @ObservedObject private var layout = DockLayoutService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
 
     var body: some View {
-        GeometryReader { proxy in
-            divider(globalFrame: proxy.frame(in: .global))
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .offset(x: dividerOffsetVector.width, y: dividerOffsetVector.height)
-                .background(.black.opacity(0.001))
-                .contentShape(Path(CGRect(origin: .zero, size: proxy.size)))
-                .background {
-                    if !isPinnedCustomDivider {
-                        ContextActionMenuPresenter { _ in
-                            dividerContextActions
+        WithPerceptionTracking {
+            GeometryReader { proxy in
+                WithPerceptionTracking {
+                    divider(globalFrame: proxy.frame(in: .global))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .offset(x: dividerOffsetVector.width, y: dividerOffsetVector.height)
+                        .background(.black.opacity(0.001))
+                        .contentShape(Path(CGRect(origin: .zero, size: proxy.size)))
+                        .background {
+                            WithPerceptionTracking {
+                                if !isPinnedCustomDivider {
+                                    ContextActionMenuPresenter { _ in
+                                        dividerContextActions
+                                    }
+                                }
+                            }
                         }
-                    }
                 }
+            }
         }
     }
 
@@ -40,15 +47,15 @@ struct DividerTileView: View {
 
     private var dividerContextActions: [ContextAction] {
         [
-            .action(preferences.autohidesWindow ? "Turn Hiding Off" : "Turn Hiding On") {
+            .action(preferences.autohidesWindow ? "关闭自动隐藏" : "开启自动隐藏") {
                 preferences.autohidesWindow.toggle()
             },
-            .action(dockSettings.magnification ? "Turn Magnification Off" : "Turn Magnification On") {
+            .action(dockSettings.magnification ? "关闭放大效果" : "开启放大效果") {
                 dockSettings.setMagnification(!dockSettings.magnification)
             },
             .submenu(String(localized: "Position on Screen"), children: positionActions),
             .divider,
-//            .action("Smart Organize Pinned Items") {
+//            .action(String(localized: "Smart Organize Pinned Items")) {
 //                TileStore.shared.smartOrganizePinnedItems()
 //            },
             .divider,
@@ -133,10 +140,12 @@ struct DividerTileView: View {
             // the 90° spin. Without this, fit operates on the pre-rotation
             // box and the rotated image under-fills the slot's cross axis.
             GeometryReader { proxy in
-                image
-                    .frame(width: proxy.size.height, height: proxy.size.width)
-                    .rotationEffect(.degrees(90))
-                    .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                WithPerceptionTracking {
+                    image
+                        .frame(width: proxy.size.height, height: proxy.size.width)
+                        .rotationEffect(.degrees(90))
+                        .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                }
             }
             .padding(.horizontal, lineInset)
         } else {

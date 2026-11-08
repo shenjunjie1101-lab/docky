@@ -325,7 +325,7 @@ final class PinnedDockSmartOrganizerService {
 
         if !remaining.isEmpty {
             result.append(HeuristicGroup(
-                title: "Apps",
+                title: String(localized: "Apps"),
                 bundleIdentifiers: remaining.map(\.bundleIdentifier),
                 insertDividerAfter: false
             ))

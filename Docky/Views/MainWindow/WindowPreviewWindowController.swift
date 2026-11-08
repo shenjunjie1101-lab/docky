@@ -13,6 +13,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import Perception
 
 @MainActor
 final class WindowPreviewWindowController: NSWindowController, ObservableObject {
@@ -23,7 +24,7 @@ final class WindowPreviewWindowController: NSWindowController, ObservableObject 
     fileprivate static let contentPadding: CGFloat = 6
     private static let animationDuration: TimeInterval = 0.18
     private static let slideOffset: CGFloat = 12
-    private static let dismissGrace: Duration = .milliseconds(120)
+    private static let dismissGrace: DockyDelay = .milliseconds(120)
 
     private var currentTileID: String?
     private var currentBundleIdentifier: String?
@@ -193,7 +194,7 @@ final class WindowPreviewWindowController: NSWindowController, ObservableObject 
 
         pendingDismissTask?.cancel()
         pendingDismissTask = Task { @MainActor in
-            try? await Task.sleep(for: Self.dismissGrace)
+            try? await dockySleep(for: Self.dismissGrace)
             guard !Task.isCancelled else { return }
             guard self.currentTileID == sourceTileID, !self.isPreviewHovered else { return }
             self.dismiss(sourceTileID: sourceTileID)
@@ -338,12 +339,14 @@ private struct WindowPreviewWindowContent: View {
     let sourceTileID: String
 
     var body: some View {
-        WindowPreviewView()
-            .contentShape(Rectangle())
-            .padding(.bottom, 8)
-            .onHover { isHovering in
-                WindowPreviewWindowController.shared.setPreviewHovered(isHovering, sourceTileID: sourceTileID)
-            }
+        WithPerceptionTracking {
+            WindowPreviewView()
+                .contentShape(Rectangle())
+                .padding(.bottom, 8)
+                .onHover { isHovering in
+                    WindowPreviewWindowController.shared.setPreviewHovered(isHovering, sourceTileID: sourceTileID)
+                }
+        }
     }
 }
 
@@ -373,50 +376,56 @@ private struct WindowPreviewView: View {
     }
 
     var body: some View {
-        // Empty state intentionally renders nothing — the controller never
-        // presents a preview when windows are empty (`present` returns false),
-        // and `removeWindow` tearing the last window also tells the controller
-        // to dismiss. The branch is kept as a defensive no-op.
-        if preview.windows.isEmpty {
-            EmptyView()
-        } else if preview.resolvedLayout == .thumbnails {
-            thumbnailLayout
-        } else {
-            listLayout
+        WithPerceptionTracking {
+            // Empty state intentionally renders nothing — the controller never
+            // presents a preview when windows are empty (`present` returns false),
+            // and `removeWindow` tearing the last window also tells the controller
+            // to dismiss. The branch is kept as a defensive no-op.
+            if preview.windows.isEmpty {
+                EmptyView()
+            } else if preview.resolvedLayout == .thumbnails {
+                thumbnailLayout
+            } else {
+                listLayout
+            }
         }
     }
 
     private var thumbnailLayout: some View {
         ScrollViewReader { scrollProxy in
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 18) {
-                    ForEach(Array(preview.windows.enumerated()), id: \.element.id) { index, window in
-                        let total = preview.windows.count
-                        let isFirst = index == 0
-                        let isLast = index == total - 1
-                        let leadingRadius = isFirst ? edgeContentCornerRadius : innerContentCornerRadius
-                        let trailingRadius = isLast ? edgeContentCornerRadius : innerContentCornerRadius
-                        WindowPreviewCard(
-                            window: window,
-                            isSelected: window.windowIdentifier == preview.selectedWindowIdentifier,
-                            innerPreviewCornerRadius: innerPreviewCornerRadius,
-                            leadingCornerRadius: leadingRadius,
-                            trailingCornerRadius: trailingRadius
-                        )
-                        .id(window.windowIdentifier)
+            WithPerceptionTracking {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 18) {
+                        ForEach(Array(preview.windows.enumerated()), id: \.element.id) { index, window in
+                            WithPerceptionTracking {
+                                let total = preview.windows.count
+                                let isFirst = index == 0
+                                let isLast = index == total - 1
+                                let leadingRadius = isFirst ? edgeContentCornerRadius : innerContentCornerRadius
+                                let trailingRadius = isLast ? edgeContentCornerRadius : innerContentCornerRadius
+                                WindowPreviewCard(
+                                    window: window,
+                                    isSelected: window.windowIdentifier == preview.selectedWindowIdentifier,
+                                    innerPreviewCornerRadius: innerPreviewCornerRadius,
+                                    leadingCornerRadius: leadingRadius,
+                                    trailingCornerRadius: trailingRadius
+                                )
+                                .id(window.windowIdentifier)
+                            }
+                        }
                     }
+                    .padding(interiorPadding)
                 }
-                .padding(interiorPadding)
-            }
-            .frame(maxWidth: 720)
-            .fixedSize(horizontal: true, vertical: true)
-            .background(.primary.opacity(0.18))
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: containerCornerRadius, style: .continuous))
-            .onChange(of: preview.selectedWindowIdentifier) { selection in
-                guard let selection else { return }
-                withAnimation(.easeInOut(duration: 0.14)) {
-                    scrollProxy.scrollTo(selection, anchor: .center)
+                .frame(maxWidth: 720)
+                .fixedSize(horizontal: true, vertical: true)
+                .background(.primary.opacity(0.18))
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: containerCornerRadius, style: .continuous))
+                .onChange(of: preview.selectedWindowIdentifier) { selection in
+                    guard let selection else { return }
+                    withAnimation(.easeInOut(duration: 0.14)) {
+                        scrollProxy.scrollTo(selection, anchor: .center)
+                    }
                 }
             }
         }
@@ -445,9 +454,9 @@ private struct WindowPreviewCard: View {
     private let previewWidth: CGFloat = 180
     private let previewHeight: CGFloat = 102
 
-    private var cardShape: UnevenRoundedRectangle {
-        UnevenRoundedRectangle(
-            cornerRadii: RectangleCornerRadii(
+    private var cardShape: DockyRoundedRectangle {
+        DockyRoundedRectangle(
+            cornerRadii: DockyCornerRadii(
                 topLeading: leadingCornerRadius,
                 bottomLeading: leadingCornerRadius,
                 bottomTrailing: trailingCornerRadius,
@@ -458,51 +467,59 @@ private struct WindowPreviewCard: View {
     }
 
     var body: some View {
-        VStack(spacing: 12) {
-            previewSurface
+        WithPerceptionTracking {
+            VStack(spacing: 12) {
+                previewSurface
 
-            VStack(spacing: 4) {
-                Text(window.windowTitle)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.primary.opacity(0.96))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .opacity(isSelected ? 1 : 0.25)
+                VStack(spacing: 4) {
+                    Text(window.windowTitle)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.primary.opacity(0.96))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .opacity(isSelected ? 1 : 0.25)
 
-                Text(window.appDisplayName)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.primary.opacity(0.6))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .opacity(isSelected ? 1 : 0.12)
-            }
-            .frame(width: previewWidth)
-        }
-        .padding(12)
-        .background {
-            cardShape
-                .fill(isSelected ? .white.opacity(0.14) : .white.opacity(0))
-                .overlay {
-                    cardShape
-                        .strokeBorder(isSelected ? .white.opacity(0.28) : .white.opacity(0), lineWidth: 1)
+                    Text(window.appDisplayName)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.primary.opacity(0.6))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .opacity(isSelected ? 1 : 0.12)
                 }
-        }
-        .background {
-            ContextActionMenuPresenter(
-                actionProvider: contextActions(modifierFlags:),
-                onPresentationChanged: preview.setContextMenuPresented
-            )
-        }
-        .contentShape(cardShape)
-        .onHover { isHovering in
-            if isHovering {
-                preview.selectWindow(withIdentifier: window.windowIdentifier)
+                .frame(width: previewWidth)
             }
+            .padding(12)
+            .background {
+                WithPerceptionTracking {
+                    cardShape
+                        .fill(isSelected ? .white.opacity(0.14) : .white.opacity(0))
+                        .overlay {
+                            WithPerceptionTracking {
+                                cardShape
+                                    .strokeBorder(isSelected ? .white.opacity(0.28) : .white.opacity(0), lineWidth: 1)
+                            }
+                        }
+                }
+            }
+            .background {
+                WithPerceptionTracking {
+                    ContextActionMenuPresenter(
+                        actionProvider: contextActions(modifierFlags:),
+                        onPresentationChanged: preview.setContextMenuPresented
+                    )
+                }
+            }
+            .contentShape(cardShape)
+            .onHover { isHovering in
+                if isHovering {
+                    preview.selectWindow(withIdentifier: window.windowIdentifier)
+                }
+            }
+            .onTapGesture {
+                WindowPreviewWindowController.shared.confirm(window)
+            }
+            .animation(.easeInOut(duration: 0.14), value: isSelected)
         }
-        .onTapGesture {
-            WindowPreviewWindowController.shared.confirm(window)
-        }
-        .animation(.easeInOut(duration: 0.14), value: isSelected)
     }
 
     private var previewSurface: some View {
@@ -525,25 +542,29 @@ private struct WindowPreviewCard: View {
         .opacity(window.isMinimized ? 0.7 : 1)
         .clipShape(RoundedRectangle(cornerRadius: innerPreviewCornerRadius / 4, style: .continuous))
         .overlay {
-            if window.isMinimized {
-                Image(systemName: "minus.diamond.fill")
-                    .font(.system(size: 32, weight: .semibold))
-                    .symbolRenderingMode(.palette)
-                    .foregroundStyle(.white, .black.opacity(0.55))
-                    .shadow(color: .black.opacity(0.45), radius: 4, y: 1)
+            WithPerceptionTracking {
+                if window.isMinimized {
+                    Image(systemName: "minus.diamond.fill")
+                        .font(.system(size: 32, weight: .semibold))
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(.white, .black.opacity(0.55))
+                        .shadow(color: .black.opacity(0.45), radius: 4, y: 1)
+                }
             }
         }
         .overlay(alignment: .topLeading) {
-            if isPreviewHovered || isMoreMenuPresented {
-                MoreActionsButton(
-                    onPresentationChanged: { presented in
-                        isMoreMenuPresented = presented
-                        preview.setContextMenuPresented(presented)
-                    },
-                    actionProvider: contextActions(modifierFlags:)
-                )
-                .padding(6)
-                .transition(.opacity)
+            WithPerceptionTracking {
+                if isPreviewHovered || isMoreMenuPresented {
+                    MoreActionsButton(
+                        onPresentationChanged: { presented in
+                            isMoreMenuPresented = presented
+                            preview.setContextMenuPresented(presented)
+                        },
+                        actionProvider: contextActions(modifierFlags:)
+                    )
+                    .padding(6)
+                    .transition(.opacity)
+                }
             }
         }
         .onHover { hovering in
@@ -605,37 +626,43 @@ private struct WindowPreviewListView: View {
     }
 
     var body: some View {
-        ScrollViewReader { scrollProxy in
-            ScrollView(.vertical, showsIndicators: false) {
-                LazyVStack(spacing: 2) {
-                    ForEach(Array(preview.windows.enumerated()), id: \.element.id) { index, window in
-                        let total = preview.windows.count
-                        let isFirst = index == 0
-                        let isLast = index == total - 1
-                        let topRadius = isFirst ? edgeRowCornerRadius : innerRowCornerRadius
-                        let bottomRadius = isLast ? edgeRowCornerRadius : innerRowCornerRadius
-                        WindowPreviewListRow(
-                            window: window,
-                            isSelected: window.windowIdentifier == preview.selectedWindowIdentifier,
-                            height: rowHeight,
-                            topCornerRadius: topRadius,
-                            bottomCornerRadius: bottomRadius
-                        )
-                        .id(window.windowIdentifier)
+        WithPerceptionTracking {
+            ScrollViewReader { scrollProxy in
+                WithPerceptionTracking {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(spacing: 2) {
+                            ForEach(Array(preview.windows.enumerated()), id: \.element.id) { index, window in
+                                WithPerceptionTracking {
+                                    let total = preview.windows.count
+                                    let isFirst = index == 0
+                                    let isLast = index == total - 1
+                                    let topRadius = isFirst ? edgeRowCornerRadius : innerRowCornerRadius
+                                    let bottomRadius = isLast ? edgeRowCornerRadius : innerRowCornerRadius
+                                    WindowPreviewListRow(
+                                        window: window,
+                                        isSelected: window.windowIdentifier == preview.selectedWindowIdentifier,
+                                        height: rowHeight,
+                                        topCornerRadius: topRadius,
+                                        bottomCornerRadius: bottomRadius
+                                    )
+                                    .id(window.windowIdentifier)
+                                }
+                            }
+                        }
+                        .padding(interiorPadding)
                     }
-                }
-                .padding(interiorPadding)
-            }
-            .frame(width: listWidth)
-            .frame(maxHeight: CGFloat(maxVisibleRows) * rowHeight + 16)
-            .fixedSize(horizontal: true, vertical: true)
-            .background(.primary.opacity(0.18))
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .onChange(of: preview.selectedWindowIdentifier) { selection in
-                guard let selection else { return }
-                withAnimation(.easeInOut(duration: 0.14)) {
-                    scrollProxy.scrollTo(selection, anchor: .center)
+                    .frame(width: listWidth)
+                    .frame(maxHeight: CGFloat(maxVisibleRows) * rowHeight + 16)
+                    .fixedSize(horizontal: true, vertical: true)
+                    .background(.primary.opacity(0.18))
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    .onChange(of: preview.selectedWindowIdentifier) { selection in
+                        guard let selection else { return }
+                        withAnimation(.easeInOut(duration: 0.14)) {
+                            scrollProxy.scrollTo(selection, anchor: .center)
+                        }
+                    }
                 }
             }
         }
@@ -654,9 +681,9 @@ private struct WindowPreviewListRow: View {
 
     private let iconSize: CGFloat = 28
 
-    private var rowShape: UnevenRoundedRectangle {
-        UnevenRoundedRectangle(
-            cornerRadii: RectangleCornerRadii(
+    private var rowShape: DockyRoundedRectangle {
+        DockyRoundedRectangle(
+            cornerRadii: DockyCornerRadii(
                 topLeading: topCornerRadius,
                 bottomLeading: bottomCornerRadius,
                 bottomTrailing: bottomCornerRadius,
@@ -667,58 +694,66 @@ private struct WindowPreviewListRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(nsImage: IconCacheService.shared.displayedIcon(forBundleIdentifier: window.bundleIdentifier))
-                .resizable()
-                .interpolation(.high)
-                .frame(width: iconSize, height: iconSize)
+        WithPerceptionTracking {
+            HStack(spacing: 12) {
+                Image(nsImage: IconCacheService.shared.displayedIcon(forBundleIdentifier: window.bundleIdentifier))
+                    .resizable()
+                    .interpolation(.high)
+                    .frame(width: iconSize, height: iconSize)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(window.windowTitle)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.primary.opacity(isSelected ? 1 : 0.85))
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(window.windowTitle)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.primary.opacity(isSelected ? 1 : 0.85))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
 
-                Text(window.appDisplayName)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.primary.opacity(isSelected ? 0.75 : 0.5))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            if window.isMinimized {
-                Image(systemName: "minus.diamond.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.primary.opacity(0.55))
-            }
-        }
-        .padding(.horizontal, 12)
-        .frame(height: height)
-        .background {
-            rowShape
-                .fill(isSelected ? .white.opacity(0.16) : .clear)
-                .overlay {
-                    rowShape.strokeBorder(isSelected ? .white.opacity(0.28) : .clear, lineWidth: 1)
+                    Text(window.appDisplayName)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.primary.opacity(isSelected ? 0.75 : 0.5))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                 }
-        }
-        .background {
-            ContextActionMenuPresenter(
-                actionProvider: contextActions(modifierFlags:),
-                onPresentationChanged: preview.setContextMenuPresented
-            )
-        }
-        .contentShape(rowShape)
-        .onHover { isHovering in
-            if isHovering {
-                preview.selectWindow(withIdentifier: window.windowIdentifier)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                if window.isMinimized {
+                    Image(systemName: "minus.diamond.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.primary.opacity(0.55))
+                }
             }
+            .padding(.horizontal, 12)
+            .frame(height: height)
+            .background {
+                WithPerceptionTracking {
+                    rowShape
+                        .fill(isSelected ? .white.opacity(0.16) : .clear)
+                        .overlay {
+                            WithPerceptionTracking {
+                                rowShape.strokeBorder(isSelected ? .white.opacity(0.28) : .clear, lineWidth: 1)
+                            }
+                        }
+                }
+            }
+            .background {
+                WithPerceptionTracking {
+                    ContextActionMenuPresenter(
+                        actionProvider: contextActions(modifierFlags:),
+                        onPresentationChanged: preview.setContextMenuPresented
+                    )
+                }
+            }
+            .contentShape(rowShape)
+            .onHover { isHovering in
+                if isHovering {
+                    preview.selectWindow(withIdentifier: window.windowIdentifier)
+                }
+            }
+            .onTapGesture {
+                WindowPreviewWindowController.shared.confirm(window)
+            }
+            .animation(.easeInOut(duration: 0.12), value: isSelected)
         }
-        .onTapGesture {
-            WindowPreviewWindowController.shared.confirm(window)
-        }
-        .animation(.easeInOut(duration: 0.12), value: isSelected)
     }
 
     private func contextActions(modifierFlags: NSEvent.ModifierFlags) -> [ContextAction] {

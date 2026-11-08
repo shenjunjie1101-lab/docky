@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct BatteriesWidgetTileView: View {
     @Environment(\.widgetTextScale) private var textScale
@@ -19,30 +20,34 @@ struct BatteriesWidgetTileView: View {
     @ObservedObject private var batteries = BatteriesService.shared
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        TimelineView(.periodic(from: .now, by: 60)) { _ in
-            GeometryReader { proxy in
-                let layout = layout(in: proxy.size, visibleDeviceCount: currentVisibleDeviceCount)
+            TimelineView(.periodic(from: .now, by: 60)) { _ in
+                GeometryReader { proxy in
+                    WithPerceptionTracking {
+                        let layout = layout(in: proxy.size, visibleDeviceCount: currentVisibleDeviceCount)
 
-                ZStack {
-                    Color(nsColor: backgroundTintColor)
-                        .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                        ZStack {
+                            Color(nsColor: backgroundTintColor)
+                                .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                    if !isWithinStack {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                            if !isWithinStack {
+                                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                    .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                            }
+
+                            content(layout: layout)
+                        }
                     }
-
-                    content(layout: layout)
                 }
             }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .task {
-            batteries.ensureFreshBatteries()
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .task {
+                batteries.ensureFreshBatteries()
+            }
         }
     }
 
@@ -58,7 +63,7 @@ struct BatteriesWidgetTileView: View {
     /// Rings with their labels when there's room; when larger widget text
     /// no longer fits, the labels go and the rings alone show the levels.
     private func indicatorStrip(devices: [BatteryDeviceSnapshot], layout: LayoutMetrics) -> some View {
-        ViewThatFits(in: .vertical) {
+        DockyViewThatFits(in: .vertical) {
             indicatorRow(devices: devices, layout: layout, showsLabels: true)
             indicatorRow(devices: devices, layout: layout, showsLabels: false)
         }
@@ -68,8 +73,10 @@ struct BatteriesWidgetTileView: View {
     private func indicatorRow(devices: [BatteryDeviceSnapshot], layout: LayoutMetrics, showsLabels: Bool) -> some View {
         HStack(alignment: .center, spacing: layout.contentGap) {
             ForEach(devices) { device in
-                batteryIndicator(device: device, layout: layout, showsLabel: showsLabels)
-                    .offset(y: 2)
+                WithPerceptionTracking {
+                    batteryIndicator(device: device, layout: layout, showsLabel: showsLabels)
+                        .offset(y: 2)
+                }
             }
         }
         .padding(layout.contentPadding)
@@ -98,17 +105,19 @@ struct BatteriesWidgetTileView: View {
                     .foregroundStyle(Color.primary.opacity(0.9))
             }
             .overlay(alignment: .topTrailing) {
-                if device.isCharging {
-                    ZStack {
-                        Circle()
-                            .fill(Color(nsColor: accentColor(for: device)).opacity(0.96))
+                WithPerceptionTracking {
+                    if device.isCharging {
+                        ZStack {
+                            Circle()
+                                .fill(Color(nsColor: accentColor(for: device)).opacity(0.96))
 
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: layout.boltSize, weight: .bold))
-                            .foregroundStyle(.white)
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: layout.boltSize, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
+                        .frame(width: layout.chargeBadgeDiameter, height: layout.chargeBadgeDiameter)
+                        .offset(x: layout.chargeBadgeOffset, y: -layout.chargeBadgeOffset)
                     }
-                    .frame(width: layout.chargeBadgeDiameter, height: layout.chargeBadgeDiameter)
-                    .offset(x: layout.chargeBadgeOffset, y: -layout.chargeBadgeOffset)
                 }
             }
             .frame(width: layout.circleDiameter, height: layout.circleDiameter)
@@ -138,7 +147,7 @@ struct BatteriesWidgetTileView: View {
     /// Drops the icon (or spinner) when larger widget text no longer
     /// leaves room for it, so the message itself stays readable.
     private func emptyState(layout: LayoutMetrics) -> some View {
-        ViewThatFits(in: .vertical) {
+        DockyViewThatFits(in: .vertical) {
             emptyStateStack(layout: layout, showsIcon: true)
             emptyStateStack(layout: layout, showsIcon: false)
         }

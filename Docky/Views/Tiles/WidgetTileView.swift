@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Perception
 
 struct WidgetTileView: View {
     let tile: WidgetTile
@@ -14,14 +15,16 @@ struct WidgetTileView: View {
     var isExpandedPreviewOpen: Bool = false
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        Group {
-            kindView
+            Group {
+                kindView
+            }
+            .environment(\.widgetTextScale, DockyPreferences.shared.widgetTextScale)
         }
-        .environment(\.widgetTextScale, DockyPreferences.shared.widgetTextScale)
     }
 
     @ViewBuilder
@@ -220,9 +223,9 @@ private final class MissingExternalWidgetPlaceholderView: NSView {
     init(identifier: String) {
         super.init(frame: .zero)
         wantsLayer = true
-        layer?.backgroundColor = NSColor.secondarySystemFill.cgColor
+        layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
 
-        let label = NSTextField(labelWithString: "Missing widget: \(identifier)")
+        let label = NSTextField(labelWithString: "缺少小组件：\(identifier)")
         label.font = .systemFont(ofSize: 11)
         label.textColor = .secondaryLabelColor
         label.translatesAutoresizingMaskIntoConstraints = false

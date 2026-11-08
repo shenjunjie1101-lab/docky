@@ -40,18 +40,18 @@ final class ExternalWidgetLoader {
 
         var localizedReason: String {
             switch self {
-            case .bundleNotOpenable: "Bundle could not be opened."
-            case .missingExecutable: "Bundle has no compiled binary in Contents/MacOS/."
-            case .loadCallFailed: "Bundle.load() failed. Check code signing."
-            case .missingPrincipalClass: "Info.plist is missing NSPrincipalClass."
-            case .notConformingToProtocol: "Principal class does not conform to DockyWidgetPlugin."
+            case .bundleNotOpenable: "无法打开组件包。"
+            case .missingExecutable: "组件包的 Contents/MacOS/ 目录中没有已编译的程序。"
+            case .loadCallFailed: "组件包载入失败，请检查代码签名。"
+            case .missingPrincipalClass: "Info.plist 中缺少 NSPrincipalClass。"
+            case .notConformingToProtocol: "组件包的主类未实现 DockyWidgetPlugin 协议。"
             }
         }
     }
 
     /// Per-bundle outcome from the most recent discovery pass. The
     /// settings pane reads this so failed bundles surface a meaningful
-    /// badge instead of staying on "Needs Restart" forever.
+    /// badge instead of staying on "需要重新启动" forever.
     private(set) var loadFailures: [URL: LoadFailure] = [:]
 
     /// File extension Docky recognizes as a widget bundle. Distinct from

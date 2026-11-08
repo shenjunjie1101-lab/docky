@@ -3,60 +3,74 @@
   "packages": [
     {
       "id": "docky.core",
-      "title": "Docky Core Actions",
+      "title": "Docky 核心操作",
       "author": "Docky",
       "version": "1.0.0",
       "reviewStatus": "curated",
-      "description": "Built-in Docky actions and reviewed scripted extensions.",
+      "description": "Docky 内置操作和经过审核的脚本扩展。",
       "actions": [
         {
           "id": "app.open",
-          "title": "Open",
+          "title": "打开",
           "kind": "builtin",
           "builtinIdentifier": "openApp",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "permissions": [],
           "inputs": [],
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
           "when": {
-            "not": { "flag": "isRunning" }
+            "not": {
+              "flag": "isRunning"
+            }
           }
         },
         {
           "id": "app.show-all-windows",
-          "title": "Show All Windows",
+          "title": "显示所有窗口",
           "kind": "builtin",
           "builtinIdentifier": "showAllWindows",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "permissions": [],
           "inputs": [],
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
-          "when": { "flag": "isRunning" }
+          "when": {
+            "flag": "isRunning"
+          }
         },
         {
           "id": "app.toggle-pin",
-          "title": "Keep in Dock",
+          "title": "保留在程序坞中",
           "kind": "builtin",
           "builtinIdentifier": "togglePinnedApp",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "permissions": [],
           "inputs": [],
           "destructive": false,
           "toggleFlag": "isPinned",
           "requiresFrontmost": false,
           "holdOption": false,
-          "when": { "flag": "canTogglePin" }
+          "when": {
+            "flag": "canTogglePin"
+          }
         },
         {
           "id": "app.show-in-finder",
-          "title": "Show in Finder",
+          "title": "在访达中显示",
           "kind": "builtin",
           "builtinIdentifier": "showAppInFinder",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "permissions": [],
           "inputs": [],
           "destructive": false,
@@ -65,10 +79,12 @@
         },
         {
           "id": "app.hide",
-          "title": "Hide",
+          "title": "隐藏",
           "kind": "builtin",
           "builtinIdentifier": "hideApp",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "permissions": [],
           "inputs": [],
           "destructive": false,
@@ -76,58 +92,92 @@
           "holdOption": false,
           "when": {
             "all": [
-              { "flag": "isRunning" },
-              { "not": { "flag": "isFinder" } }
+              {
+                "flag": "isRunning"
+              },
+              {
+                "not": {
+                  "flag": "isFinder"
+                }
+              }
             ]
           }
         },
         {
           "id": "app.hide-others",
-          "title": "Hide Others",
+          "title": "隐藏其他应用",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.apple.systemevents",
-          "permissions": ["accessibility"],
-          "inputs": ["bundleIdentifier"],
+          "permissions": [
+            "accessibility"
+          ],
+          "inputs": [
+            "bundleIdentifier"
+          ],
           "script": "tell application id \"com.apple.systemevents\"\n    set visible of every application process whose bundle identifier is not \"{{bundleIdentifier}}\" to false\nend tell",
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
           "when": {
             "all": [
-              { "flag": "isRunning" },
-              { "not": { "flag": "isFinder" } }
+              {
+                "flag": "isRunning"
+              },
+              {
+                "not": {
+                  "flag": "isFinder"
+                }
+              }
             ]
           }
         },
         {
           "id": "app.quit",
-          "title": "Quit",
+          "title": "退出",
           "alternateTitle": "Force Quit",
-          "alternateTitleWhen": { "flag": "optionKey" },
+          "alternateTitleWhen": {
+            "flag": "optionKey"
+          },
           "kind": "builtin",
           "builtinIdentifier": "quitApp",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "permissions": [],
           "inputs": [],
           "destructive": false,
-          "destructiveWhen": { "flag": "optionKey" },
+          "destructiveWhen": {
+            "flag": "optionKey"
+          },
           "requiresFrontmost": false,
           "holdOption": false,
           "when": {
             "all": [
-              { "flag": "isRunning" },
-              { "not": { "flag": "isFinder" } }
+              {
+                "flag": "isRunning"
+              },
+              {
+                "not": {
+                  "flag": "isFinder"
+                }
+              }
             ]
           }
         },
         {
           "id": "folder.open-in-finder",
-          "title": "Open in Finder",
+          "title": "在访达中打开",
           "kind": "builtin",
           "builtinIdentifier": "openFolderInFinder",
-          "tileTypes": ["folder"],
-          "permissions": ["finderAutomation"],
+          "tileTypes": [
+            "folder"
+          ],
+          "permissions": [
+            "finderAutomation"
+          ],
           "inputs": [],
           "destructive": false,
           "requiresFrontmost": false,
@@ -135,11 +185,15 @@
         },
         {
           "id": "folder.reveal-in-finder",
-          "title": "Reveal in Finder",
+          "title": "在访达中显示",
           "kind": "builtin",
           "builtinIdentifier": "revealFolderInFinder",
-          "tileTypes": ["folder"],
-          "permissions": ["finderAutomation"],
+          "tileTypes": [
+            "folder"
+          ],
+          "permissions": [
+            "finderAutomation"
+          ],
           "inputs": [],
           "destructive": false,
           "requiresFrontmost": false,
@@ -147,11 +201,15 @@
         },
         {
           "id": "trash.open",
-          "title": "Open Trash",
+          "title": "打开废纸篓",
           "kind": "builtin",
           "builtinIdentifier": "openTrash",
-          "tileTypes": ["trash"],
-          "permissions": ["finderAutomation"],
+          "tileTypes": [
+            "trash"
+          ],
+          "permissions": [
+            "finderAutomation"
+          ],
           "inputs": [],
           "destructive": false,
           "requiresFrontmost": false,
@@ -159,11 +217,15 @@
         },
         {
           "id": "trash.empty",
-          "title": "Empty Trash",
+          "title": "清倒废纸篓",
           "kind": "builtin",
           "builtinIdentifier": "emptyTrash",
-          "tileTypes": ["trash"],
-          "permissions": ["finderAutomation"],
+          "tileTypes": [
+            "trash"
+          ],
+          "permissions": [
+            "finderAutomation"
+          ],
           "inputs": [],
           "destructive": true,
           "requiresFrontmost": false,
@@ -171,94 +233,141 @@
         },
         {
           "id": "xcode.run",
-          "title": "Run",
+          "title": "运行",
           "kind": "menuClick",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.apple.dt.Xcode",
-          "permissions": ["accessibility"],
+          "permissions": [
+            "accessibility"
+          ],
           "inputs": [],
-          "path": ["Product", "Run"],
+          "path": [
+            "Product",
+            "Run"
+          ],
           "destructive": false,
           "requiresFrontmost": true,
           "holdOption": false,
           "symbol": "play.fill",
-          "when": { "bundleIdentifierEquals": "com.apple.dt.Xcode" }
+          "when": {
+            "bundleIdentifierEquals": "com.apple.dt.Xcode"
+          }
         },
         {
           "id": "xcode.test",
-          "title": "Test",
+          "title": "测试",
           "kind": "menuClick",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.apple.dt.Xcode",
-          "permissions": ["accessibility"],
+          "permissions": [
+            "accessibility"
+          ],
           "inputs": [],
-          "path": ["Product", "Test"],
+          "path": [
+            "Product",
+            "Test"
+          ],
           "destructive": false,
           "requiresFrontmost": true,
           "holdOption": false,
           "symbol": "checkmark.diamond",
-          "when": { "bundleIdentifierEquals": "com.apple.dt.Xcode" }
+          "when": {
+            "bundleIdentifierEquals": "com.apple.dt.Xcode"
+          }
         },
         {
           "id": "xcode.profile",
-          "title": "Profile",
+          "title": "性能分析",
           "kind": "menuClick",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.apple.dt.Xcode",
-          "permissions": ["accessibility"],
+          "permissions": [
+            "accessibility"
+          ],
           "inputs": [],
-          "path": ["Product", "Profile"],
+          "path": [
+            "Product",
+            "Profile"
+          ],
           "destructive": false,
           "requiresFrontmost": true,
           "holdOption": false,
           "symbol": "speedometer",
-          "when": { "bundleIdentifierEquals": "com.apple.dt.Xcode" }
+          "when": {
+            "bundleIdentifierEquals": "com.apple.dt.Xcode"
+          }
         },
         {
           "id": "xcode.analyze",
-          "title": "Analyze",
+          "title": "分析",
           "kind": "menuClick",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.apple.dt.Xcode",
-          "permissions": ["accessibility"],
+          "permissions": [
+            "accessibility"
+          ],
           "inputs": [],
-          "path": ["Product", "Analyze"],
+          "path": [
+            "Product",
+            "Analyze"
+          ],
           "destructive": false,
           "requiresFrontmost": true,
           "holdOption": false,
           "symbol": "stethoscope",
-          "when": { "bundleIdentifierEquals": "com.apple.dt.Xcode" }
+          "when": {
+            "bundleIdentifierEquals": "com.apple.dt.Xcode"
+          }
         },
         {
           "id": "xcode.clean-build-folder",
-          "title": "Clean Build Folder",
+          "title": "清理构建文件夹",
           "kind": "menuClick",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.apple.dt.Xcode",
-          "permissions": ["accessibility"],
+          "permissions": [
+            "accessibility"
+          ],
           "inputs": [],
-          "path": ["Product", "Clean Build Folder"],
+          "path": [
+            "Product",
+            "Clean Build Folder"
+          ],
           "destructive": false,
           "requiresFrontmost": true,
           "holdOption": false,
           "symbol": "trash",
-          "when": { "bundleIdentifierEquals": "com.apple.dt.Xcode" }
+          "when": {
+            "bundleIdentifierEquals": "com.apple.dt.Xcode"
+          }
         }
       ]
     },
     {
       "id": "docky.curated-app-integrations",
-      "title": "Curated App Integrations",
+      "title": "应用集成",
       "author": "Docky",
       "version": "1.0.0",
       "reviewStatus": "curated",
-      "description": "Docky-reviewed actions for selected third-party apps and browsers.",
+      "description": "Docky 为部分第三方应用和浏览器提供的预设操作。",
       "actions": [
         {
           "id": "ghostty.new-window",
-          "title": "New Window",
+          "title": "新建窗口",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.mitchellh.ghostty",
           "permissions": [],
           "inputs": [],
@@ -266,13 +375,17 @@
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "com.mitchellh.ghostty" }
+          "when": {
+            "bundleIdentifierEquals": "com.mitchellh.ghostty"
+          }
         },
         {
           "id": "ghostty.new-tab",
-          "title": "New Tab",
+          "title": "新建标签页",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.mitchellh.ghostty",
           "permissions": [],
           "inputs": [],
@@ -282,16 +395,22 @@
           "holdOption": false,
           "when": {
             "all": [
-              { "bundleIdentifierEquals": "com.mitchellh.ghostty" },
-              { "flag": "isRunning" }
+              {
+                "bundleIdentifierEquals": "com.mitchellh.ghostty"
+              },
+              {
+                "flag": "isRunning"
+              }
             ]
           }
         },
         {
           "id": "arc.new-window",
-          "title": "New Window",
+          "title": "新建窗口",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "company.thebrowser.Browser",
           "permissions": [],
           "inputs": [],
@@ -299,13 +418,17 @@
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "company.thebrowser.Browser" }
+          "when": {
+            "bundleIdentifierEquals": "company.thebrowser.Browser"
+          }
         },
         {
           "id": "arc.new-incognito-window",
-          "title": "New Incognito Window",
+          "title": "新建无痕窗口",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "company.thebrowser.Browser",
           "permissions": [],
           "inputs": [],
@@ -313,13 +436,17 @@
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "company.thebrowser.Browser" }
+          "when": {
+            "bundleIdentifierEquals": "company.thebrowser.Browser"
+          }
         },
         {
           "id": "arc.new-tab",
-          "title": "New Tab",
+          "title": "新建标签页",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "company.thebrowser.Browser",
           "permissions": [],
           "inputs": [],
@@ -329,16 +456,22 @@
           "holdOption": false,
           "when": {
             "all": [
-              { "bundleIdentifierEquals": "company.thebrowser.Browser" },
-              { "flag": "isRunning" }
+              {
+                "bundleIdentifierEquals": "company.thebrowser.Browser"
+              },
+              {
+                "flag": "isRunning"
+              }
             ]
           }
         },
         {
           "id": "dia.new-window",
-          "title": "New Window",
+          "title": "新建窗口",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "company.thebrowser.dia",
           "permissions": [],
           "inputs": [],
@@ -346,13 +479,17 @@
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "company.thebrowser.dia" }
+          "when": {
+            "bundleIdentifierEquals": "company.thebrowser.dia"
+          }
         },
         {
           "id": "dia.new-tab",
-          "title": "New Tab",
+          "title": "新建标签页",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "company.thebrowser.dia",
           "permissions": [],
           "inputs": [],
@@ -362,30 +499,45 @@
           "holdOption": false,
           "when": {
             "all": [
-              { "bundleIdentifierEquals": "company.thebrowser.dia" },
-              { "flag": "isRunning" }
+              {
+                "bundleIdentifierEquals": "company.thebrowser.dia"
+              },
+              {
+                "flag": "isRunning"
+              }
             ]
           }
         },
         {
           "id": "claude.new-conversation",
-          "title": "New Conversation",
+          "title": "新建对话",
           "kind": "menuClick",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.anthropic.claudefordesktop",
-          "permissions": ["accessibility"],
+          "permissions": [
+            "accessibility"
+          ],
           "inputs": [],
-          "path": ["File", "New Conversation"],
+          "path": [
+            "File",
+            "New Conversation"
+          ],
           "destructive": false,
           "requiresFrontmost": true,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "com.anthropic.claudefordesktop" }
+          "when": {
+            "bundleIdentifierEquals": "com.anthropic.claudefordesktop"
+          }
         },
         {
           "id": "safari.new-window",
-          "title": "New Window",
+          "title": "新建窗口",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.apple.Safari",
           "permissions": [],
           "inputs": [],
@@ -393,27 +545,40 @@
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "com.apple.Safari" }
+          "when": {
+            "bundleIdentifierEquals": "com.apple.Safari"
+          }
         },
         {
           "id": "safari.new-private-window",
-          "title": "New Private Window",
+          "title": "新建隐私窗口",
           "kind": "menuClick",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.apple.Safari",
-          "permissions": ["accessibility"],
+          "permissions": [
+            "accessibility"
+          ],
           "inputs": [],
-          "path": ["File", "New Private Window"],
+          "path": [
+            "File",
+            "New Private Window"
+          ],
           "destructive": false,
           "requiresFrontmost": true,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "com.apple.Safari" }
+          "when": {
+            "bundleIdentifierEquals": "com.apple.Safari"
+          }
         },
         {
           "id": "safari.new-tab",
-          "title": "New Tab",
+          "title": "新建标签页",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.apple.Safari",
           "permissions": [],
           "inputs": [],
@@ -423,16 +588,22 @@
           "holdOption": false,
           "when": {
             "all": [
-              { "bundleIdentifierEquals": "com.apple.Safari" },
-              { "flag": "isRunning" }
+              {
+                "bundleIdentifierEquals": "com.apple.Safari"
+              },
+              {
+                "flag": "isRunning"
+              }
             ]
           }
         },
         {
           "id": "chrome.new-window",
-          "title": "New Window",
+          "title": "新建窗口",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.google.Chrome",
           "permissions": [],
           "inputs": [],
@@ -440,13 +611,17 @@
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "com.google.Chrome" }
+          "when": {
+            "bundleIdentifierEquals": "com.google.Chrome"
+          }
         },
         {
           "id": "chrome.new-incognito-window",
-          "title": "New Incognito Window",
+          "title": "新建无痕窗口",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.google.Chrome",
           "permissions": [],
           "inputs": [],
@@ -454,13 +629,17 @@
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "com.google.Chrome" }
+          "when": {
+            "bundleIdentifierEquals": "com.google.Chrome"
+          }
         },
         {
           "id": "chrome.new-tab",
-          "title": "New Tab",
+          "title": "新建标签页",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.google.Chrome",
           "permissions": [],
           "inputs": [],
@@ -470,16 +649,22 @@
           "holdOption": false,
           "when": {
             "all": [
-              { "bundleIdentifierEquals": "com.google.Chrome" },
-              { "flag": "isRunning" }
+              {
+                "bundleIdentifierEquals": "com.google.Chrome"
+              },
+              {
+                "flag": "isRunning"
+              }
             ]
           }
         },
         {
           "id": "brave.new-window",
-          "title": "New Window",
+          "title": "新建窗口",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.brave.Browser",
           "permissions": [],
           "inputs": [],
@@ -487,13 +672,17 @@
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "com.brave.Browser" }
+          "when": {
+            "bundleIdentifierEquals": "com.brave.Browser"
+          }
         },
         {
           "id": "brave.new-private-window",
-          "title": "New Private Window",
+          "title": "新建隐私窗口",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.brave.Browser",
           "permissions": [],
           "inputs": [],
@@ -501,13 +690,17 @@
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "com.brave.Browser" }
+          "when": {
+            "bundleIdentifierEquals": "com.brave.Browser"
+          }
         },
         {
           "id": "brave.new-tab",
-          "title": "New Tab",
+          "title": "新建标签页",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.brave.Browser",
           "permissions": [],
           "inputs": [],
@@ -517,16 +710,22 @@
           "holdOption": false,
           "when": {
             "all": [
-              { "bundleIdentifierEquals": "com.brave.Browser" },
-              { "flag": "isRunning" }
+              {
+                "bundleIdentifierEquals": "com.brave.Browser"
+              },
+              {
+                "flag": "isRunning"
+              }
             ]
           }
         },
         {
           "id": "edge.new-window",
-          "title": "New Window",
+          "title": "新建窗口",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.microsoft.edgemac",
           "permissions": [],
           "inputs": [],
@@ -534,13 +733,17 @@
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "com.microsoft.edgemac" }
+          "when": {
+            "bundleIdentifierEquals": "com.microsoft.edgemac"
+          }
         },
         {
           "id": "edge.new-inprivate-window",
-          "title": "New InPrivate Window",
+          "title": "新建 InPrivate 窗口",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.microsoft.edgemac",
           "permissions": [],
           "inputs": [],
@@ -548,13 +751,17 @@
           "destructive": false,
           "requiresFrontmost": false,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "com.microsoft.edgemac" }
+          "when": {
+            "bundleIdentifierEquals": "com.microsoft.edgemac"
+          }
         },
         {
           "id": "edge.new-tab",
-          "title": "New Tab",
+          "title": "新建标签页",
           "kind": "applescript",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.microsoft.edgemac",
           "permissions": [],
           "inputs": [],
@@ -564,66 +771,106 @@
           "holdOption": false,
           "when": {
             "all": [
-              { "bundleIdentifierEquals": "com.microsoft.edgemac" },
-              { "flag": "isRunning" }
+              {
+                "bundleIdentifierEquals": "com.microsoft.edgemac"
+              },
+              {
+                "flag": "isRunning"
+              }
             ]
           }
         },
         {
           "id": "firefox.new-window",
-          "title": "New Window",
+          "title": "新建窗口",
           "kind": "menuClick",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "org.mozilla.firefox",
-          "permissions": ["accessibility"],
+          "permissions": [
+            "accessibility"
+          ],
           "inputs": [],
-          "path": ["File", "New Window"],
+          "path": [
+            "File",
+            "New Window"
+          ],
           "destructive": false,
           "requiresFrontmost": true,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "org.mozilla.firefox" }
+          "when": {
+            "bundleIdentifierEquals": "org.mozilla.firefox"
+          }
         },
         {
           "id": "firefox.new-private-window",
-          "title": "New Private Window",
+          "title": "新建隐私窗口",
           "kind": "menuClick",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "org.mozilla.firefox",
-          "permissions": ["accessibility"],
+          "permissions": [
+            "accessibility"
+          ],
           "inputs": [],
-          "path": ["File", "New Private Window"],
+          "path": [
+            "File",
+            "New Private Window"
+          ],
           "destructive": false,
           "requiresFrontmost": true,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "org.mozilla.firefox" }
+          "when": {
+            "bundleIdentifierEquals": "org.mozilla.firefox"
+          }
         },
         {
           "id": "vscode.new-window",
-          "title": "New Window",
+          "title": "新建窗口",
           "kind": "menuClick",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.microsoft.VSCode",
-          "permissions": ["accessibility"],
+          "permissions": [
+            "accessibility"
+          ],
           "inputs": [],
-          "path": ["File", "New Window"],
+          "path": [
+            "File",
+            "New Window"
+          ],
           "destructive": false,
           "requiresFrontmost": true,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "com.microsoft.VSCode" }
+          "when": {
+            "bundleIdentifierEquals": "com.microsoft.VSCode"
+          }
         },
         {
           "id": "cursor.new-window",
-          "title": "New Window",
+          "title": "新建窗口",
           "kind": "menuClick",
-          "tileTypes": ["app"],
+          "tileTypes": [
+            "app"
+          ],
           "targetApp": "com.todesktop.230313mzl4w4u92",
-          "permissions": ["accessibility"],
+          "permissions": [
+            "accessibility"
+          ],
           "inputs": [],
-          "path": ["File", "New Window"],
+          "path": [
+            "File",
+            "New Window"
+          ],
           "destructive": false,
           "requiresFrontmost": true,
           "holdOption": false,
-          "when": { "bundleIdentifierEquals": "com.todesktop.230313mzl4w4u92" }
+          "when": {
+            "bundleIdentifierEquals": "com.todesktop.230313mzl4w4u92"
+          }
         }
       ]
     }

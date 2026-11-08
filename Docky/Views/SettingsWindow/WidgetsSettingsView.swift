@@ -11,10 +11,11 @@
 
 import AppKit
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct WidgetsSettingsView: View {
-    @Bindable private var prefs = DockyPreferences.shared
+    @Perception.Bindable private var prefs = DockyPreferences.shared
     @State private var entries: [WidgetEntry] = []
     @State private var marketplaceState: MarketplaceState = .loading
     @State private var hasPendingChanges = false
@@ -23,38 +24,40 @@ struct WidgetsSettingsView: View {
     @State private var installingIdentifiers: Set<String> = []
 
     var body: some View {
-        Form {
-            unlockedContent
-        }
-        .formStyle(.grouped)
-        .navigationTitle("Widget Store")
-        .onAppear {
-            refresh()
-            loadMarketplace()
-        }
-        .confirmationDialog(
-            "Delete this widget?",
-            isPresented: deletionDialogBinding,
-            presenting: bundleURLPendingDeletion
-        ) { url in
-            Button("Delete", role: .destructive) {
-                deleteBundle(at: url)
-                bundleURLPendingDeletion = nil
+        WithPerceptionTracking {
+            Form {
+                unlockedContent
             }
-            Button("Cancel", role: .cancel) {
-                bundleURLPendingDeletion = nil
+            .dockySettingsForm()
+            .navigationTitle("Widget Store")
+            .onAppear {
+                refresh()
+                loadMarketplace()
             }
-        } message: { url in
-            Text("\(url.lastPathComponent) will be removed from disk. It will keep running until you restart Docky.")
-        }
-        .alert(
-            "Could not install widget",
-            isPresented: installErrorBinding,
-            presenting: installErrorMessage
-        ) { _ in
-            Button("OK", role: .cancel) { installErrorMessage = nil }
-        } message: { message in
-            Text(message)
+            .confirmationDialog(
+                "Delete this widget?",
+                isPresented: deletionDialogBinding,
+                presenting: bundleURLPendingDeletion
+            ) { url in
+                Button("Delete", role: .destructive) {
+                    deleteBundle(at: url)
+                    bundleURLPendingDeletion = nil
+                }
+                Button("Cancel", role: .cancel) {
+                    bundleURLPendingDeletion = nil
+                }
+            } message: { url in
+                Text("将从磁盘中移除 \(url.lastPathComponent)。它会继续运行，直到你重新启动 Docky。")
+            }
+            .alert(
+                "Could not install widget",
+                isPresented: installErrorBinding,
+                presenting: installErrorMessage
+            ) { _ in
+                Button("OK", role: .cancel) { installErrorMessage = nil }
+            } message: { message in
+                Text(message)
+            }
         }
     }
 
@@ -81,9 +84,9 @@ struct WidgetsSettingsView: View {
             }
         }
 
-        Section("Security") {
-            Toggle("Allow installing widgets from links", isOn: $prefs.allowsWidgetLinkInstalls)
-            Text("Links like `docky://install-widget` let a web page install a widget. Off by default. Widgets are native plugins that run inside Docky with the same access Docky has — Accessibility, Automation, files, and more — and Docky doesn't sandbox or verify them, so only install widgets you trust. Installing a `.dockywidget` file yourself always works.")
+        Section("安全") {
+            Toggle("允许通过链接安装小组件", isOn: $prefs.allowsWidgetLinkInstalls)
+            Text("类似 docky://install-widget 的链接可从网页发起小组件安装，默认关闭。小组件是直接在 Docky 内运行的原生插件，可使用 Docky 已获得的辅助功能、自动化和文件等权限，且不会经过沙盒隔离或行为验证。请仅安装你信任的小组件。手动安装 .dockywidget 文件不受此开关影响。")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -103,14 +106,16 @@ struct WidgetsSettingsView: View {
                 }
             } else {
                 ForEach(entries) { entry in
-                    entryRow(entry)
+                    WithPerceptionTracking {
+                        entryRow(entry)
+                    }
                 }
             }
         }
 
         Section {
-            Grid(horizontalSpacing: 12, verticalSpacing: 12) {
-                GridRow {
+            VStack(spacing: 12) {
+                HStack(spacing: 12) {
                     actionButton(
                         "Install from File…",
                         systemImage: "square.and.arrow.down",
@@ -122,7 +127,7 @@ struct WidgetsSettingsView: View {
                         action: revealWidgetsFolder
                     )
                 }
-                GridRow {
+                HStack(spacing: 12) {
                     actionButton(
                         "Refresh",
                         systemImage: "arrow.clockwise",
@@ -165,7 +170,9 @@ struct WidgetsSettingsView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(widgets) { widget in
-                    marketplaceRow(widget)
+                    WithPerceptionTracking {
+                        marketplaceRow(widget)
+                    }
                 }
             }
         }
@@ -357,7 +364,7 @@ struct WidgetsSettingsView: View {
                     identifier: url.lastPathComponent,
                     displayName: url.deletingPathExtension().lastPathComponent,
                     systemImageName: "exclamationmark.triangle",
-                    author: "Unknown",
+                    author: "未知",
                     version: "—",
                     status: .failed(failure.localizedReason)
                 ))
@@ -367,7 +374,7 @@ struct WidgetsSettingsView: View {
                     identifier: url.lastPathComponent,
                     displayName: url.deletingPathExtension().lastPathComponent,
                     systemImageName: "puzzlepiece.extension",
-                    author: "Unknown",
+                    author: "未知",
                     version: "—",
                     status: .needsRestart
                 ))
@@ -380,7 +387,7 @@ struct WidgetsSettingsView: View {
             combined.append(WidgetEntry(
                 bundleURL: registration.bundleURL,
                 identifier: registration.metadata.identifier,
-                displayName: registration.metadata.displayName + " (file missing)",
+                displayName: registration.metadata.displayName + "（文件丢失）",
                 systemImageName: registration.metadata.systemImageName,
                 author: registration.metadata.author,
                 version: registration.metadata.version,
@@ -393,7 +400,7 @@ struct WidgetsSettingsView: View {
 
     private func installWidget() {
         let panel = NSOpenPanel()
-        panel.title = "Install Widget"
+        panel.title = "安装小组件"
         panel.allowsMultipleSelection = false
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
@@ -481,8 +488,8 @@ private struct WidgetEntry: Identifiable {
         var badgeText: String? {
             switch self {
             case .loaded: nil
-            case .needsRestart: "Needs Restart"
-            case .failed: "Failed to Load"
+            case .needsRestart: "需要重新启动"
+            case .failed: "载入失败"
             }
         }
 

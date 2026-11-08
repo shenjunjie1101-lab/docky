@@ -103,7 +103,7 @@ final class WindowSwitcherService: ObservableObject {
         }
 
         guard PermissionsService.shared.accessibility == .granted else {
-            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "switch between windows")
+            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "切换窗口")
             return
         }
 
@@ -492,7 +492,7 @@ final class WindowSwitcherService: ObservableObject {
         }
 
         focusedPreviewTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(1))
+            try? await dockySleep(for: .seconds(1))
 
             await self?.runFocusedPreviewLoop(forWindowIdentifier: identifier)
         }
@@ -548,7 +548,7 @@ final class WindowSwitcherService: ObservableObject {
                 )
             }
 
-            try? await Task.sleep(for: .milliseconds(120))
+            try? await dockySleep(for: .milliseconds(120))
         }
     }
 

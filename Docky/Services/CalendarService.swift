@@ -59,11 +59,11 @@ final class CalendarService: ObservableObject {
     /// not-granted because the widget needs read access to show events.
     var permissionStatus: PermissionStatus {
         switch authorizationStatus {
-        case .fullAccess, .authorized:
+        case .authorized:
             return .granted
         case .notDetermined:
             return .notDetermined
-        case .denied, .restricted, .writeOnly:
+        case .denied, .restricted:
             return .denied
         @unknown default:
             return .denied
@@ -81,13 +81,13 @@ final class CalendarService: ObservableObject {
         lastErrorDescription = nil
 
         switch authorizationStatus {
-        case .fullAccess, .authorized:
+        case .authorized:
             loadNextEvent()
-        case .writeOnly:
+        case _ where authorizationStatus.rawValue == 4:
             nextEvent = nil
             upcomingEvents = []
             isLoading = false
-            lastErrorDescription = "Calendar read access is needed to show upcoming events."
+            lastErrorDescription = "需要日历读取权限才能显示即将开始的日程。"
         case .notDetermined:
             // Permission is requested lazily from the widget's Enable button,
             // never automatically on render. Leave the widget in its
@@ -99,12 +99,12 @@ final class CalendarService: ObservableObject {
             nextEvent = nil
             upcomingEvents = []
             isLoading = false
-            lastErrorDescription = "Enable Calendar access in Settings to show upcoming events."
+            lastErrorDescription = "请在设置中允许访问日历，以显示即将开始的日程。"
         @unknown default:
             nextEvent = nil
             upcomingEvents = []
             isLoading = false
-            lastErrorDescription = "Calendar is unavailable right now."
+            lastErrorDescription = "日历暂时不可用。"
         }
     }
 
@@ -122,11 +122,16 @@ final class CalendarService: ObservableObject {
         refreshAuthorizationStatus()
 
         switch authorizationStatus {
-        case .fullAccess, .authorized:
+        case .authorized:
             return true
-        case .writeOnly, .denied, .restricted:
+        case .denied, .restricted:
             return false
         case .notDetermined:
+            guard #available(macOS 14.0, *) else {
+                let granted = (try? await eventStore.requestAccess(to: .event)) ?? false
+                refreshAuthorizationStatus()
+                return granted
+            }
             return await withCheckedContinuation { continuation in
                 eventStore.requestFullAccessToEvents { [weak self] granted, _ in
                     guard let self else {
@@ -283,7 +288,7 @@ struct CalendarEventSnapshot: Equatable {
         eventIdentifier = event.eventIdentifier ?? event.calendarItemIdentifier
         calendarIdentifier = event.calendar.calendarIdentifier
         let trimmedTitle = event.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        title = trimmedTitle.isEmpty ? "Untitled Event" : trimmedTitle
+        title = trimmedTitle.isEmpty ? "无标题日程" : trimmedTitle
         startDate = event.startDate
         endDate = event.endDate
         isAllDay = event.isAllDay

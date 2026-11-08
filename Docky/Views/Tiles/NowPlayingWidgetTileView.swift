@@ -6,6 +6,7 @@
 import AppKit
 import CoreImage
 import SwiftUI
+import Perception
 
 struct NowPlayingWidgetTileView: View {
     @Environment(\.widgetTextScale) private var textScale
@@ -21,48 +22,52 @@ struct NowPlayingWidgetTileView: View {
     @State private var isLyricsOverlayPresented = false
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        GeometryReader { proxy in
-            let layout = layout(in: proxy.size)
-            let expandedLayout = expandedLayout(in: proxy.size)
+            GeometryReader { proxy in
+                WithPerceptionTracking {
+                    let layout = layout(in: proxy.size)
+                    let expandedLayout = expandedLayout(in: proxy.size)
 
-            ZStack {
-                Color(nsColor: prominentTintColor)
-                    .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    ZStack {
+                        Color(nsColor: prominentTintColor)
+                            .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                if !isWithinStack {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
-                }
+                        if !isWithinStack {
+                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                        }
 
-                content(layout: layout)
-                    .opacity(isExpandedPreviewOpen && isExpanded ? 0 : 1)
+                        content(layout: layout)
+                            .opacity(isExpandedPreviewOpen && isExpanded ? 0 : 1)
 
-                if isExpanded {
-                    expandedContent(layout: expandedLayout)
-                        .frame(height: proxy.size.height)
-                        .transition(
-                            .opacity.animation(
-                                .easeInOut(duration: 0.22).delay(0.22)
-                            ).combined(with: .scale).combined(with: .slide)
-                        )
-                }
+                        if isExpanded {
+                            expandedContent(layout: expandedLayout)
+                                .frame(height: proxy.size.height)
+                                .transition(
+                                    .opacity.animation(
+                                        .easeInOut(duration: 0.22).delay(0.22)
+                                    ).combined(with: .scale).combined(with: .slide)
+                                )
+                        }
 
-                if isExpanded && isLyricsOverlayPresented {
-                    lyricsOverlay(layout: expandedLayout)
-                        .transition(.opacity)
+                        if isExpanded && isLyricsOverlayPresented {
+                            lyricsOverlay(layout: expandedLayout)
+                                .transition(.opacity)
+                        }
+                    }
+                    .animation(.easeInOut(duration: 0.18), value: isLyricsOverlayPresented)
+                    .animation(.easeInOut(duration: 0.22), value: isExpanded)
+                    .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
                 }
             }
-            .animation(.easeInOut(duration: 0.18), value: isLyricsOverlayPresented)
-            .animation(.easeInOut(duration: 0.22), value: isExpanded)
+            .opacity(isExpandedPreviewOpen && !isExpanded ? 0.5 : 1)
             .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         }
-        .opacity(isExpandedPreviewOpen && !isExpanded ? 0.5 : 1)
-        .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 
     @ViewBuilder
@@ -81,16 +86,18 @@ struct NowPlayingWidgetTileView: View {
         artworkView(size: nil, artworkCornerRadius: layout.artworkCornerRadius)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .overlay {
-                if isHovering {
-                    ZStack {
-                        Color.black.opacity(0.18)
+                WithPerceptionTracking {
+                    if isHovering {
+                        ZStack {
+                            Color.black.opacity(0.18)
 
-                        Image(systemName: playbackState?.isPlaying == true ? "pause.fill" : "play.fill")
-                            .font(.system(size: layout.largeGlyphSize, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.95))
-                            .offset(x: playbackState?.isPlaying == true ? 0 : -layout.largeGlyphSize * 0.06)
+                            Image(systemName: playbackState?.isPlaying == true ? "pause.fill" : "play.fill")
+                                .font(.system(size: layout.largeGlyphSize, weight: .semibold))
+                                .foregroundStyle(.white.opacity(0.95))
+                                .offset(x: playbackState?.isPlaying == true ? 0 : -layout.largeGlyphSize * 0.06)
+                        }
+                        .transition(.opacity)
                     }
-                    .transition(.opacity)
                 }
             }
             .onHover { isHovering = $0 }
@@ -122,7 +129,7 @@ struct NowPlayingWidgetTileView: View {
             artworkView(size: layout.artworkSize, artworkCornerRadius: layout.artworkCornerRadius)
 
             VStack(alignment: .leading, spacing: layout.stackSpacing) {
-                Text(playbackState?.isPresentable == false ? (playbackState?.title ?? "Not Playing") : playbackTitle)
+                Text(playbackState?.isPresentable == false ? (playbackState?.title ?? "未在播放") : playbackTitle)
                     .font(.system(size: layout.titleFontSize, weight: .semibold))
                     .foregroundStyle(primaryForegroundColor)
                     .lineLimit(1)
@@ -195,13 +202,15 @@ struct NowPlayingWidgetTileView: View {
 
             VStack(spacing: layout.progressLabelSpacing) {
                 GeometryReader { proxy in
-                    ZStack(alignment: .leading) {
-                        Capsule(style: .continuous)
-                            .fill(secondaryForegroundColor.opacity(0.28))
+                    WithPerceptionTracking {
+                        ZStack(alignment: .leading) {
+                            Capsule(style: .continuous)
+                                .fill(secondaryForegroundColor.opacity(0.28))
 
-                        Capsule(style: .continuous)
-                            .fill(primaryForegroundColor)
-                            .frame(width: max(0, proxy.size.width * progress))
+                            Capsule(style: .continuous)
+                                .fill(primaryForegroundColor)
+                                .frame(width: max(0, proxy.size.width * progress))
+                        }
                     }
                 }
                 .frame(height: layout.progressBarHeight)
@@ -281,7 +290,7 @@ struct NowPlayingWidgetTileView: View {
             ZStack(alignment: .leading) {
                 VStack {
                     HStack {
-                        
+
                         Spacer()
 
                         Button {
@@ -299,7 +308,7 @@ struct NowPlayingWidgetTileView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    
+
                     Spacer()
                 }
 
@@ -516,7 +525,7 @@ struct NowPlayingWidgetTileView: View {
         guard playbackState?.isPresentable == true else {
             return (NSColor.windowBackgroundColor.blended(withFraction: 0.18, of: .black) ?? .windowBackgroundColor)
         }
-        
+
         if let averageColor = playbackState?.artwork?.averageColor {
             let extractedColor = averageColor.withSystemEffect(.pressed)
             return extractedColor.usingColorSpace(.deviceRGB) ?? extractedColor
@@ -545,14 +554,16 @@ struct NowPlayingWidgetTileView: View {
     }
 
     private var playbackTitle: String {
+        guard #available(macOS 15.0, *) else { return "小组件暂不可用" }
         guard let playbackState, playbackState.hasContent else {
-            return "Not Playing"
+            return "未在播放"
         }
 
         return playbackState.title.isEmpty ? ownerDisplayName : playbackState.title
     }
 
     private var playbackArtist: String {
+        guard #available(macOS 15.0, *) else { return "需要 macOS 15 或更新版本" }
         guard let playbackState, playbackState.hasContent else {
             return ownerDisplayName
         }
@@ -593,39 +604,45 @@ private struct KaraokeLyricsView: View {
     @State private var activeIndex = 0
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: layout.titleStackSpacing * 4) {
-                    Color.clear.frame(height: layout.controlButtonSize)
+        WithPerceptionTracking {
+            ScrollViewReader { proxy in
+                WithPerceptionTracking {
+                    ScrollView(showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: layout.titleStackSpacing * 4) {
+                            Color.clear.frame(height: layout.controlButtonSize)
 
-                    ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
-                        Text(line.text.isEmpty ? "♪" : line.text)
-                            .font(.system(
-                                size: layout.titleFontSize * 1.2,
-                                weight: .semibold,
-                                design: .rounded
-                            ))
-                            .foregroundStyle(index == activeIndex ? primaryColor : secondaryColor)
-                            .opacity(opacity(for: index))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .id(index)
-                            .animation(.easeInOut(duration: 0.22), value: activeIndex)
+                            ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
+                                WithPerceptionTracking {
+                                    Text(line.text.isEmpty ? "♪" : line.text)
+                                        .font(.system(
+                                            size: layout.titleFontSize * 1.2,
+                                            weight: .semibold,
+                                            design: .rounded
+                                        ))
+                                        .foregroundStyle(index == activeIndex ? primaryColor : secondaryColor)
+                                        .opacity(opacity(for: index))
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .id(index)
+                                        .animation(.easeInOut(duration: 0.22), value: activeIndex)
+                                }
+                            }
+
+                            Color.clear.frame(height: layout.controlButtonSize)
+                        }
                     }
-
-                    Color.clear.frame(height: layout.controlButtonSize)
+                    .onChange(of: activeIndex) { newIndex in
+                        withAnimation(.easeInOut(duration: 0.35)) {
+                            proxy.scrollTo(newIndex, anchor: .center)
+                        }
+                    }
+                    .onAppear {
+                        proxy.scrollTo(activeIndex, anchor: .center)
+                    }
                 }
             }
-            .onChange(of: activeIndex) { newIndex in
-                withAnimation(.easeInOut(duration: 0.35)) {
-                    proxy.scrollTo(newIndex, anchor: .center)
-                }
+            .task {
+                await trackPlayback()
             }
-            .onAppear {
-                proxy.scrollTo(activeIndex, anchor: .center)
-            }
-        }
-        .task {
-            await trackPlayback()
         }
     }
 
@@ -643,7 +660,7 @@ private struct KaraokeLyricsView: View {
     private func trackPlayback() async {
         activeIndex = currentIndex(at: estimatedTime())
         while !Task.isCancelled {
-            try? await Task.sleep(for: .milliseconds(150))
+            try? await dockySleep(for: .milliseconds(150))
             if Task.isCancelled { return }
             let newIndex = currentIndex(at: estimatedTime())
             if newIndex != activeIndex {

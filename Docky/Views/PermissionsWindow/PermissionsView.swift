@@ -6,6 +6,7 @@
 import AppKit
 import AVKit
 import SwiftUI
+import Perception
 
 private struct PermissionsWindowFramePreference: Equatable {
     let frame: CGRect
@@ -36,43 +37,47 @@ struct PermissionsView: View {
     private var isLastStep: Bool { currentIndex == steps.count - 1 }
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        cardView
-        .padding(.top, topBarAdjustment)
-        .background(
-            GeometryReader { proxy in
-                Color.clear
-                    .preference(
-                        key: PermissionsWindowFramePreferenceKey.self,
-                        value: PermissionsWindowFramePreference(
-                            frame: proxy.frame(in: .local),
-                            layoutKey: "\(currentIndex)-\(statusLabel)"
-                        )
-                    )
+            cardView
+            .padding(.top, topBarAdjustment)
+            .background(
+                GeometryReader { proxy in
+                    WithPerceptionTracking {
+                        Color.clear
+                            .preference(
+                                key: PermissionsWindowFramePreferenceKey.self,
+                                value: PermissionsWindowFramePreference(
+                                    frame: proxy.frame(in: .local),
+                                    layoutKey: "\(currentIndex)-\(statusLabel)"
+                                )
+                            )
+                    }
+                }
+            )
+            .onAppear {
+                service.refresh()
             }
-        )
-        .onAppear {
-            service.refresh()
-        }
-        .onPreferenceChange(PermissionsWindowFramePreferenceKey.self) { preference in
-            guard !preference.frame.isEmpty else { return }
-            onWindowFrameChange(preference.frame)
-        }
-        .task(id: currentIndex) {
-            if (step == .finderAutomation || step == .location), status == .notDetermined {
-                _ = await service.requestPermission(for: step)
+            .onPreferenceChange(PermissionsWindowFramePreferenceKey.self) { preference in
+                guard !preference.frame.isEmpty else { return }
+                onWindowFrameChange(preference.frame)
             }
+            .task(id: currentIndex) {
+                if (step == .finderAutomation || step == .location), status == .notDetermined {
+                    _ = await service.requestPermission(for: step)
+                }
 
-            if step == .systemEventsAutomation,
-               status == .notDetermined,
-               service.status(for: .accessibility) == .granted {
-                _ = await service.requestPermission(for: step)
-            }
+                if step == .systemEventsAutomation,
+                   status == .notDetermined,
+                   service.status(for: .accessibility) == .granted {
+                    _ = await service.requestPermission(for: step)
+                }
 
-            await pollUntilAdvance()
+                await pollUntilAdvance()
+            }
         }
     }
 
@@ -89,12 +94,16 @@ struct PermissionsView: View {
                 .strokeBorder(Color.secondary.opacity(0.12))
         )
         .overlay(alignment: .topLeading) {
-            quitButton
-                .padding(18)
+            WithPerceptionTracking {
+                quitButton
+                    .padding(18)
+            }
         }
         .overlay(alignment: .topTrailing) {
-            skipButton
-                .padding(18)
+            WithPerceptionTracking {
+                skipButton
+                    .padding(18)
+            }
         }
     }
 
@@ -299,11 +308,11 @@ struct PermissionsView: View {
 
     private var grantMethodLabel: String? {
         switch grantMethod {
-        case .fullDiskAccess: return "Full Disk Access"
-        case .automation: return "Automation"
-        case .accessibility: return "Accessibility"
-        case .screenCapture: return "Screen Recording"
-        case .location: return "Location"
+        case .fullDiskAccess: return "完全磁盘访问权限"
+        case .automation: return "自动化"
+        case .accessibility: return "辅助功能"
+        case .screenCapture: return "屏幕录制"
+        case .location: return String(localized: "Location")
         case .none: return nil
         }
     }
@@ -342,40 +351,40 @@ struct PermissionsView: View {
     private var systemSettingsButtonTitle: String {
         switch step {
         case .finderAutomation:
-            return "Open System Settings (Automation)"
+            return "打开系统偏好设置（自动化）"
         case .systemEventsAutomation:
-            return "Open System Settings (Automation)"
+            return "打开系统偏好设置（自动化）"
         case .userFolders:
-            return "Open System Settings (Full Disk Access)"
+            return "打开系统偏好设置（完全磁盘访问权限）"
         case .accessibility:
-            return "Open System Settings (Accessibility)"
+            return "打开系统偏好设置（辅助功能）"
         case .screenCapture:
-            return "Open System Settings (Screen Recording)"
+            return "打开系统偏好设置（屏幕录制）"
         case .location:
-            return "Open System Settings (Location Services)"
+            return "打开系统偏好设置（定位服务）"
         case .calendar:
-            return "Open System Settings (Calendars)"
+            return "打开系统偏好设置（日历）"
         case .reminders:
-            return "Open System Settings (Reminders)"
+            return "打开系统偏好设置（提醒事项）"
         }
     }
 
     private var requestButtonTitle: String {
         switch step {
         case .finderAutomation:
-            return "Request Finder Access"
+            return "请求访达权限"
         case .systemEventsAutomation:
-            return "Request System Events Access"
+            return "请求 System Events 权限"
         case .screenCapture:
-            return "Request Screen Recording Access"
+            return "请求屏幕录制权限"
         case .location:
-            return "Request Location Access"
+            return "请求定位权限"
         case .calendar:
-            return "Request Calendar Access"
+            return "请求日历权限"
         case .reminders:
-            return "Request Reminders Access"
+            return "请求提醒事项权限"
         case .userFolders, .accessibility:
-            return "Request Access"
+            return "请求权限"
         }
     }
 
@@ -396,7 +405,7 @@ struct PermissionsView: View {
     }
 
     private var primaryActionTitle: String {
-        isLastStep ? "Continue" : "Next"
+        isLastStep ? "继续" : "下一步"
     }
 
     private func advance() {
@@ -418,7 +427,7 @@ struct PermissionsView: View {
 
         let nextStep = step
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(120))
+            try? await dockySleep(for: .milliseconds(120))
             guard !isDismissing, self.step == nextStep else { return }
             onOpenSystemSettings(nextStep)
         }
@@ -433,7 +442,7 @@ struct PermissionsView: View {
         advanceIfReady()
 
         while !Task.isCancelled {
-            try? await Task.sleep(for: .seconds(1))
+            try? await dockySleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
 
             service.refresh()
@@ -489,32 +498,32 @@ struct PermissionsView: View {
     private var stepSummary: String {
         switch status {
         case .granted:
-            return "This permission is already enabled. You can continue when ready."
+            return "此权限已开启，可以继续下一步。"
         case .denied:
-            return "macOS has this disabled right now. Open System Settings, enable it, then come back and re-check."
+            return "macOS 当前尚未开启此权限。请打开系统偏好设置并启用，然后回到这里重新检查。"
         case .notDetermined:
-            return "Docky will guide you through the fastest way to enable this on your Mac."
+            return "Docky 会引导你以合适的方式开启这台 Mac 上的权限。"
         }
     }
 
     private var mediaCaption: String {
         switch step {
         case .userFolders:
-            return "Preview pinned folders instantly"
+            return "即时预览固定文件夹"
         case .finderAutomation:
-            return "Reveal and manage files in Finder"
+            return "在访达中显示和管理文件"
         case .accessibility:
-            return "Control interface actions smoothly"
+            return "顺畅执行界面操作"
         case .systemEventsAutomation:
-            return "Run curated menu actions quickly"
+            return "快速执行预设菜单操作"
         case .screenCapture:
-            return "Capture live window previews"
+            return "显示实时窗口预览"
         case .location:
-            return "Show local weather in the dock"
+            return "在程序坞中显示本地天气"
         case .calendar:
-            return "Show upcoming events in the dock"
+            return "在程序坞中显示即将开始的日程"
         case .reminders:
-            return "Show open tasks in the dock"
+            return "在程序坞中显示未完成任务"
         }
     }
 
@@ -537,18 +546,18 @@ struct PermissionsView: View {
 
     private var bottomSummary: String {
         if step == .finderAutomation {
-            return "Finder access can be requested here now, so reveal-in-Finder and Trash actions work without waiting for the first macOS prompt."
+            return "可以直接在这里请求访达权限，使“在访达中显示”和废纸篓操作正常工作，无需等首次操作触发 macOS 提示。"
         }
 
         if step == .systemEventsAutomation {
-            return "System Events access can be requested here now for curated menu-click actions. Accessibility should be enabled too, since UI scripting depends on both permissions."
+            return "可以直接在这里请求 System Events 权限，用于执行预设菜单点击操作。界面脚本还依赖辅助功能权限，请同时开启。"
         }
 
         if step.isRequiredAtLaunch {
-            return "This permission unlocks a core Docky feature, but you can skip it for now and grant it later."
+            return "此权限用于 Docky 的核心功能。你可以暂时跳过，以后再授权。"
         }
 
-        return "This permission unlocks an optional feature and can be granted later from Settings."
+        return "此权限用于可选功能，可稍后在设置中授权。"
     }
 
     private var statusBadge: some View {
@@ -567,11 +576,11 @@ struct PermissionsView: View {
     private var statusLabel: String {
         switch status {
         case .granted:
-            return "Granted"
+            return "已授权"
         case .denied:
-            return "Needs Attention"
+            return "需要处理"
         case .notDetermined:
-            return "Not Yet Granted"
+            return "尚未授权"
         }
     }
 
@@ -685,15 +694,19 @@ private struct PageDots: View {
     let currentIndex: Int
 
     var body: some View {
-        HStack(spacing: 8) {
-            ForEach(0..<totalPages, id: \.self) { index in
-                Capsule(style: .continuous)
-                    .fill(index == currentIndex ? Color.accentColor : Color.secondary.opacity(0.30))
-                    .frame(width: index == currentIndex ? 24 : 8, height: 8)
+        WithPerceptionTracking {
+            HStack(spacing: 8) {
+                ForEach(0..<totalPages, id: \.self) { index in
+                    WithPerceptionTracking {
+                        Capsule(style: .continuous)
+                            .fill(index == currentIndex ? Color.accentColor : Color.secondary.opacity(0.30))
+                            .frame(width: index == currentIndex ? 24 : 8, height: 8)
+                    }
+                }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("第 \(currentIndex + 1) 步，共 \(max(totalPages, 1)) 步")
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Step \(currentIndex + 1) of \(max(totalPages, 1))")
     }
 }
 

@@ -78,7 +78,7 @@ struct LaunchpadTile: Equatable {
     let identifier: String
     let title: String
 
-    nonisolated init(identifier: String, title: String = "Launchpad") {
+    nonisolated init(identifier: String, title: String = String(localized: "Launchpad")) {
         self.identifier = identifier
         self.title = title
     }
@@ -94,7 +94,7 @@ struct StartMenuTile: Equatable {
     let identifier: String
     let title: String
 
-    nonisolated init(identifier: String, title: String = "Start") {
+    nonisolated init(identifier: String, title: String = "开始") {
         self.identifier = identifier
         self.title = title
     }

@@ -7,6 +7,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct MainWindowView: View {
@@ -14,48 +15,52 @@ struct MainWindowView: View {
     private let chromeResizeAnimation: Animation = .easeInOut(duration: 0.18)
 
     private let dockSettings = DockSettingsService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @ObservedObject private var layoutService = DockLayoutService.shared
     private let magnification = DockMagnificationService.shared
     @ObservedObject private var chromeMetrics = DockChromeMetricsService.shared
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        let chromeFrameSize = resolvedChromeFrameSize
-        let chromeOffset = resolvedChromeAlongAxisOffset
-        let dockEdge = dockEdgeAlignment
-        let isVertical = preferences.windowPosition
-            .resolved(systemOrientation: dockSettings.orientation)
-            .isVertical
+            let chromeFrameSize = resolvedChromeFrameSize
+            let chromeOffset = resolvedChromeAlongAxisOffset
+            let dockEdge = dockEdgeAlignment
+            let isVertical = preferences.windowPosition
+                .resolved(systemOrientation: dockSettings.orientation)
+                .isVertical
 
-        // The chrome is a background so it never sizes the layout. A chrome
-        // grown past the dock (magnification on a dock that fills its
-        // edge) would otherwise enlarge the stack it sits in and shift the
-        // tile canvas, throwing off the cursor-to-tile mapping.
-        TileContainerView()
-            .background(alignment: dockEdge) {
-                chromeBackground()
-                    .frame(width: chromeFrameSize?.width, height: chromeFrameSize?.height)
-                    .offset(x: isVertical ? 0 : chromeOffset, y: isVertical ? chromeOffset : 0)
-                    .allowsHitTesting(true)
-                    // Suppress the implicit easeInOut while magnification is
-                    // tracking the cursor — chrome growth updates per frame
-                    // and a 0.18s tween would visibly lag the pointer. Tile
-                    // add/remove and other resting layout changes still
-                    // animate normally.
-                    .animation(
-                        isTrackingMagnification ? nil : chromeResizeAnimation,
-                        value: chromeFrameSize
-                    )
-            }
-        // Keeps the dock at its resting spot inside a window that extends
-        // past it along the axis (see `alongAxisLeadingInset`).
-        .padding(isVertical ? .top : .leading, layoutService.alongAxisLeadingInset)
-        .padding(isVertical ? .bottom : .trailing, layoutService.alongAxisTrailingInset)
-        .compositingGroup()
+            // The chrome is a background so it never sizes the layout. A chrome
+            // grown past the dock (magnification on a dock that fills its
+            // edge) would otherwise enlarge the stack it sits in and shift the
+            // tile canvas, throwing off the cursor-to-tile mapping.
+            TileContainerView()
+                .background(alignment: dockEdge) {
+                    WithPerceptionTracking {
+                        chromeBackground()
+                            .frame(width: chromeFrameSize?.width, height: chromeFrameSize?.height)
+                            .offset(x: isVertical ? 0 : chromeOffset, y: isVertical ? chromeOffset : 0)
+                            .allowsHitTesting(true)
+                            // Suppress the implicit easeInOut while magnification is
+                            // tracking the cursor — chrome growth updates per frame
+                            // and a 0.18s tween would visibly lag the pointer. Tile
+                            // add/remove and other resting layout changes still
+                            // animate normally.
+                            .animation(
+                                isTrackingMagnification ? nil : chromeResizeAnimation,
+                                value: chromeFrameSize
+                            )
+                    }
+                }
+            // Keeps the dock at its resting spot inside a window that extends
+            // past it along the axis (see `alongAxisLeadingInset`).
+            .padding(isVertical ? .top : .leading, layoutService.alongAxisLeadingInset)
+            .padding(isVertical ? .bottom : .trailing, layoutService.alongAxisTrailingInset)
+            .compositingGroup()
+        }
     }
 
     private var isTrackingMagnification: Bool {
@@ -77,66 +82,74 @@ struct MainWindowView: View {
         let radii = chromeCornerRadii
         backgroundFill(radii: radii)
             .background {
-                if !preferences.effectiveDisablesGlassLook,
-                   FeatureGate.shared.isAvailable(.liquidGlass),
-                   #available(macOS 26.0, *) {
-                    // NSGlassEffectView only supports a uniform corner
-                    // radius via `layer.cornerRadius`. Pass the largest
-                    // of the four so the material extends out to the
-                    // widest curve; the SwiftUI `clipShape` below then
-                    // trims the smaller corners down to their target
-                    // radii. Net result: per-corner radii visually, no
-                    // private-API surface area added.
-                    LiquidGlassChromeView(
-                        variant: 11,
-                        cornerRadius: max(
-                            radii.topLeading, radii.topTrailing,
-                            radii.bottomLeading, radii.bottomTrailing
+                WithPerceptionTracking {
+                    if !preferences.effectiveDisablesGlassLook,
+                       FeatureGate.shared.isAvailable(.liquidGlass),
+                       #available(macOS 26.0, *) {
+                        // NSGlassEffectView only supports a uniform corner
+                        // radius via `layer.cornerRadius`. Pass the largest
+                        // of the four so the material extends out to the
+                        // widest curve; the SwiftUI `clipShape` below then
+                        // trims the smaller corners down to their target
+                        // radii. Net result: per-corner radii visually, no
+                        // private-API surface area added.
+                        LiquidGlassChromeView(
+                            variant: 11,
+                            cornerRadius: max(
+                                radii.topLeading, radii.topTrailing,
+                                radii.bottomLeading, radii.bottomTrailing
+                            )
                         )
-                    )
+                    }
                 }
             }
-            .clipShape(UnevenRoundedRectangle(cornerRadii: radii, style: .continuous))
+            .clipShape(DockyRoundedRectangle(cornerRadii: radii, style: .continuous))
             .overlay {
                 // Theme border, when set, takes precedence over the
                 // default glass stroke. When no theme border is set
                 // and glass isn't disabled, we draw the gradient
                 // outline that lives with the dock chrome.
-                if let themeBorder = preferences.effectiveWindowBorderColor {
-                    let width = max(0, preferences.effectiveWindowBorderWidth)
-                    if width > 0 {
-                        UnevenRoundedRectangle(cornerRadii: radii, style: .continuous)
-                            .inset(by: width / 2)
-                            .strokeBorder(Color(nsColor: themeBorder), lineWidth: width)
+                WithPerceptionTracking {
+                    if let themeBorder = preferences.effectiveWindowBorderColor {
+                        let width = max(0, preferences.effectiveWindowBorderWidth)
+                        if width > 0 {
+                            DockyRoundedRectangle(cornerRadii: radii, style: .continuous)
+                                .inset(by: width / 2)
+                                .strokeBorder(Color(nsColor: themeBorder), lineWidth: width)
+                        }
+                    } else if !preferences.effectiveDisablesGlassLook {
+                        DockyRoundedRectangle(cornerRadii: radii, style: .continuous)
+                            .inset(by: borderWidth / 2)
+                            .strokeBorder(borderGradient, lineWidth: borderWidth)
                     }
-                } else if !preferences.effectiveDisablesGlassLook {
-                    UnevenRoundedRectangle(cornerRadii: radii, style: .continuous)
-                        .inset(by: borderWidth / 2)
-                        .strokeBorder(borderGradient, lineWidth: borderWidth)
                 }
             }
     }
 
     @ViewBuilder
-    private func backgroundFill(radii: RectangleCornerRadii) -> some View {
+    private func backgroundFill(radii: DockyCornerRadii) -> some View {
         let resolvedPosition = preferences.windowPosition.resolved(systemOrientation: dockSettings.orientation)
         let rotated = resolvedPosition.isVertical
-        UnevenRoundedRectangle(cornerRadii: radii, style: .continuous)
+        DockyRoundedRectangle(cornerRadii: radii, style: .continuous)
             .fill(Color.clear)
             .background {
-                if let backgroundImage = resolvedBackgroundImage {
-                    GeometryReader { proxy in
-                        backgroundImageContent(image: backgroundImage)
-                            .frame(
-                                width: rotated ? proxy.size.height : proxy.size.width,
-                                height: rotated ? proxy.size.width : proxy.size.height
-                            )
-                            .rotationEffect(.degrees(backgroundImageRotationDegrees(for: resolvedPosition)))
-                            .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                WithPerceptionTracking {
+                    if let backgroundImage = resolvedBackgroundImage {
+                        GeometryReader { proxy in
+                            WithPerceptionTracking {
+                                backgroundImageContent(image: backgroundImage)
+                                    .frame(
+                                        width: rotated ? proxy.size.height : proxy.size.width,
+                                        height: rotated ? proxy.size.width : proxy.size.height
+                                    )
+                                    .rotationEffect(.degrees(backgroundImageRotationDegrees(for: resolvedPosition)))
+                                    .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                            }
+                        }
+                    } else {
+                        Color(nsColor: preferences.effectiveWindowTintColor)
+                            .opacity(preferences.effectiveWindowTintOpacity)
                     }
-                } else {
-                    Color(nsColor: preferences.effectiveWindowTintColor)
-                        .opacity(preferences.effectiveWindowTintOpacity)
                 }
             }
             .clipped()
@@ -182,9 +195,9 @@ struct MainWindowView: View {
     /// Per-corner radii used by every chrome shape (fill, glass clip,
     /// border). Each corner is the theme/user override clamped to the
     /// max curve, falling through to the uniform value when unset.
-    private var chromeCornerRadii: RectangleCornerRadii {
+    private var chromeCornerRadii: DockyCornerRadii {
         let cap = maximumCornerRadius
-        return RectangleCornerRadii(
+        return DockyCornerRadii(
             topLeading: min(preferences.effectiveWindowCornerRadiusTopLeading, cap),
             bottomLeading: min(preferences.effectiveWindowCornerRadiusBottomLeading, cap),
             bottomTrailing: min(preferences.effectiveWindowCornerRadiusBottomTrailing, cap),

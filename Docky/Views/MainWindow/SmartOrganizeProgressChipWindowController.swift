@@ -6,6 +6,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import Perception
 
 final class SmartOrganizeProgressChipWindowController: NSWindowController {
     private weak var mainWindow: MainWindow?
@@ -190,27 +191,31 @@ private struct SmartOrganizeProgressChipView: View {
     @ObservedObject private var progress = SmartOrganizeProgressService.shared
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        HStack(spacing: 10) {
-            ProgressView()
-                .controlSize(.small)
+            HStack(spacing: 10) {
+                ProgressView()
+                    .controlSize(.small)
 
-            Text(progress.message)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
+                Text(progress.message)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(.regularMaterial, in: Capsule())
+            .overlay {
+                WithPerceptionTracking {
+                    Capsule()
+                        .strokeBorder(Color.white.opacity(0.16))
+                }
+            }
+            .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
+            .fixedSize()
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 9)
-        .background(.regularMaterial, in: Capsule())
-        .overlay {
-            Capsule()
-                .strokeBorder(Color.white.opacity(0.16))
-        }
-        .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
-        .fixedSize()
     }
 }
