@@ -190,11 +190,11 @@ private struct ProfileRow: View {
     private func duplicate() {
         let base = profile.name
         let existingNames = Set(profileService.profiles.map(\.name))
-        var name = "\(base) Copy"
+        var name = "\(base) 副本"
         var counter = 1
         while existingNames.contains(name) {
             counter += 1
-            name = "\(base) Copy \(counter)"
+            name = "\(base) 副本 \(counter)"
         }
         profileService.createProfile(
             name: name,

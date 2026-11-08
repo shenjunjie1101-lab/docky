@@ -6,7 +6,7 @@ UserDefaults.standard.set(["zh-Hans"], forKey: "AppleLanguages")
 
 if CommandLine.arguments.contains("--localization-smoke-test") {
     do {
-        try runChineseLocalizationSmokeTest()
+        try MainActor.assumeIsolated { try runChineseLocalizationSmokeTest() }
     } catch {
         fputs("Localization smoke test failed: \(error)\n", stderr)
         exit(1)

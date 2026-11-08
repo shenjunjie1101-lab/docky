@@ -47,7 +47,7 @@ struct WidgetsSettingsView: View {
                     bundleURLPendingDeletion = nil
                 }
             } message: { url in
-                Text("\(url.lastPathComponent) will be removed from disk. It will keep running until you restart Docky.")
+                Text("将从磁盘中移除 \(url.lastPathComponent)。它会继续运行，直到你重新启动 Docky。")
             }
             .alert(
                 "Could not install widget",

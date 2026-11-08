@@ -1205,7 +1205,7 @@ struct TileView: View {
         case .widget(let widget):
             widget.kind.title
         case .smartStack(let stack):
-            stack.title
+            stack.title == "Smart Stack" ? String(localized: "Smart Stack") : stack.title
         case .folder(let folder):
             folder.displayName
         case .trash:
@@ -1940,7 +1940,7 @@ struct TileView: View {
         if !candidates.isEmpty {
             actions.append(.divider)
             actions.append(contentsOf: candidates.map { widget in
-                .action(widget.title, isOn: currentKind == widget.kind) {
+                .action(widget.kind.title, isOn: currentKind == widget.kind) {
                     TileStore.shared.setAppWidgetDisplay(
                         bundleIdentifier: app.bundleIdentifier,
                         kind: widget.kind
@@ -2305,7 +2305,7 @@ struct TileView: View {
         var actions: [ContextAction] = []
         let widgetVisibilityActions = TileStore.shared.smartStackWidgetCandidates(tileID: tile.id).map { widget in
             ContextAction.action(
-                widget.title,
+                widget.kind.title,
                 isOn: TileStore.shared.isSmartStackWidgetVisible(
                     tileID: tile.id,
                     ownerBundleIdentifier: widget.ownerBundleIdentifier

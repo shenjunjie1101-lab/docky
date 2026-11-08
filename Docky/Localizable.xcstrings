@@ -3600,7 +3600,7 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "完整数量"
+            "value": "非空"
           }
         }
       }

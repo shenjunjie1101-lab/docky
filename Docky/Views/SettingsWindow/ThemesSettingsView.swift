@@ -261,7 +261,7 @@ struct ThemesSettingsView: View {
 
     private func defaultExportName() -> String {
         if let active = manager.activeManifest {
-            return "\(active.name) Copy.dockytheme"
+            return "\(active.name) 副本.dockytheme"
         }
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
@@ -308,7 +308,7 @@ struct ThemesSettingsView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Label(LocalizedStringKey(title), systemImage: systemImage)
+            Label(title, systemImage: systemImage)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 4)
         }

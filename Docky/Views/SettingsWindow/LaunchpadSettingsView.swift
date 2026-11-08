@@ -130,7 +130,7 @@ struct LaunchpadSettingsView: View {
 
                             Spacer()
 
-                            Text("\(Int(preferences.launchpadBaseIconSize)) pt")
+                            Text("\(Int(preferences.launchpadBaseIconSize)) 磅")
                                 .foregroundStyle(.secondary)
                                 .monospacedDigit()
                         }
@@ -154,7 +154,7 @@ struct LaunchpadSettingsView: View {
 
                             Spacer()
 
-                            Text("\(Int(preferences.launchpadColumnSpacing)) pt")
+                            Text("\(Int(preferences.launchpadColumnSpacing)) 磅")
                                 .foregroundStyle(.secondary)
                                 .monospacedDigit()
                         }

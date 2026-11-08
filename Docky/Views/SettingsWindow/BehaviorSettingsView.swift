@@ -182,7 +182,7 @@ struct BehaviorSettingsView: View {
                     }
                     .labelsHidden()
 
-                    Text("\(String(format: "%.2f", preferences.autohideWindowDelay)) s")
+                    Text("\(String(format: "%.2f", preferences.autohideWindowDelay)) 秒")
                         .foregroundStyle(.secondary)
                         .frame(width: 56, alignment: .trailing)
                 }
@@ -204,7 +204,7 @@ struct BehaviorSettingsView: View {
                     }
                     .labelsHidden()
 
-                    Text("\(String(format: "%.2f", preferences.autohideAnimationDuration)) s")
+                    Text("\(String(format: "%.2f", preferences.autohideAnimationDuration)) 秒")
                         .foregroundStyle(.secondary)
                         .frame(width: 56, alignment: .trailing)
                 }
@@ -236,7 +236,7 @@ struct BehaviorSettingsView: View {
                     }
                     .labelsHidden()
 
-                    Text("\(String(format: "%.2f", preferences.fullscreenRevealDelay)) s")
+                    Text("\(String(format: "%.2f", preferences.fullscreenRevealDelay)) 秒")
                         .foregroundStyle(.secondary)
                         .frame(width: 56, alignment: .trailing)
                 }
@@ -531,7 +531,7 @@ struct BehaviorSettingsView: View {
 
                     Text(preferences.widgetHoverPreviewDelay == 0
                         ? "Off"
-                        : "\(String(format: "%.2f", preferences.widgetHoverPreviewDelay)) s")
+                        : "\(String(format: "%.2f", preferences.widgetHoverPreviewDelay)) 秒")
                         .foregroundStyle(.secondary)
                         .frame(width: 56, alignment: .trailing)
                 }
@@ -611,7 +611,7 @@ struct BehaviorSettingsView: View {
 
                     Spacer()
 
-                    Text("\(Int(preferences.appFolderIconSize)) pt")
+                    Text("\(Int(preferences.appFolderIconSize)) 磅")
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }

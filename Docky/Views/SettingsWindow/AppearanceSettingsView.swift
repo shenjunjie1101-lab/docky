@@ -147,7 +147,7 @@ struct AppearanceSettingsView: View {
                 value: $preferences.activeIndicatorOffset,
                 range: -20...20,
                 step: 1,
-                format: { "\(Int($0)) pt" },
+                format: { "\(Int($0)) 磅" },
                 description: "调整运行标记与屏幕边缘之间的距离。"
             )
 
@@ -228,7 +228,7 @@ struct AppearanceSettingsView: View {
             value: $preferences.dividerOffset,
             range: -20...20,
             step: 1,
-            format: { "\(Int($0)) pt" },
+            format: { "\(Int($0)) 磅" },
             description: "沿图块较短的方向移动分隔线。正值会使横向程序坞的分隔线上移，使纵向程序坞的分隔线右移。"
         )
 
@@ -372,7 +372,7 @@ struct AppearanceSettingsView: View {
                         }
                         .labelsHidden()
 
-                        Text("\(Int(preferences.tileVerticalPadding)) pt")
+                        Text("\(Int(preferences.tileVerticalPadding)) 磅")
                             .foregroundStyle(.secondary)
                             .frame(width: 48, alignment: .trailing)
                     }
@@ -396,7 +396,7 @@ struct AppearanceSettingsView: View {
                             Text("Tile Spacing")
                         }
                         .labelsHidden()
-                        Text("\(Int(preferences.tileSpacing)) pt")
+                        Text("\(Int(preferences.tileSpacing)) 磅")
                             .foregroundStyle(.secondary)
                             .frame(width: 48, alignment: .trailing)
                     }
@@ -418,7 +418,7 @@ struct AppearanceSettingsView: View {
                     }
                     .labelsHidden()
 
-                    Text("\(Int(dockSettings.tileSize.rounded())) pt")
+                    Text("\(Int(dockSettings.tileSize.rounded())) 磅")
                         .foregroundStyle(.secondary)
                         .frame(width: 48, alignment: .trailing)
                 }
@@ -441,7 +441,7 @@ struct AppearanceSettingsView: View {
                             Text("Tile Icon Padding")
                         }
                         .labelsHidden()
-                        Text("\(Int(preferences.effectiveTileIconPadding)) pt")
+                        Text("\(Int(preferences.effectiveTileIconPadding)) 磅")
                             .foregroundStyle(.secondary)
                             .frame(width: 48, alignment: .trailing)
                     }
@@ -496,7 +496,7 @@ struct AppearanceSettingsView: View {
                         Text("Hover Background Corner Radius")
                     }
                     .labelsHidden()
-                    Text("\(Int(preferences.effectiveTileHoverBackgroundCornerRadius)) pt")
+                    Text("\(Int(preferences.effectiveTileHoverBackgroundCornerRadius)) 磅")
                         .foregroundStyle(.secondary)
                         .frame(width: 56, alignment: .trailing)
                 }
@@ -573,7 +573,7 @@ struct AppearanceSettingsView: View {
                         Text("Active Background Corner Radius")
                     }
                     .labelsHidden()
-                    Text("\(Int(preferences.effectiveTileActiveBackgroundCornerRadius)) pt")
+                    Text("\(Int(preferences.effectiveTileActiveBackgroundCornerRadius)) 磅")
                         .foregroundStyle(.secondary)
                         .frame(width: 56, alignment: .trailing)
                 }
@@ -598,7 +598,7 @@ struct AppearanceSettingsView: View {
                             Text("Shadow Radius")
                         }
                         .labelsHidden()
-                        Text(String(format: "%.1f pt", preferences.effectiveIconShadowRadius))
+                        Text(String(format: "%.1f 磅", preferences.effectiveIconShadowRadius))
                             .foregroundStyle(.secondary)
                             .frame(width: 56, alignment: .trailing)
                     }
@@ -637,7 +637,7 @@ struct AppearanceSettingsView: View {
                         }
                         .labelsHidden()
 
-                        Text("\(Int(dockSettings.largeSize.rounded())) pt")
+                        Text("\(Int(dockSettings.largeSize.rounded())) 磅")
                             .foregroundStyle(.secondary)
                             .frame(width: 48, alignment: .trailing)
                     }
@@ -690,7 +690,7 @@ struct AppearanceSettingsView: View {
                             Text("Window Corner Radius")
                         }
                         .labelsHidden()
-                        Text("\(Int(min(preferences.windowCornerRadius, maximumCornerRadius))) pt")
+                        Text("\(Int(min(preferences.windowCornerRadius, maximumCornerRadius))) 磅")
                             .foregroundStyle(.secondary)
                             .frame(width: 48, alignment: .trailing)
                     }
@@ -759,7 +759,7 @@ struct AppearanceSettingsView: View {
                             Text("Border Width")
                         }
                         .labelsHidden()
-                        Text(String(format: "%.1f pt", preferences.effectiveWindowBorderWidth))
+                        Text(String(format: "%.1f 磅", preferences.effectiveWindowBorderWidth))
                             .foregroundStyle(.secondary)
                             .frame(width: 56, alignment: .trailing)
                     }
@@ -883,7 +883,7 @@ struct AppearanceSettingsView: View {
     ) -> some View {
         // Three-state row: the toggle is the user's intent (override
         // this span's value or inherit). The slider becomes editable
-        // only when the override is on. Unset state shows "inherited"
+        // only when the override is on. Unset state shows "沿用默认值"
         // rather than a meaningless number.
         let isOverriding = Binding<Bool>(
             get: { binding.wrappedValue != nil },
@@ -910,8 +910,8 @@ struct AppearanceSettingsView: View {
             .labelsHidden()
             .disabled(!isOverriding.wrappedValue)
             Text(isOverriding.wrappedValue
-                 ? "\(Int(sliderValue.wrappedValue)) pt"
-                 : (effective.map { "\(Int($0)) pt" } ?? "inherited"))
+                 ? "\(Int(sliderValue.wrappedValue)) 磅"
+                 : (effective.map { "\(Int($0)) 磅" } ?? "沿用默认值"))
                 .foregroundStyle(.secondary)
                 .frame(width: 80, alignment: .trailing)
         }
@@ -1431,7 +1431,7 @@ struct AppearanceSettingsView: View {
             }
             .labelsHidden()
             .disabled(!usesOverride.wrappedValue)
-            Text("\(Int(effective)) pt")
+            Text("\(Int(effective)) 磅")
                 .foregroundStyle(.secondary)
                 .frame(width: 48, alignment: .trailing)
         }
@@ -1448,7 +1448,7 @@ struct AppearanceSettingsView: View {
                 Text(LocalizedStringKey(label))
             }
             .labelsHidden()
-            Text("\(Int(value.wrappedValue)) pt")
+            Text("\(Int(value.wrappedValue)) 磅")
                 .foregroundStyle(.secondary)
                 .frame(width: 48, alignment: .trailing)
         }
