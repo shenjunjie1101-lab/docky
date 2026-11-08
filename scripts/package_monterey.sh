@@ -4,6 +4,11 @@ set -euo pipefail
 app="build/Build/Products/Release/Docky.app"
 test -f "$app/Contents/MacOS/Docky"
 mkdir -p dist
+for plist in "$app/Contents/Info.plist" "$app/Contents/Library/LoginItems/DockyDockWatchdog.app/Contents/Info.plist"; do
+  /usr/libexec/PlistBuddy -c 'Set :CFBundleShortVersionString 0.9.7' "$plist"
+done
+revision=$(git rev-parse HEAD)
+printf 'Source revision: %s\nhttps://github.com/shenjunjie1101-lab/docky/tree/%s\n' "$revision" "$revision" > "$app/Contents/Resources/Source-Revision.txt"
 cp LICENSE "$app/Contents/Resources/GPL-3.0.txt"
 cp MONTEREY.md "$app/Contents/Resources/Monterey-Compatibility.md"
 
@@ -12,6 +17,7 @@ import pathlib, plistlib, struct, sys
 app = pathlib.Path(sys.argv[1])
 info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
 assert info['LSMinimumSystemVersion'] == '12.6', info
+assert info['CFBundleShortVersionString'] == '0.9.7', info
 for binary in [app / 'Contents/MacOS/Docky',
                app / 'Contents/Library/LoginItems/DockyDockWatchdog.app/Contents/MacOS/DockyDockWatchdog']:
     data = binary.read_bytes()
