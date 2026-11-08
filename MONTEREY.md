@@ -13,6 +13,12 @@ widgets still need testing on a real Monterey Mac.
 
 ## Changes and limits
 
+- On macOS 12/13, app activation preserves the caller's options and adds
+  `activateIgnoringOtherApps` for explicit dock actions. Already-running apps
+  with empty accessibility window lists receive activation before reopening;
+  rejected activation requests fall back to NSWorkspace. CI checks the legacy
+  option construction and switching from a Safari page to running/hidden apps
+  with both accessory and regular Docky activation policies.
 - Perception 1.6.0 replaces the macOS 14 Observation runtime, including tracking
   inside lazy SwiftUI view builders and the AppKit observation bridge.
 - Settings, corner shapes, geometry observation, path helpers, delays, app

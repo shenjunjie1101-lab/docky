@@ -130,9 +130,15 @@ final class WorkspaceService: ObservableObject {
         // No AX windows can also mean every window is on another Space (AX
         // can't see those): activate to switch Spaces instead of reopening.
         if accessibilityGranted, allWindows.isEmpty {
+            // An AX lookup can be empty for a running third-party app even
+            // though it has a window. Try foreground activation as well as
+            // reopening it, rather than relying only on a reopen Apple event.
+            runningApp.unhide()
+            let didRequestActivation = runningApp.activateTransferringFrontmost(options: [.activateAllWindows])
             if hasWindowOnAnotherSpace(pid: runningApp.processIdentifier) {
-                runningApp.unhide()
-                runningApp.activateTransferringFrontmost(options: [.activateAllWindows])
+                if !didRequestActivation, let appURL = runningApp.bundleURL {
+                    openApplication(at: appURL)
+                }
             } else if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) {
                 openApplication(at: appURL)
             }
@@ -157,7 +163,10 @@ final class WorkspaceService: ObservableObject {
 
         // Default: bring the app forward.
         runningApp.unhide()
-        runningApp.activateTransferringFrontmost(options: [.activateAllWindows])
+        if !runningApp.activateTransferringFrontmost(options: [.activateAllWindows]),
+           let appURL = runningApp.bundleURL {
+            openApplication(at: appURL)
+        }
     }
 
     /// Whether the window server knows a live, ordinary window for `pid` that

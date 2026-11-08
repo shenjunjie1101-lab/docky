@@ -42,14 +42,14 @@ codesign --force --deep --sign - "$app"
 codesign --verify --deep --strict --verbose=2 "$app"
 otool -L "$app/Contents/MacOS/Docky" > dist/linked-libraries.txt
 
-package_name="Docky-0.9.7-Monterey-12.6-arm64-zh-CN-fix2"
+package_name="Docky-0.9.7-Monterey-12.6-arm64-zh-CN-fix3"
 ditto -c -k --sequesterRsrc --keepParent "$app" "dist/$package_name.zip"
 dmg_root=$(mktemp -d)
 trap 'rm -rf "$dmg_root"' EXIT
 ditto "$app" "$dmg_root/Docky.app"
 ln -s /Applications "$dmg_root/Applications"
 cat > "$dmg_root/使用说明.txt" <<'TEXT'
-Docky 0.9.7 — macOS 12.6 简体中文兼容测试版 fix2（Apple Silicon）
+Docky 0.9.7 — macOS 12.6 简体中文兼容测试版 fix3（Apple Silicon）
 
 1. 将 Docky 拖入 Applications（应用程序）。
 2. 首次打开时，按住 Control 点击应用并选择“打开”。本版本使用临时签名，未经 Apple 公证。
@@ -58,8 +58,13 @@ Docky 0.9.7 — macOS 12.6 简体中文兼容测试版 fix2（Apple Silicon）
    入口：Docky 设置 → 系统 → 系统程序坞 → 隐藏系统程序坞。
 5. 如需在全屏应用中也一直显示：设置 → 行为 → 可见性，关闭“全屏时隐藏”。
 
-fix2 调整：实际窗口层级、切换应用时保持显示、旧系统菜单及解组处理。
+fix3 调整：macOS 12 激活已运行应用时明确请求前台切换；激活失败时重新打开应用。
+包含 fix2 的窗口置顶、切换应用时保持显示、旧系统菜单和解组保护。
 升级前请退出旧版，再将新版拖入应用程序并替换。
+
+放大程序坞：设置 → 外观 → 图块布局 → 图块大小，建议先尝试 64–80 磅。
+应用较多时：设置 → 行为 → 可见性 → 空间不足时，选择“滚动”，避免整条自动缩小。
+小组件 1x/2x/3x 主要表示横向占位宽度，不是文字放大倍数。
 
 已知限制：音乐播放小组件暂不支持；启动台采用普通滚动和翻页按钮；
 部分小组件采用紧凑排版；原版自动更新已关闭；外部插件需要单独兼容 12.6。

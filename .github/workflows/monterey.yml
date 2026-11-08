@@ -50,6 +50,13 @@ jobs:
             build 2>&1 | tee build.log
       - name: Verify and package the app
         run: bash scripts/package_monterey.sh
+      - name: Check switching from browser to already-running apps
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          subprocess.run(['build/Build/Products/Release/Docky.app/Contents/MacOS/Docky',
+                          '--app-activation-smoke-test'], check=True, timeout=120)
+          PY
       - name: Check native dock layer above other applications
         run: |
           python3 - <<'PY'
