@@ -1,0 +1,45 @@
+name: Monterey compatibility build
+
+on:
+  push:
+    branches: [compat/macos-12.6]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monterey-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode 26
+        shell: bash
+        run: |
+          for xcode_path in /Applications/Xcode_26*.app; do
+            if [[ -d "$xcode_path" ]]; then
+              echo "DEVELOPER_DIR=$xcode_path/Contents/Developer" >> "$GITHUB_ENV"
+            fi
+          done
+      - name: Build for macOS 12.6 on Apple Silicon
+        shell: bash
+        run: |
+          set -o pipefail
+          xcodebuild -version
+          xcodebuild -project Docky.xcodeproj -scheme Docky \
+            -configuration Release -destination 'generic/platform=macOS' \
+            -derivedDataPath build MACOSX_DEPLOYMENT_TARGET=12.6 \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO \
+            build 2>&1 | tee build.log
+      - name: Collect build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: monterey-build-log
+          path: build.log
+          retention-days: 14
