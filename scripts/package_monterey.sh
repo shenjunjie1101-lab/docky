@@ -42,25 +42,30 @@ codesign --force --deep --sign - "$app"
 codesign --verify --deep --strict --verbose=2 "$app"
 otool -L "$app/Contents/MacOS/Docky" > dist/linked-libraries.txt
 
-package_name="Docky-0.9.7-Monterey-12.6-arm64-zh-CN"
+package_name="Docky-0.9.7-Monterey-12.6-arm64-zh-CN-fix2"
 ditto -c -k --sequesterRsrc --keepParent "$app" "dist/$package_name.zip"
 dmg_root=$(mktemp -d)
 trap 'rm -rf "$dmg_root"' EXIT
 ditto "$app" "$dmg_root/Docky.app"
 ln -s /Applications "$dmg_root/Applications"
 cat > "$dmg_root/使用说明.txt" <<'TEXT'
-Docky 0.9.7 — macOS 12.6 简体中文兼容测试版（Apple Silicon）
+Docky 0.9.7 — macOS 12.6 简体中文兼容测试版 fix2（Apple Silicon）
 
 1. 将 Docky 拖入 Applications（应用程序）。
 2. 首次打开时，按住 Control 点击应用并选择“打开”。本版本使用临时签名，未经 Apple 公证。
 3. 根据应用提示，在“系统偏好设置 → 安全性与隐私 → 隐私”中允许辅助功能和屏幕录制。
 4. 首次运行保留系统 Dock。确认基本操作正常后，再按需开启隐藏系统 Dock。
+   入口：Docky 设置 → 系统 → 系统程序坞 → 隐藏系统程序坞。
+5. 如需在全屏应用中也一直显示：设置 → 行为 → 可见性，关闭“全屏时隐藏”。
+
+fix2 调整：实际窗口层级、切换应用时保持显示、旧系统菜单及解组处理。
+升级前请退出旧版，再将新版拖入应用程序并替换。
 
 已知限制：音乐播放小组件暂不支持；启动台采用普通滚动和翻页按钮；
 部分小组件采用紧凑排版；原版自动更新已关闭；外部插件需要单独兼容 12.6。
 
 本版本仍需在 macOS 12.6 实机验证。如果无法启动，请保留完整错误提示或崩溃报告。
-源码：https://github.com/shenjunjie1101-lab/docky/tree/compat/macos-12.6
+源码：https://github.com/shenjunjie1101-lab/docky/tree/fix/monterey-window-layer
 TEXT
 cp LICENSE "$dmg_root/LICENSE.txt"
 hdiutil create -volname "Docky for Monterey" -srcfolder "$dmg_root" -ov \

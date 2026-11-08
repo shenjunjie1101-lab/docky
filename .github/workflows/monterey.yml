@@ -51,10 +51,16 @@ jobs:
       - name: Verify and package the app
         run: bash scripts/package_monterey.sh
       - name: Check native dock layer above other applications
-        run: build/Build/Products/Release/Docky.app/Contents/MacOS/Docky --window-layer-smoke-test
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          subprocess.run(['build/Build/Products/Release/Docky.app/Contents/MacOS/Docky',
+                          '--window-layer-smoke-test'], check=True, timeout=120)
+          PY
       - name: Verify Chinese resources and render UI previews
         run: build/Build/Products/Release/Docky.app/Contents/MacOS/Docky --localization-smoke-test
       - name: Upload Monterey test build
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Docky-Monterey-12.6-arm64-zh-CN

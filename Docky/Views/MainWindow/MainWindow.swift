@@ -234,6 +234,21 @@ final class MainWindow: NSPanel {
     override var canBecomeKey: Bool { Self.allowsKeyWindow }
     override var canBecomeMain: Bool { false }
 
+    static func makeDockWindow() -> MainWindow {
+        // Decode-free construction matters: the old nib archives an NSWindow,
+        // which can reject the nonactivating-panel flag even with our custom
+        // NSPanel subclass. Construct an actual panel and install the same view.
+        let window = MainWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 480, height: 64),
+            styleMask: [.borderless], backing: .buffered, defer: false)
+        window.hasShadow = false
+        window.isReleasedWhenClosed = false
+        window.contentView = MainWindowContainerView(frame: NSRect(origin: .zero, size: window.frame.size))
+        window.contentView?.wantsLayer = true
+        window.applyCurrentFrame(animated: false)
+        return window
+    }
+
     private enum VisibilityState {
         case visible
         case hidden

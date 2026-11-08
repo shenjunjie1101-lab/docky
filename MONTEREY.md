@@ -23,6 +23,11 @@ widgets still need testing on a real Monterey Mac.
   CI checks its WindowServer layer and stacking against an overlapping normal
   window, including after Finder activation; user-selected autohide and
   fullscreen visibility rules still apply.
+- Context menus use the public AppKit presentation API before macOS 26. Menu
+  actions that remove or ungroup a tile run after menu tracking unwinds; ungroup
+  also deduplicates imported member IDs. CI exercises 30 native-menu group and
+  ungroup cycles across grid, list and inline presentation, plus an imported
+  duplicate-member case.
 - Monterey uses ordinary scrolling with explicit page buttons, without the newer
   snapping behavior. Adaptive widget content uses its compact presentation.
 - Window snapshots first use the existing CoreGraphics capture path. The newer

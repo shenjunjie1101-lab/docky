@@ -395,22 +395,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     }
 
     private func makeMainWindowController() -> MainWindowController? {
-        var topLevelObjects: NSArray?
-        let didLoadNib = Bundle.main.loadNibNamed(
-            "MainWindow",
-            owner: nil,
-            topLevelObjects: &topLevelObjects
-        )
-
-        guard
-            didLoadNib,
-            let mainWindow = (topLevelObjects as? [Any])?.first(where: { $0 is MainWindow }) as? MainWindow
-        else {
-            assertionFailure("Failed to load MainWindow.xib")
-            return nil
-        }
-
-        return MainWindowController(window: mainWindow)
+        MainWindowController(window: MainWindow.makeDockWindow())
     }
 
     private func configureMainMenu() {

@@ -1037,7 +1037,7 @@ struct AppFolderListMenuPresenter: NSViewRepresentable {
 
         private func popUp(menu: NSMenu, in view: NSView) {
             let selector = NSSelectorFromString("_popUpMenuRelativeToRect:inView:preferredEdge:")
-            if menu.responds(to: selector) {
+            if #available(macOS 26.0, *), menu.responds(to: selector) {
                 typealias Fn = @convention(c) (NSMenu, Selector, NSRect, NSView?, NSRectEdge) -> Void
                 let imp = menu.method(for: selector)
                 let fn = unsafeBitCast(imp, to: Fn.self)

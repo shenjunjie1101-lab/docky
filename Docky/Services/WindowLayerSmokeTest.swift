@@ -28,12 +28,7 @@ func runWindowLayerSmokeTest() throws {
     preferences.hidesDuringFullscreen = false
     preferences.maximizedWindowBehavior = .ignore
 
-    var topLevelObjects: NSArray?
-    try require(Bundle.main.loadNibNamed("MainWindow", owner: nil,
-                                        topLevelObjects: &topLevelObjects), "Dock nib failed to load")
-    guard let dock = (topLevelObjects as? [Any])?.compactMap({ $0 as? MainWindow }).first else {
-        throw NSError(domain: "Docky.InteractionQA", code: 2)
-    }
+    let dock = MainWindow.makeDockWindow()
     let controller = MainWindowController(window: dock)
     controller.showWindow(nil)
     settle(0.6)
@@ -86,6 +81,12 @@ func runWindowLayerSmokeTest() throws {
                 "Ordering the dock forward stole keyboard focus")
     try checkStacking("background dock ordered forward without activation")
 
+    // Native menus need an active event source for deterministic automated
+    // selection; test background stacking above before activating our fixture.
+    app.activate(ignoringOtherApps: true)
+    cover.makeKeyAndOrderFront(nil)
+    settle(0.3)
+
     let store = TileStore.shared
     let bundleIDs = ["com.apple.TextEdit", "com.apple.calculator", "com.apple.Preview"]
     try require(bundleIDs.allSatisfy { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil },
@@ -117,26 +118,32 @@ func runWindowLayerSmokeTest() throws {
             ran = true
             store.ungroupAppFolder(tileID: folderID)
         }
-        let coordinator = ContextActionMenuPresenter.Coordinator(
-            actionProvider: { _ in [action] }, preferredEdge: .maxY,
-            onPresentationChanged: { _ in })
-        let menu = NSMenu()
-        let item = NSMenuItem(title: action.title, action: NSSelectorFromString("runAction:"), keyEquivalent: "")
-        item.target = coordinator
-        item.representedObject = action
-        menu.addItem(item)
-        let selection = Timer(timeInterval: 0.15, repeats: false) { _ in
-            menu.performActionForItem(at: 0)
-            menu.cancelTracking()
+        for _ in 0..<3 where !ran {
+            menuReturned = false
+            let coordinator = ContextActionMenuPresenter.Coordinator(
+                actionProvider: { _ in [action] }, preferredEdge: .maxY,
+                onPresentationChanged: { _ in })
+            let menu = NSMenu()
+            let item = NSMenuItem(title: action.title, action: NSSelectorFromString("runAction:"), keyEquivalent: "")
+            item.target = coordinator
+            item.representedObject = action
+            menu.addItem(item)
+            let selection = Timer(timeInterval: 0.15, repeats: false) { _ in
+                MainActor.assumeIsolated {
+                    menu.performActionForItem(at: 0)
+                    menu.cancelTrackingWithoutAnimation()
+                }
+            }
+            RunLoop.main.add(selection, forMode: .common)
+            RunLoop.main.add(selection, forMode: .eventTracking)
+            guard let anchor = dock.contentView else { throw NSError(domain: "Docky.InteractionQA", code: 5) }
+            coordinator.popUpCartouche(menu: menu, in: anchor)
+            menuReturned = true
+            selection.invalidate()
+            settle(0.12)
         }
-        RunLoop.main.add(selection, forMode: .common)
-        RunLoop.main.add(selection, forMode: .eventTracking)
-        guard let anchor = dock.contentView else { throw NSError(domain: "Docky.InteractionQA", code: 5) }
-        coordinator.popUpCartouche(menu: menu, in: anchor)
-        menuReturned = true
-        selection.invalidate()
-        settle(0.12)
-        try require(ran && !ranDuringTracking, "Menu action ran before menu tracking unwound in cycle \(cycle)")
+        try require(ran, "Native menu did not accept the simulated selection in cycle \(cycle)")
+        try require(!ranDuringTracking, "Menu action ran before menu tracking unwound in cycle \(cycle)")
         try require(preferences.pinnedItems.compactMap(\.bundleIdentifier) == bundleIDs,
                     "Ungroup lost or reordered members in cycle \(cycle)")
         let visibleIDs = store.tiles.map(\.id)
