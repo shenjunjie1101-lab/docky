@@ -569,11 +569,11 @@ final class TileStore: ObservableObject {
         }
 
         let alert = NSAlert()
-        alert.messageText = "Rename Folder"
-        alert.informativeText = "Choose a name for this app folder."
+        alert.messageText = String(localized: "Rename Folder")
+        alert.informativeText = "为这个应用文件夹输入名称。"
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "Rename")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "重命名")
+        alert.addButton(withTitle: String(localized: "Cancel"))
 
         let textField = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
         textField.stringValue = item.folderDisplayName ?? "Folder"
@@ -2486,7 +2486,7 @@ final class TileStore: ObservableObject {
     private static func makeSmartStackTile(identifier: String, widgets: [WidgetTile]) -> SmartStackTile {
         SmartStackTile(
             identifier: identifier,
-            title: "Smart Stack",
+            title: String(localized: "Smart Stack"),
             widgets: widgets,
             span: .three
         )
@@ -2704,7 +2704,7 @@ final class TileStore: ObservableObject {
             .split(whereSeparator: \.isWhitespace)
             .joined(separator: " ")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        return normalized.isEmpty ? "Folder" : normalized
+        return normalized.isEmpty ? String(localized: "Folder") : normalized
     }
 
     // MARK: - Parsing plist entries
@@ -2727,7 +2727,7 @@ final class TileStore: ObservableObject {
     }
 
     private static func parseAppTile(id: String, data: [String: Any]) -> Tile? {
-        let label = (data["file-label"] as? String) ?? "Unknown"
+        let label = (data["file-label"] as? String) ?? "未知"
         let fileData = data["file-data"] as? [String: Any]
         let urlString = fileData?["_CFURLString"] as? String
         let url = urlString.flatMap { URL(string: $0) }

@@ -1,4 +1,4 @@
-# Docky 0.9.7 — macOS Monterey compatibility build
+# Docky 0.9.7 — Simplified Chinese Monterey compatibility build
 
 This fork targets macOS 12.6 on Apple Silicon. It is an experimental source
 port of upstream tag `v0.9.7`, not an official Docky release.
@@ -46,3 +46,12 @@ bash scripts/package_monterey.sh
 The package script produces a ZIP and DMG in `dist/`. These local builds are ad
 hoc signed and are not notarized by Apple. The upstream GPLv3 license applies;
 included Perception and IssueReporting notices are preserved in the app bundle.
+
+## Simplified Chinese edition
+
+The app selects Simplified Chinese before AppKit loads its resources. Translation
+covers the string catalog, native menu, privacy usage descriptions, built-in
+catalog actions, permission guidance, status text, settings and widget labels.
+Existing app names, user content, filenames and file paths are preserved.
+The CI workflow validates format arguments and unchanged executable action data,
+then renders seven settings pages and checks native Chinese resource lookup.

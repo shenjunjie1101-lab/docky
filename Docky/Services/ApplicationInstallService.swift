@@ -67,7 +67,7 @@ final class ApplicationInstallService {
         let sourceURL = Bundle.main.bundleURL.standardizedFileURL
 
         guard let destinationDirectory = preferredApplicationsDirectory() else {
-            presentMoveFailureAlert(message: "Docky could not find a writable Applications folder.")
+            presentMoveFailureAlert(message: "Docky 找不到可写入的“应用程序”文件夹。")
             return false
         }
 

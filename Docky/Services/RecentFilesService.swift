@@ -2,7 +2,7 @@
 //  RecentFilesService.swift
 //  Docky
 //
-//  Live "Recents" list backed by Spotlight, mirroring Finder's sidebar
+//  Live "最近使用" list backed by Spotlight, mirroring Finder's sidebar
 //  Recents canned search at:
 //    /System/Library/CoreServices/Finder.app/Contents/Resources/
 //      MyLibraries/myDocuments.cannedSearch/Resources/search.savedSearch

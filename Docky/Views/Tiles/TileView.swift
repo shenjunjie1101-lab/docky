@@ -1198,18 +1198,18 @@ struct TileView: View {
             window.windowTitle
         case .appFolder(let folder):
             folder.displayName
-        case .launchpad(let launchpad):
-            launchpad.title
-        case .startMenu(let menu):
-            menu.title
+        case .launchpad:
+            String(localized: "Launchpad")
+        case .startMenu:
+            String(localized: "Start Menu")
         case .widget(let widget):
-            widget.title
+            widget.kind.title
         case .smartStack(let stack):
             stack.title
         case .folder(let folder):
             folder.displayName
         case .trash:
-            "Trash"
+            String(localized: "Trash")
         case .spacer, .flexibleSpacer, .divider:
             nil
         }
@@ -1652,26 +1652,26 @@ struct TileView: View {
             children.append(.divider)
             children.append(contentsOf: [
                 .action(
-                    "Left and Right",
+                    "左右并排",
                     image: contextMenuSymbol("rectangle.lefthalf.filled")
                 ) { _ = workspace.tile(windows: windows, layout: .leftRight) },
                 .action(
-                    "Right and Left",
+                    "右左并排",
                     image: contextMenuSymbol("rectangle.righthalf.filled")
                 ) { _ = workspace.tile(windows: windows, layout: .rightLeft) },
                 .action(
-                    "Top and Bottom",
+                    "上下排列",
                     image: contextMenuSymbol("rectangle.tophalf.filled")
                 ) { _ = workspace.tile(windows: windows, layout: .topBottom) },
                 .action(
-                    "Bottom and Top",
+                    "下上排列",
                     image: contextMenuSymbol("rectangle.bottomhalf.filled")
                 ) { _ = workspace.tile(windows: windows, layout: .bottomTop) },
             ])
             if windows.count >= 3 {
                 children.append(
                     .action(
-                        "Quarters",
+                        "四等分",
                         image: contextMenuSymbol("rectangle.split.2x2")
                     ) { _ = workspace.tile(windows: windows, layout: .quarters) }
                 )
@@ -1795,7 +1795,7 @@ struct TileView: View {
 
         var result = actions
         if let optionsIndex = result.firstIndex(where: {
-            $0.kind == .submenu && $0.title == "Options"
+            $0.kind == .submenu && $0.title == String(localized: "Options")
         }) {
             var children = result[optionsIndex].children
             if !children.isEmpty, children.last?.kind != .divider {
@@ -1850,7 +1850,7 @@ struct TileView: View {
                 workspace.hide(bundleIdentifier: app.bundleIdentifier)
             })
             actions.append(.action(
-                useForceQuit ? "Force Quit" : "Quit",
+                useForceQuit ? "强制退出" : "Quit",
                 isDestructive: useForceQuit
             ) {
                 workspace.quit(bundleIdentifier: app.bundleIdentifier, force: useForceQuit)
@@ -2104,7 +2104,7 @@ struct TileView: View {
             ])
 
             if let playbackState = mediaPlayback.state(for: widget.ownerBundleIdentifier), playbackState.supportsFavorite {
-                actions.append(.action(playbackState.isFavorite ? "Unfavorite" : "Favorite") {
+                actions.append(.action(playbackState.isFavorite ? "取消收藏" : "收藏") {
                     Task {
                         await mediaPlayback.setFavorite(!playbackState.isFavorite, for: widget.ownerBundleIdentifier)
                     }
@@ -2121,7 +2121,7 @@ struct TileView: View {
                 actions.append(settingsAction)
             }
             actions.append(.divider)
-            actions.append(widgetRemovalAction(for: widget, nonDockyTitle: "Remove Stack"))
+            actions.append(widgetRemovalAction(for: widget, nonDockyTitle: "移除叠放"))
             return actions
         case .weather:
             var actions: [ContextAction] = [
@@ -2260,7 +2260,7 @@ struct TileView: View {
         }
     }
 
-    private func widgetRemovalAction(for widget: WidgetTile, nonDockyTitle: String = "Remove Widget") -> ContextAction {
+    private func widgetRemovalAction(for widget: WidgetTile, nonDockyTitle: String = "移除小组件") -> ContextAction {
         if isDockyPinnedTile || isDockyTrailingTile {
             return .action(String(localized: "Remove from Dock")) {
                 removeDockyTile()
@@ -2384,13 +2384,13 @@ struct TileView: View {
     private func spanTitle(for span: TileSpan) -> String {
         switch span {
         case .one:
-            "1 Tile"
+            "1 格"
         case .two:
-            "2 Tiles"
+            "2 格"
         case .three:
-            "3 Tiles"
+            "3 格"
         case .four:
-            "4 Tiles"
+            "4 格"
         }
     }
 
@@ -2637,7 +2637,7 @@ private struct FolderListMenuPresenter: NSViewRepresentable {
             case .loaded(let itemURLs):
                 let sortedItemURLs = FolderAccessService.shared.sortedItems(in: itemURLs, sortMode: tile.sortMode)
                 if sortedItemURLs.isEmpty {
-                    let emptyItem = NSMenuItem(title: "No visible items", action: nil, keyEquivalent: "")
+                    let emptyItem = NSMenuItem(title: String(localized: "No visible items"), action: nil, keyEquivalent: "")
                     emptyItem.isEnabled = false
                     menu.addItem(emptyItem)
                 } else if sortedItemURLs.count > inlineItemLimit {
@@ -2645,7 +2645,7 @@ private struct FolderListMenuPresenter: NSViewRepresentable {
                         menu.addItem(menuItem(for: itemURL))
                     }
                     let overflowCount = sortedItemURLs.count - inlineItemLimit
-                    let showMoreItem = NSMenuItem(title: "Show More (\(overflowCount))", action: nil, keyEquivalent: "")
+                    let showMoreItem = NSMenuItem(title: "显示更多（\(overflowCount)）", action: nil, keyEquivalent: "")
                     let overflowMenu = NSMenu(title: showMoreItem.title)
                     for itemURL in sortedItemURLs.dropFirst(inlineItemLimit) {
                         overflowMenu.addItem(menuItem(for: itemURL))
@@ -2658,7 +2658,7 @@ private struct FolderListMenuPresenter: NSViewRepresentable {
                     }
                 }
             case .unreadable:
-                let unreadableItem = NSMenuItem(title: "Can't read folder contents", action: nil, keyEquivalent: "")
+                let unreadableItem = NSMenuItem(title: String(localized: "Can't read folder contents"), action: nil, keyEquivalent: "")
                 unreadableItem.isEnabled = false
                 menu.addItem(unreadableItem)
             }
@@ -2667,7 +2667,7 @@ private struct FolderListMenuPresenter: NSViewRepresentable {
                 menu.addItem(.separator())
             }
 
-            let openInFinderItem = NSMenuItem(title: "Open in Finder", action: #selector(openInFinder(_:)), keyEquivalent: "")
+            let openInFinderItem = NSMenuItem(title: String(localized: "Open in Finder"), action: #selector(openInFinder(_:)), keyEquivalent: "")
             openInFinderItem.target = self
             openInFinderItem.representedObject = folderURL
             menu.addItem(openInFinderItem)
@@ -3090,7 +3090,7 @@ func fileContextActions(for url: URL) -> [ContextAction] {
         },
         .divider,
         .action(
-            "Move to Trash",
+            "移到废纸篓",
             image: contextMenuSymbol("trash"),
             isDestructive: true
         ) {

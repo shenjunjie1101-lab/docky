@@ -685,10 +685,10 @@ enum ThemeExportError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidName(let name):
-            return "The name \"\(name)\" can't be used as a theme identifier."
+            return "“\(name)”不能用作主题标识符。"
         case .archiveFailed(let status, let stderr):
             let detail = stderr.isEmpty ? "" : " (\(stderr.trimmingCharacters(in: .whitespacesAndNewlines)))"
-            return "Failed to write theme archive (exit \(status))\(detail)."
+            return "写入主题压缩包失败（退出状态 \(status)）\(detail)。"
         }
     }
 }
@@ -703,13 +703,13 @@ enum ThemeImportError: LocalizedError {
         switch self {
         case .extractionFailed(let status, let stderr):
             let detail = stderr.isEmpty ? "" : " (\(stderr.trimmingCharacters(in: .whitespacesAndNewlines)))"
-            return "Failed to extract theme archive (exit \(status))\(detail)."
+            return "解压主题压缩包失败（退出状态 \(status)）\(detail)。"
         case .missingManifest:
-            return "The theme archive does not contain a theme.json manifest."
+            return "主题压缩包中不包含 theme.json 配置文件。"
         case .invalidManifest(let underlying):
-            return "The theme manifest is invalid: \(underlying.localizedDescription)"
+            return "主题配置文件无效：\(underlying.localizedDescription)"
         case .invalidID(let id):
-            return "The theme manifest id \"\(id)\" is not a valid identifier."
+            return "主题标识符“\(id)”无效。"
         }
     }
 }

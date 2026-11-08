@@ -317,8 +317,8 @@ private struct WindowPreviewsDebugView: View {
         return CGRect(
             x: (boundsDict["X"] as? CGFloat) ?? 0,
             y: (boundsDict["Y"] as? CGFloat) ?? 0,
-            width: (boundsDict["Width"] as? CGFloat) ?? 0,
-            height: (boundsDict["Height"] as? CGFloat) ?? 0
+            width: (boundsDict["宽度"] as? CGFloat) ?? 0,
+            height: (boundsDict["高度"] as? CGFloat) ?? 0
         )
     }
 

@@ -38,32 +38,32 @@ private enum SettingsPane: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .profiles: "Profiles"
-        case .appearanceGeneral: "General"
-        case .appearanceIndicators: "Indicators"
-        case .appearanceTileLayout: "Tile Layout"
-        case .appearanceWindowShape: "Window Shape"
-        case .appearanceWindowBackground: "Window Background"
-        case .appearanceWidgets: "Widgets"
-        case .appearanceThemes: "Themes"
-        case .appIcons: "App Icons"
-        case .behaviorGeneral: "General"
-        case .behaviorPlacement: "Placement"
-        case .behaviorVisibility: "Visibility"
-        case .behaviorAppTileClick: "App Tile Click"
-        case .behaviorAppFolders: "App Folders"
-        case .behaviorWidgets: "Widgets"
-        case .hiddenApps: "Hidden Apps"
-        case .launchpad: "Launchpad"
-        case .startMenu: "Start Menu"
-        case .windowManagement: "Window Management"
-        case .actions: "Actions"
-        case .externalWidgets: "Widget Store"
-        case .behaviorLaunch: "Launch"
-        case .behaviorSystemDock: "System Dock"
-        case .permissions: "Permissions"
-        case .updates: "Updates"
-        case .feedback: "Feedback"
+        case .profiles: String(localized: "Profiles")
+        case .appearanceGeneral: String(localized: "General")
+        case .appearanceIndicators: String(localized: "Indicators")
+        case .appearanceTileLayout: String(localized: "Tile Layout")
+        case .appearanceWindowShape: String(localized: "Window Shape")
+        case .appearanceWindowBackground: String(localized: "Window Background")
+        case .appearanceWidgets: String(localized: "Widgets")
+        case .appearanceThemes: String(localized: "Themes")
+        case .appIcons: String(localized: "App Icons")
+        case .behaviorGeneral: String(localized: "General")
+        case .behaviorPlacement: String(localized: "Placement")
+        case .behaviorVisibility: String(localized: "Visibility")
+        case .behaviorAppTileClick: "应用点击行为"
+        case .behaviorAppFolders: "应用文件夹"
+        case .behaviorWidgets: String(localized: "Widgets")
+        case .hiddenApps: String(localized: "Hidden Apps")
+        case .launchpad: String(localized: "Launchpad")
+        case .startMenu: String(localized: "Start Menu")
+        case .windowManagement: String(localized: "Window Management")
+        case .actions: "快捷操作"
+        case .externalWidgets: String(localized: "Widget Store")
+        case .behaviorLaunch: String(localized: "Launch")
+        case .behaviorSystemDock: String(localized: "System Dock")
+        case .permissions: String(localized: "Permissions")
+        case .updates: String(localized: "Updates")
+        case .feedback: "反馈"
         }
     }
 
@@ -138,8 +138,8 @@ private struct SettingsSection: Identifiable {
 }
 
 private let settingsSections: [SettingsSection] = [
-    SettingsSection(id: "profiles", title: "Profiles", panes: [.profiles]),
-    SettingsSection(id: "appearance", title: "Appearance", panes: [
+    SettingsSection(id: "profiles", title: String(localized: "Profiles"), panes: [.profiles]),
+    SettingsSection(id: "appearance", title: String(localized: "Appearance"), panes: [
         .appearanceThemes,
         .appearanceGeneral,
         .appearanceIndicators,
@@ -149,7 +149,7 @@ private let settingsSections: [SettingsSection] = [
         .appearanceWidgets,
         .appIcons
     ]),
-    SettingsSection(id: "behavior", title: "Behavior", panes: [
+    SettingsSection(id: "behavior", title: String(localized: "Behavior"), panes: [
         .behaviorGeneral,
         .behaviorPlacement,
         .behaviorVisibility,
@@ -158,20 +158,20 @@ private let settingsSections: [SettingsSection] = [
         .behaviorWidgets,
         .hiddenApps
     ]),
-    SettingsSection(id: "features", title: "Features", panes: [
+    SettingsSection(id: "features", title: String(localized: "Features"), panes: [
         .launchpad,
         .startMenu,
         .windowManagement,
         .actions,
         .externalWidgets
     ]),
-    SettingsSection(id: "system", title: "System", panes: [
+    SettingsSection(id: "system", title: String(localized: "System"), panes: [
         .behaviorLaunch,
         .behaviorSystemDock,
         .permissions,
         .updates
     ]),
-    SettingsSection(id: "support", title: "Support", panes: [
+    SettingsSection(id: "support", title: "支持", panes: [
         .feedback
     ])
 ]

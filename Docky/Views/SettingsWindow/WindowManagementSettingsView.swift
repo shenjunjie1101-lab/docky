@@ -29,10 +29,10 @@ struct WindowManagementSettingsView: View {
         if preferences.showsWindowSwitcherFocusPreview,
            preferences.windowSwitcherPreviewMode == .instantFocus,
            previewControlsApply {
-            return "While the switcher is open, keep the shortcut modifiers held and tap the shortcut again to cycle. In Instant Focus mode, each step immediately focuses the next window and releasing the modifiers ends cycling."
+            return "切换器打开时，保持按住修饰键，并再次按快捷键逐项切换。在“即时激活”模式下，每一步都会立即激活下一个窗口；松开修饰键后结束切换。"
         }
 
-        return "While the switcher is open, keep the shortcut modifiers held and tap the shortcut again to cycle. Release the modifiers to focus the selected window."
+        return "切换器打开时，保持按住修饰键，并再次按快捷键逐项切换。松开修饰键后激活选中的窗口。"
     }
 
     var body: some View {
@@ -151,21 +151,21 @@ struct WindowManagementSettingsView: View {
                         }
 
                         actionKeyRow(
-                            title: "Minimize",
+                            title: String(localized: "Minimize"),
                             keyCode: preferences.switcherMinimizeKeyCode,
                             isRecording: $isRecordingMinimizeKey,
                             defaultKeyCode: 46
                         ) { preferences.switcherMinimizeKeyCode = $0 }
 
                         actionKeyRow(
-                            title: "Close Window",
+                            title: String(localized: "Close Window"),
                             keyCode: preferences.switcherCloseKeyCode,
                             isRecording: $isRecordingCloseKey,
                             defaultKeyCode: 13
                         ) { preferences.switcherCloseKeyCode = $0 }
 
                         actionKeyRow(
-                            title: "Zoom",
+                            title: String(localized: "Zoom"),
                             keyCode: preferences.switcherZoomKeyCode,
                             isRecording: $isRecordingZoomKey,
                             defaultKeyCode: 6
@@ -242,7 +242,7 @@ struct WindowManagementSettingsView: View {
         onChange: @escaping (UInt16) -> Void
     ) -> some View {
         HStack {
-            Text(title)
+            Text(LocalizedStringKey(title))
             Spacer()
             SingleKeyRecorderControl(
                 keyCode: keyCode,
@@ -263,7 +263,7 @@ private struct SingleKeyRecorderControl: View {
     var body: some View {
         WithPerceptionTracking {
             HStack(spacing: 8) {
-                Button(isRecording ? "Press Key" : KeyboardShortcut.keyDisplayString(for: keyCode)) {
+                Button(isRecording ? "按下按键" : KeyboardShortcut.keyDisplayString(for: keyCode)) {
                     isRecording = true
                 }
                 .buttonStyle(.borderedProminent)

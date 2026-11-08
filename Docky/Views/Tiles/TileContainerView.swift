@@ -507,7 +507,7 @@ struct TileContainerView: View {
                 id: "editor-preview:smart-stack",
                 content: .smartStack(SmartStackTile(
                     identifier: "editor-preview:smart-stack",
-                    title: "Smart Stack",
+                    title: String(localized: "Smart Stack"),
                     widgets: WidgetCatalog.smartStackRegistrations.map { $0.makeTile() },
                     span: .three
                 ))
@@ -2063,7 +2063,7 @@ struct TileContainerView: View {
                 id: "editor-preview:smart-stack",
                 content: .smartStack(SmartStackTile(
                     identifier: "editor-preview:smart-stack",
-                    title: "Smart Stack",
+                    title: String(localized: "Smart Stack"),
                     widgets: WidgetCatalog.smartStackRegistrations.map { $0.makeTile() },
                     span: .three
                 ))

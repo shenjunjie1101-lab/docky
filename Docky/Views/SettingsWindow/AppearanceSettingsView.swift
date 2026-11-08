@@ -143,21 +143,21 @@ struct AppearanceSettingsView: View {
             .padding(.vertical, 4)
 
             sliderRow(
-                title: "Inward Offset",
+                title: "向内偏移",
                 value: $preferences.activeIndicatorOffset,
                 range: -20...20,
                 step: 1,
                 format: { "\(Int($0)) pt" },
-                description: "Shifts the indicator further from or closer to the screen edge."
+                description: "调整运行标记与屏幕边缘之间的距离。"
             )
 
             sliderRow(
-                title: "Size",
+                title: String(localized: "Size"),
                 value: $preferences.activeIndicatorScale,
                 range: 0.5...2.0,
                 step: 0.05,
                 format: { String(format: "%.2fx", $0) },
-                description: "Scales the indicator's rendered size."
+                description: "调整运行标记的显示大小。"
             )
         }
 
@@ -173,7 +173,7 @@ struct AppearanceSettingsView: View {
                 .font(.headline)
 
             dividerImageRow(
-                title: "Center",
+                title: String(localized: "Center"),
                 path: preferences.dividerImagePath,
                 onChoose: { chooseDividerImage(slot: .global) },
                 onClear: { preferences.dividerImagePath = nil }
@@ -182,7 +182,7 @@ struct AppearanceSettingsView: View {
             Divider()
 
             dividerImageRow(
-                title: "Left Side",
+                title: "左侧",
                 path: preferences.leftDividerImagePath,
                 onChoose: { chooseDividerImage(slot: .left) },
                 onClear: { preferences.leftDividerImagePath = nil }
@@ -215,39 +215,39 @@ struct AppearanceSettingsView: View {
         .padding(.vertical, 4)
 
         sliderRow(
-            title: "Padding",
+            title: String(localized: "Padding"),
             value: $preferences.dividerPaddingFraction,
             range: 0...0.5,
             step: 0.01,
             format: { "\(Int(($0 * 100).rounded()))%" },
-            description: "Controls how much each divider is inset along its short axis, as a fraction of the tile size."
+            description: "按图块大小的比例，设置分隔线在较短方向上的内缩量。"
         )
 
         sliderRow(
-            title: "Vertical Offset",
+            title: "垂直偏移",
             value: $preferences.dividerOffset,
             range: -20...20,
             step: 1,
             format: { "\(Int($0)) pt" },
-            description: "Shifts dividers along the tile's short axis. Positive values move them up in horizontal docks or right in vertical docks."
+            description: "沿图块较短的方向移动分隔线。正值会使横向程序坞的分隔线上移，使纵向程序坞的分隔线右移。"
         )
 
         sliderRow(
-            title: "Image Size",
+            title: "图片大小",
             value: $preferences.dividerImageScale,
             range: 0.5...2.0,
             step: 0.05,
             format: { String(format: "%.2fx", $0) },
-            description: "Scales custom divider images. Has no effect on the default line."
+            description: "调整自定义分隔线图片的大小，不影响默认分隔线。"
         )
 
         sliderRow(
-            title: "Opacity",
+            title: String(localized: "Opacity"),
             value: $preferences.dividerOpacity,
             range: 0...1,
             step: 0.05,
             format: { "\(Int(($0 * 100).rounded()))%" },
-            description: "Controls how visible dividers are. 100% is fully opaque; 0% hides them entirely."
+            description: "控制分隔线的可见程度。100% 为完全不透明，0% 为完全隐藏。"
         )
 
         VStack(alignment: .leading, spacing: 8) {
@@ -287,12 +287,12 @@ struct AppearanceSettingsView: View {
         description: String
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.headline)
 
             HStack {
                 Slider(value: value, in: range, step: step) {
-                    Text(title)
+                    Text(LocalizedStringKey(title))
                 }
                 .labelsHidden()
 
@@ -301,7 +301,7 @@ struct AppearanceSettingsView: View {
                     .frame(width: 64, alignment: .trailing)
             }
 
-            Text(description)
+            Text(LocalizedStringKey(description))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -312,7 +312,7 @@ struct AppearanceSettingsView: View {
     private func dividerImageRow(title: String?, path: String?, onChoose: @escaping () -> Void, onClear: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             if let title {
-                Text(title)
+                Text(LocalizedStringKey(title))
             }
 
             HStack {
@@ -705,22 +705,22 @@ struct AppearanceSettingsView: View {
 
             DisclosureGroup("Per-Corner Radii") {
                 cornerRadiusRow(
-                    label: "Top Leading",
+                    label: "左上角",
                     binding: $preferences.windowCornerRadiusTopLeading,
                     effective: preferences.effectiveWindowCornerRadiusTopLeading
                 )
                 cornerRadiusRow(
-                    label: "Top Trailing",
+                    label: "右上角",
                     binding: $preferences.windowCornerRadiusTopTrailing,
                     effective: preferences.effectiveWindowCornerRadiusTopTrailing
                 )
                 cornerRadiusRow(
-                    label: "Bottom Leading",
+                    label: "左下角",
                     binding: $preferences.windowCornerRadiusBottomLeading,
                     effective: preferences.effectiveWindowCornerRadiusBottomLeading
                 )
                 cornerRadiusRow(
-                    label: "Bottom Trailing",
+                    label: "右下角",
                     binding: $preferences.windowCornerRadiusBottomTrailing,
                     effective: preferences.effectiveWindowCornerRadiusBottomTrailing
                 )
@@ -735,9 +735,9 @@ struct AppearanceSettingsView: View {
 
             DisclosureGroup("Per-Edge Content Insets") {
                 contentInsetRow(label: "Top", value: $preferences.windowContentInsetTop)
-                contentInsetRow(label: "Leading", value: $preferences.windowContentInsetLeading)
+                contentInsetRow(label: "前端", value: $preferences.windowContentInsetLeading)
                 contentInsetRow(label: "Bottom", value: $preferences.windowContentInsetBottom)
-                contentInsetRow(label: "Trailing", value: $preferences.windowContentInsetTrailing)
+                contentInsetRow(label: "末端", value: $preferences.windowContentInsetTrailing)
 
                 Text("Padding between the dock panel and the chrome view, per edge. Full-axis mode forces these to 0 regardless.")
                     .foregroundStyle(.secondary)
@@ -790,21 +790,21 @@ struct AppearanceSettingsView: View {
 
         Section {
             widgetSpanBlock(
-                title: "1x Widgets",
+                title: "1 格小组件",
                 paddingBinding: $preferences.widget1xContentPadding,
                 radiusBinding: $preferences.widget1xCornerRadius,
                 effectivePadding: preferences.effectiveWidgetContentPadding(for: .one),
                 effectiveRadius: preferences.effectiveWidgetCornerRadius(for: .one)
             )
             widgetSpanBlock(
-                title: "2x Widgets",
+                title: "2 格小组件",
                 paddingBinding: $preferences.widget2xContentPadding,
                 radiusBinding: $preferences.widget2xCornerRadius,
                 effectivePadding: preferences.effectiveWidgetContentPadding(for: .two),
                 effectiveRadius: preferences.effectiveWidgetCornerRadius(for: .two)
             )
             widgetSpanBlock(
-                title: "3x Widgets",
+                title: "3 格小组件",
                 paddingBinding: $preferences.widget3xContentPadding,
                 radiusBinding: $preferences.widget3xCornerRadius,
                 effectivePadding: preferences.effectiveWidgetContentPadding(for: .three),
@@ -856,16 +856,16 @@ struct AppearanceSettingsView: View {
         effectiveRadius: CGFloat?
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.headline)
+            Text(LocalizedStringKey(title)).font(.headline)
 
             widgetOverrideRow(
-                label: "Content Padding",
+                label: "内容留白",
                 binding: paddingBinding,
                 effective: effectivePadding,
                 range: 0...32
             )
             widgetOverrideRow(
-                label: "Corner Radius",
+                label: "圆角半径",
                 binding: radiusBinding,
                 effective: effectiveRadius,
                 range: 0...32
@@ -901,11 +901,11 @@ struct AppearanceSettingsView: View {
         )
         HStack {
             Toggle(isOn: isOverriding) {
-                Text(label).frame(width: 140, alignment: .leading)
+                Text(LocalizedStringKey(label)).frame(width: 140, alignment: .leading)
             }
             .toggleStyle(.checkbox)
             Slider(value: sliderValue, in: range, step: 1) {
-                Text(label)
+                Text(LocalizedStringKey(label))
             }
             .labelsHidden()
             .disabled(!isOverriding.wrappedValue)
@@ -1044,9 +1044,9 @@ struct AppearanceSettingsView: View {
     private var windowCornerRadiusDescription: String {
         switch preferences.windowClipShape {
         case .rounded:
-            "Controls the roundness of the main dock window and its border, up to a full capsule."
+            "调整程序坞主窗口及边框的圆角，最大可形成完整胶囊形。"
         case .circle:
-            "Circle mode uses the maximum radius automatically, so square chrome becomes circular and wider chrome becomes a capsule."
+            "圆形模式自动使用最大圆角半径：正方形面板会变为圆形，较宽的面板会变为胶囊形。"
         }
     }
 
@@ -1221,7 +1221,7 @@ struct AppearanceSettingsView: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
-        panel.prompt = "Choose Image"
+        panel.prompt = "选择图片"
 
         guard panel.runModal() == .OK, let url = panel.url else {
             return
@@ -1236,7 +1236,7 @@ struct AppearanceSettingsView: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
-        panel.prompt = "Choose Image"
+        panel.prompt = "选择图片"
 
         guard panel.runModal() == .OK, let url = panel.url else {
             return
@@ -1251,7 +1251,7 @@ struct AppearanceSettingsView: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
-        panel.prompt = "Choose Image"
+        panel.prompt = "选择图片"
 
         guard panel.runModal() == .OK, let url = panel.url else {
             return
@@ -1319,7 +1319,7 @@ struct AppearanceSettingsView: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
-        panel.prompt = "Choose Image"
+        panel.prompt = "选择图片"
 
         guard panel.runModal() == .OK, let url = panel.url else {
             return
@@ -1423,11 +1423,11 @@ struct AppearanceSettingsView: View {
 
         HStack {
             Toggle(isOn: usesOverride) {
-                Text(label).frame(width: 120, alignment: .leading)
+                Text(LocalizedStringKey(label)).frame(width: 120, alignment: .leading)
             }
             .toggleStyle(.checkbox)
             Slider(value: value, in: 0...maximumCornerRadius, step: 1) {
-                Text(label)
+                Text(LocalizedStringKey(label))
             }
             .labelsHidden()
             .disabled(!usesOverride.wrappedValue)
@@ -1440,12 +1440,12 @@ struct AppearanceSettingsView: View {
     @ViewBuilder
     private func contentInsetRow(label: String, value: Binding<CGFloat>) -> some View {
         HStack {
-            Text(label).frame(width: 120, alignment: .leading)
+            Text(LocalizedStringKey(label)).frame(width: 120, alignment: .leading)
             Slider(value: Binding(
                 get: { Double(value.wrappedValue) },
                 set: { value.wrappedValue = CGFloat($0) }
             ), in: 0...16, step: 1) {
-                Text(label)
+                Text(LocalizedStringKey(label))
             }
             .labelsHidden()
             Text("\(Int(value.wrappedValue)) pt")
@@ -1464,7 +1464,7 @@ struct AppearanceSettingsView: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
-        panel.prompt = "Choose Image"
+        panel.prompt = "选择图片"
 
         guard panel.runModal() == .OK, let url = panel.url else {
             return

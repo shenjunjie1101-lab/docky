@@ -42,14 +42,14 @@ codesign --force --deep --sign - "$app"
 codesign --verify --deep --strict --verbose=2 "$app"
 otool -L "$app/Contents/MacOS/Docky" > dist/linked-libraries.txt
 
-package_name="Docky-0.9.7-Monterey-12.6-arm64"
+package_name="Docky-0.9.7-Monterey-12.6-arm64-zh-CN"
 ditto -c -k --sequesterRsrc --keepParent "$app" "dist/$package_name.zip"
 dmg_root=$(mktemp -d)
 trap 'rm -rf "$dmg_root"' EXIT
 ditto "$app" "$dmg_root/Docky.app"
 ln -s /Applications "$dmg_root/Applications"
 cat > "$dmg_root/使用说明.txt" <<'TEXT'
-Docky 0.9.7 — macOS 12.6 兼容测试版（Apple Silicon）
+Docky 0.9.7 — macOS 12.6 简体中文兼容测试版（Apple Silicon）
 
 1. 将 Docky 拖入 Applications（应用程序）。
 2. 首次打开时，按住 Control 点击应用并选择“打开”。本版本使用临时签名，未经 Apple 公证。

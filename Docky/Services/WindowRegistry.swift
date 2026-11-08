@@ -193,8 +193,8 @@ final class WindowRegistry: ObservableObject {
         return CGRect(
             x: (boundsDict["X"] as? CGFloat) ?? 0,
             y: (boundsDict["Y"] as? CGFloat) ?? 0,
-            width: (boundsDict["Width"] as? CGFloat) ?? 0,
-            height: (boundsDict["Height"] as? CGFloat) ?? 0
+            width: (boundsDict["宽度"] as? CGFloat) ?? 0,
+            height: (boundsDict["高度"] as? CGFloat) ?? 0
         )
     }
 
@@ -254,7 +254,7 @@ final class WindowRegistry: ObservableObject {
     @discardableResult
     func focus(_ window: AppWindow) -> Bool {
         guard PermissionsService.shared.accessibility == .granted else {
-            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "focus app windows")
+            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "激活应用窗口")
             return false
         }
 
@@ -322,7 +322,7 @@ final class WindowRegistry: ObservableObject {
     @discardableResult
     func minimize(_ window: AppWindow) -> Bool {
         guard PermissionsService.shared.accessibility == .granted else {
-            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "minimize app windows")
+            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "最小化应用窗口")
             return false
         }
 
@@ -340,7 +340,7 @@ final class WindowRegistry: ObservableObject {
     @discardableResult
     func close(_ window: AppWindow) -> Bool {
         guard PermissionsService.shared.accessibility == .granted else {
-            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "close app windows")
+            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "关闭应用窗口")
             return false
         }
 
@@ -359,7 +359,7 @@ final class WindowRegistry: ObservableObject {
     @discardableResult
     func zoom(_ window: AppWindow) -> Bool {
         guard PermissionsService.shared.accessibility == .granted else {
-            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "zoom app windows")
+            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "缩放应用窗口")
             return false
         }
 
@@ -1176,8 +1176,8 @@ final class WindowRegistry: ObservableObject {
                 let cgFrame = CGRect(
                     x: (boundsDict["X"] as? CGFloat) ?? 0,
                     y: (boundsDict["Y"] as? CGFloat) ?? 0,
-                    width: (boundsDict["Width"] as? CGFloat) ?? 0,
-                    height: (boundsDict["Height"] as? CGFloat) ?? 0
+                    width: (boundsDict["宽度"] as? CGFloat) ?? 0,
+                    height: (boundsDict["高度"] as? CGFloat) ?? 0
                 )
                 if abs(cgFrame.origin.x - frame.origin.x) < 2,
                    abs(cgFrame.origin.y - frame.origin.y) < 2,

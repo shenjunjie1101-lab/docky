@@ -224,14 +224,14 @@ struct RemindersWidgetTileView: View {
 
     private var emptyTitle: String {
         if reminders.isLoading {
-            return "Loading Reminders"
+            return "正在载入提醒事项"
         }
 
         if reminders.lastErrorDescription != nil {
-            return "Reminders Unavailable"
+            return "提醒事项不可用"
         }
 
-        return "All Clear"
+        return "已全部完成"
     }
 
     private var emptyDetail: String? {
@@ -239,13 +239,13 @@ struct RemindersWidgetTileView: View {
             return lastErrorDescription
         }
 
-        return "No incomplete reminders right now."
+        return "当前没有未完成的提醒事项。"
     }
 
     private func nextUpBadgeText(for item: ReminderItemSnapshot, now: Date) -> String {
         switch item.timingCategory(relativeTo: now) {
         case .overdue:
-            return "OVERDUE"
+            return "已逾期"
         case .today, .upcoming:
             if let dueDate = item.dueDate {
                 return compactDueLabel(for: item, dueDate: dueDate, now: now)
@@ -272,25 +272,25 @@ struct RemindersWidgetTileView: View {
 
     private func detailedDueLine(for item: ReminderItemSnapshot, now: Date) -> String {
         guard let dueDate = item.dueDate else {
-            return "No due date"
+            return "无截止日期"
         }
 
         var list = ""
         if !item.listTitle.isEmpty {
-            list = " in \(item.listTitle)"
+            list = " · \(item.listTitle)"
         }
 
         switch item.timingCategory(relativeTo: now) {
         case .overdue:
             return item.hasDueTime && Calendar.autoupdatingCurrent.isDate(dueDate, inSameDayAs: now)
-                ? "Overdue • \(timeFormatter.string(from: dueDate))\(list)"
-                : "Overdue • \(dayLabel(for: item, dueDate: dueDate, now: now))\(list)"
+                ? "已逾期 · \(timeFormatter.string(from: dueDate))\(list)"
+                : "已逾期 · \(dayLabel(for: item, dueDate: dueDate, now: now))\(list)"
         case .today:
-            return item.hasDueTime ? timeFormatter.string(from: dueDate) : "Today\(list)"
+            return item.hasDueTime ? timeFormatter.string(from: dueDate) : "今天\(list)"
         case .upcoming:
             return dayLabel(for: item, dueDate: dueDate, now: now) + list
         case .unscheduled:
-            return "No due date\(list)"
+            return "无截止日期\(list)"
         }
     }
 
@@ -302,11 +302,11 @@ struct RemindersWidgetTileView: View {
         }
 
         if calendar.isDateInToday(dueDate) {
-            return "TODAY"
+            return "今天"
         }
 
         if calendar.isDateInTomorrow(dueDate) {
-            return "TOM"
+            return "明天"
         }
 
         return compactDayFormatter.string(from: dueDate).uppercased()
@@ -316,11 +316,11 @@ struct RemindersWidgetTileView: View {
         let calendar = Calendar.autoupdatingCurrent
 
         if calendar.isDateInToday(dueDate) {
-            return item.hasDueTime ? timeFormatter.string(from: dueDate) : "Today"
+            return item.hasDueTime ? timeFormatter.string(from: dueDate) : "今天"
         }
 
         if calendar.isDateInTomorrow(dueDate) {
-            return item.hasDueTime ? "Tomorrow \(timeFormatter.string(from: dueDate))" : "Tomorrow"
+            return item.hasDueTime ? "明天 \(timeFormatter.string(from: dueDate))" : "明天"
         }
 
         if calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: dueDate)).day ?? 0 < 7 {
@@ -357,7 +357,7 @@ struct RemindersWidgetTileView: View {
 
     private var timeFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.timeStyle = .short
         formatter.dateStyle = .none
         return formatter
@@ -365,28 +365,28 @@ struct RemindersWidgetTileView: View {
 
     private var shortDateFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("MMM d")
         return formatter
     }
 
     private var shortDateTimeFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("MMM d j:mm")
         return formatter
     }
 
     private var weekdayFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("EEE")
         return formatter
     }
 
     private var compactDayFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("EEE")
         return formatter
     }

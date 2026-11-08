@@ -39,7 +39,7 @@ struct WeatherWidgetSettingsContent: View {
 
     private var temperatureUnitSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Temperature")
+            Text("温度")
                 .font(.headline)
 
             Picker("", selection: $unitSelection) {
@@ -53,7 +53,7 @@ struct WeatherWidgetSettingsContent: View {
                 applyTemperatureUnit(newValue)
             }
 
-            Text("Automatic follows your system region.")
+            Text("自动模式跟随系统地区设置。")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -147,9 +147,9 @@ struct WeatherWidgetSettingsContent: View {
 
     private var currentLocationDisplayName: String {
         if isConfigured {
-            return configuredName ?? "Custom Location"
+            return configuredName ?? "自定义位置"
         }
-        return "Current Location"
+        return "当前位置"
     }
 
     private func loadCurrentSelection() {

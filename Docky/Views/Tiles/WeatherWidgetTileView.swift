@@ -281,10 +281,10 @@ private struct WeatherWidgetContentView: View {
         var parts: [String] = [snapshot.conditionDescription]
 
         if let high = snapshot.highTemperature {
-            parts.append("H: \(Int(high.rounded()))°")
+            parts.append("最高：\(Int(high.rounded()))°")
         }
         if let low = snapshot.lowTemperature {
-            parts.append("L: \(Int(low.rounded()))°")
+            parts.append("最低：\(Int(low.rounded()))°")
         }
 
         return parts.joined(separator: " • ")
@@ -533,9 +533,9 @@ private struct WeatherWidgetContentView: View {
     private var placeholderTitle: String {
         switch authorizationStatus {
         case .denied, .restricted:
-            "Enable Location"
+            "启用定位"
         default:
-            isLoading ? "Loading Weather" : "Weather"
+            isLoading ? "正在载入天气" : String(localized: "Weather")
         }
     }
 

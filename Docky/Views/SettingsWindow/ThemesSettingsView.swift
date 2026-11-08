@@ -37,7 +37,7 @@ struct ThemesSettingsView: View {
                     if !preferences.userOverriddenAppearanceKeys.isEmpty {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("You have \(preferences.userOverriddenAppearanceKeys.count) appearance override(s).")
+                                Text("你有 \(preferences.userOverriddenAppearanceKeys.count) 项外观自定义设置。")
                                     .font(.callout)
                                 Text("These take precedence over the active theme. Clear them to let the theme show through.")
                                     .font(.caption)
@@ -139,7 +139,7 @@ struct ThemesSettingsView: View {
                 Text(manifest.name)
                     .font(.headline)
                 if let author = manifest.author, !author.isEmpty {
-                    Text("by \(author)")
+                    Text("作者：\(author)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -179,12 +179,12 @@ struct ThemesSettingsView: View {
                     }
                 }
                 if let author = theme.manifest.author, !author.isEmpty {
-                    Text("by \(author)")
+                    Text("作者：\(author)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 if let description = theme.manifest.description, !description.isEmpty {
-                    Text(description)
+                    Text(LocalizedStringKey(description))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
@@ -223,7 +223,7 @@ struct ThemesSettingsView: View {
 
     private func importTheme() {
         let panel = NSOpenPanel()
-        panel.title = "Import Theme"
+        panel.title = "导入主题"
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
@@ -240,7 +240,7 @@ struct ThemesSettingsView: View {
 
     private func exportTheme() {
         let panel = NSSavePanel()
-        panel.title = "Export Theme"
+        panel.title = "导出主题"
         panel.nameFieldStringValue = defaultExportName()
         panel.allowedContentTypes = ThemesSettingsView.importContentTypes
         panel.canCreateDirectories = true
@@ -265,7 +265,7 @@ struct ThemesSettingsView: View {
         }
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
-        return "My Docky Theme \(formatter.string(from: Date())).dockytheme"
+        return "我的 Docky 主题 \(formatter.string(from: Date())).dockytheme"
     }
 
     private var deletionDialogBinding: Binding<Bool> {
@@ -308,7 +308,7 @@ struct ThemesSettingsView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Label(title, systemImage: systemImage)
+            Label(LocalizedStringKey(title), systemImage: systemImage)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 4)
         }

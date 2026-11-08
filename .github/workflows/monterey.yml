@@ -2,7 +2,7 @@ name: Monterey compatibility build
 
 on:
   push:
-    branches: [compat/macos-12.6]
+    branches: [compat/macos-12.6, compat/macos-12.6-zh-cn]
   workflow_dispatch:
 
 permissions:
@@ -18,6 +18,10 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check Chinese translations and action integrity
+        run: python3 scripts/validate_chinese_localization.py
       - name: Select Xcode 26
         shell: bash
         run: |
@@ -46,10 +50,12 @@ jobs:
             build 2>&1 | tee build.log
       - name: Verify and package the app
         run: bash scripts/package_monterey.sh
+      - name: Verify Chinese resources and render UI previews
+        run: build/Build/Products/Release/Docky.app/Contents/MacOS/Docky --localization-smoke-test
       - name: Upload Monterey test build
         uses: actions/upload-artifact@v4
         with:
-          name: Docky-Monterey-12.6-arm64
+          name: Docky-Monterey-12.6-arm64-zh-CN
           path: dist/
           retention-days: 30
       - name: Collect build log

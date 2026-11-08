@@ -38,11 +38,11 @@ struct ActionCatalogSettingsView: View {
                                             .foregroundStyle(.secondary)
                                     }
 
-                                    Text("by \(package.author) • \(package.actionCount) actions • \(package.reviewStatus)")
+                                    Text("作者：\(package.author) • \(package.actionCount) 个操作 • \(package.reviewStatus == "reviewed" ? "已审核" : package.reviewStatus)")
                                         .foregroundStyle(.secondary)
 
                                     if let description = package.description {
-                                        Text(description)
+                                        Text(LocalizedStringKey(description))
                                             .foregroundStyle(.secondary)
                                             .fixedSize(horizontal: false, vertical: true)
                                     }

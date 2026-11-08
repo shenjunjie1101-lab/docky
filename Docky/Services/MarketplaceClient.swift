@@ -161,13 +161,13 @@ enum MarketplaceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .http(let code):
-            "Marketplace responded with HTTP \(code)."
+            "小组件市场返回 HTTP \(code)。"
         case .unzipFailed(let code):
-            "Couldn't unzip the widget archive (exit code \(code))."
+            "无法解压小组件压缩包（退出代码 \(code)）。"
         case .bundleMissing:
-            "The downloaded archive doesn't contain a .dockywidget bundle."
+            "下载的压缩包中不包含 .dockywidget 组件包。"
         case .sha256Mismatch(let expected, let actual):
-            "Download SHA-256 mismatch.\nExpected: \(expected)\nGot: \(actual)"
+            "下载文件的 SHA-256 校验不匹配。\n预期：\(expected)\n实际：\(actual)"
         }
     }
 }

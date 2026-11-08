@@ -303,10 +303,10 @@ struct CalendarWidgetTileView: View {
     private func sectionTitle(for day: Date, now: Date) -> String {
         let calendarRef = Calendar.autoupdatingCurrent
         if calendarRef.isDate(day, inSameDayAs: now) {
-            return "Today"
+            return "今天"
         }
         if calendarRef.isDateInTomorrow(day) {
-            return "Tomorrow"
+            return "明天"
         }
         return sectionDayFormatter.string(from: day)
     }
@@ -349,7 +349,7 @@ struct CalendarWidgetTileView: View {
 
     private func expandedScheduleText(for event: CalendarEventSnapshot, now: Date) -> String {
         if event.isAllDay {
-            return "All day"
+            return "全天"
         }
 
         let start = timeFormatter.string(from: event.startDate)
@@ -359,14 +359,14 @@ struct CalendarWidgetTileView: View {
 
     private var headerDateFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("EEEE d MMM")
         return formatter
     }
 
     private var sectionDayFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("EEE d MMM")
         return formatter
     }
@@ -516,14 +516,14 @@ struct CalendarWidgetTileView: View {
 
     private var emptyTitle: String {
         if calendar.isLoading {
-            return "Loading Calendar"
+            return "正在载入日历"
         }
 
         if calendar.lastErrorDescription != nil {
-            return "Calendar Unavailable"
+            return "日历不可用"
         }
 
-        return "No Upcoming Events"
+        return "暂无即将开始的日程"
     }
 
     private var emptyDetail: String? {
@@ -531,12 +531,12 @@ struct CalendarWidgetTileView: View {
             return lastErrorDescription
         }
 
-        return "You’re clear for now."
+        return "目前没有待处理的日程。"
     }
 
     private func shortTimeText(for event: CalendarEventSnapshot, now: Date) -> String {
         if event.isAllDay {
-            return "ALL DAY"
+            return "全天"
         }
 
         if Calendar.autoupdatingCurrent.isDate(event.startDate, inSameDayAs: now) {
@@ -551,7 +551,7 @@ struct CalendarWidgetTileView: View {
 
         if event.isAllDay {
             return Calendar.autoupdatingCurrent.isDate(event.startDate, inSameDayAs: now)
-                ? "Today, all day"
+                ? "今天，全天"
                 : "\(dayFormatter.string(from: event.startDate)), all day"
         }
 
@@ -571,22 +571,22 @@ struct CalendarWidgetTileView: View {
 
         let minutes = interval / 60
         if minutes < 60 {
-            return "in \(minutes)m"
+            return "\(minutes) 分钟后"
         }
 
         let hours = minutes / 60
         if hours < 24 {
             let remainingMinutes = minutes % 60
-            return remainingMinutes == 0 ? "in \(hours)h" : "in \(hours)h \(remainingMinutes)m"
+            return remainingMinutes == 0 ? "\(hours) 小时后" : "\(hours) 小时 \(remainingMinutes) 分钟后"
         }
 
         let days = hours / 24
-        return days == 1 ? "tomorrow" : "in \(days)d"
+        return days == 1 ? "tomorrow" : "\(days) 天后"
     }
 
     private var timeFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.timeStyle = .short
         formatter.dateStyle = .none
         return formatter
@@ -594,14 +594,14 @@ struct CalendarWidgetTileView: View {
 
     private var shortDateTimeFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("MMM d j:mm")
         return formatter
     }
 
     private var dayFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("EEE MMM d")
         return formatter
     }
@@ -624,28 +624,28 @@ struct CalendarWidgetTileView: View {
 
     private var shortWeekdayFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("EEE")
         return formatter
     }
 
     private var dayNumberFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("d")
         return formatter
     }
 
     private var shortMonthFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.setLocalizedDateFormatFromTemplate("MMM")
         return formatter
     }
 
     private var fullDateFormatter: DateFormatter {
         let formatter = DateFormatter()
-        formatter.locale = .autoupdatingCurrent
+        formatter.locale = Locale(identifier: "zh_CN")
         formatter.dateStyle = .full
         formatter.timeStyle = .none
         return formatter

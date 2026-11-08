@@ -10,14 +10,14 @@ final class SmartOrganizeProgressService: ObservableObject {
     static let shared = SmartOrganizeProgressService()
 
     @Published private(set) var isPresented = false
-    @Published private(set) var message = "Analyzing your workspace"
+    @Published private(set) var message = "正在分析你的工作区"
 
     private let messages = [
-        "Analyzing your workspace",
-        "Rubberizing your layout",
-        "Grouping your launch crew",
-        "Sorting the shiny things",
-        "Polishing your dock flow",
+        "正在分析你的工作区",
+        "正在调整布局",
+        "正在整理应用分组",
+        "正在排列程序坞项目",
+        "正在优化程序坞布局",
     ]
 
     private var activeToken: UUID?

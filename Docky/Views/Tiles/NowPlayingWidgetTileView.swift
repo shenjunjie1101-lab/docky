@@ -129,7 +129,7 @@ struct NowPlayingWidgetTileView: View {
             artworkView(size: layout.artworkSize, artworkCornerRadius: layout.artworkCornerRadius)
 
             VStack(alignment: .leading, spacing: layout.stackSpacing) {
-                Text(playbackState?.isPresentable == false ? (playbackState?.title ?? "Not Playing") : playbackTitle)
+                Text(playbackState?.isPresentable == false ? (playbackState?.title ?? "未在播放") : playbackTitle)
                     .font(.system(size: layout.titleFontSize, weight: .semibold))
                     .foregroundStyle(primaryForegroundColor)
                     .lineLimit(1)
@@ -554,16 +554,16 @@ struct NowPlayingWidgetTileView: View {
     }
 
     private var playbackTitle: String {
-        guard #available(macOS 15.0, *) else { return "Widget unavailable" }
+        guard #available(macOS 15.0, *) else { return "小组件暂不可用" }
         guard let playbackState, playbackState.hasContent else {
-            return "Not Playing"
+            return "未在播放"
         }
 
         return playbackState.title.isEmpty ? ownerDisplayName : playbackState.title
     }
 
     private var playbackArtist: String {
-        guard #available(macOS 15.0, *) else { return "Requires macOS 15 or later" }
+        guard #available(macOS 15.0, *) else { return "需要 macOS 15 或更新版本" }
         guard let playbackState, playbackState.hasContent else {
             return ownerDisplayName
         }

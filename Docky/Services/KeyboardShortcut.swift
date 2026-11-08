@@ -47,7 +47,7 @@ struct KeyboardShortcut: Codable, Equatable {
 
     var displayString: String {
         guard isValid else {
-            return "Not Set"
+            return "未设置"
         }
 
         let modifierDisplay = Self.modifierDisplayString(for: modifierFlags)
@@ -57,7 +57,7 @@ struct KeyboardShortcut: Codable, Equatable {
 
     var releaseInstruction: String {
         let modifierDisplay = Self.modifierDisplayString(for: modifierFlags)
-        return modifierDisplay.isEmpty ? "Release shortcut to switch" : "Release \(modifierDisplay) to switch"
+        return modifierDisplay.isEmpty ? "松开快捷键以切换" : "松开 \(modifierDisplay) 以切换"
     }
 
     static let supportedModifierFlags: NSEvent.ModifierFlags = [.command, .option, .control, .shift]
@@ -96,19 +96,19 @@ struct KeyboardShortcut: Codable, Equatable {
             return character
         }
 
-        return "Key \(keyCode)"
+        return "按键 \(keyCode)"
     }
 
     private static let specialKeyNames: [UInt16: String] = [
-        36: "Return",
+        36: "回车",
         48: "Tab",
-        49: "Space",
+        49: "空格",
         51: "Delete",
-        53: "Escape",
-        123: "Left Arrow",
-        124: "Right Arrow",
-        125: "Down Arrow",
-        126: "Up Arrow",
+        53: "Esc",
+        123: "向左键",
+        124: "向右键",
+        125: "向下键",
+        126: "向上键",
     ]
 
     private static let characterKeyNames: [UInt16: String] = [

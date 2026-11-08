@@ -87,7 +87,7 @@ final class CalendarService: ObservableObject {
             nextEvent = nil
             upcomingEvents = []
             isLoading = false
-            lastErrorDescription = "Calendar read access is needed to show upcoming events."
+            lastErrorDescription = "需要日历读取权限才能显示即将开始的日程。"
         case .notDetermined:
             // Permission is requested lazily from the widget's Enable button,
             // never automatically on render. Leave the widget in its
@@ -99,12 +99,12 @@ final class CalendarService: ObservableObject {
             nextEvent = nil
             upcomingEvents = []
             isLoading = false
-            lastErrorDescription = "Enable Calendar access in Settings to show upcoming events."
+            lastErrorDescription = "请在设置中允许访问日历，以显示即将开始的日程。"
         @unknown default:
             nextEvent = nil
             upcomingEvents = []
             isLoading = false
-            lastErrorDescription = "Calendar is unavailable right now."
+            lastErrorDescription = "日历暂时不可用。"
         }
     }
 
@@ -288,7 +288,7 @@ struct CalendarEventSnapshot: Equatable {
         eventIdentifier = event.eventIdentifier ?? event.calendarItemIdentifier
         calendarIdentifier = event.calendar.calendarIdentifier
         let trimmedTitle = event.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        title = trimmedTitle.isEmpty ? "Untitled Event" : trimmedTitle
+        title = trimmedTitle.isEmpty ? "无标题日程" : trimmedTitle
         startDate = event.startDate
         endDate = event.endDate
         isAllDay = event.isAllDay

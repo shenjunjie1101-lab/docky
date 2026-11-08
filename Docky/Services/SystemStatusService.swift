@@ -268,13 +268,13 @@ struct SystemStatusSnapshot: Equatable {
             SystemStatusMetricSnapshot(
                 kind: .memory,
                 primaryText: Self.percentText(memoryUsagePercent),
-                secondaryText: "MEM",
+                secondaryText: "内存",
                 progress: min(1, max(0, memoryUsagePercent / 100))
             ),
             SystemStatusMetricSnapshot(
                 kind: .network,
                 primaryText: Self.compactRateText(totalNetworkBytesPerSecond),
-                secondaryText: "NET",
+                secondaryText: "网络",
                 progress: Self.networkProgress(totalNetworkBytesPerSecond)
             ),
         ]

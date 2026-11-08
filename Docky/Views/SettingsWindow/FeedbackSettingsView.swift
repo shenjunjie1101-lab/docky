@@ -121,7 +121,7 @@ struct FeedbackSettingsView: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
-        panel.prompt = "Attach"
+        panel.prompt = "附加"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         attachmentURL = url
     }
@@ -138,7 +138,7 @@ struct FeedbackSettingsView: View {
             )
             present(items: [feedbackText as NSString, bundleURL as NSURL])
         } catch {
-            errorMessage = "Could not build feedback bundle: \(error.localizedDescription)"
+            errorMessage = "无法创建反馈诊断包：\(error.localizedDescription)"
         }
     }
 
@@ -146,7 +146,7 @@ struct FeedbackSettingsView: View {
     /// Mail.app with our address pre-filled). Falls back to a generic
     /// `NSSharingServicePicker` if Mail.app isn't configured.
     private func present(items: [Any]) {
-        let subject = "Docky Feedback (v\(Bundle.main.shortVersion))"
+        let subject = "Docky 反馈（版本 \(Bundle.main.shortVersion)）"
         if let mail = NSSharingService(named: .composeEmail) {
             mail.recipients = [feedbackDestinationEmail]
             mail.subject = subject

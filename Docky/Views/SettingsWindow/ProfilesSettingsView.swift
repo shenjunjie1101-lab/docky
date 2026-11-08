@@ -56,7 +56,7 @@ struct ProfilesSettingsView: View {
     }
 
     private func addProfile() {
-        let baseName = "Profile"
+        let baseName = "配置方案"
         let existingNames = Set(profileService.profiles.map(\.name))
         var name = baseName
         var counter = 1
@@ -315,13 +315,13 @@ private struct TimeOfDayTriggerEditor: View {
     @Perception.Bindable private var profileService = ProfileService.shared
 
     private static let weekdays: [(symbol: String, label: String)] = [
-        (symbol: "1", label: "Sun"),
-        (symbol: "2", label: "Mon"),
-        (symbol: "3", label: "Tue"),
-        (symbol: "4", label: "Wed"),
-        (symbol: "5", label: "Thu"),
-        (symbol: "6", label: "Fri"),
-        (symbol: "7", label: "Sat")
+        (symbol: "1", label: "周日"),
+        (symbol: "2", label: "周一"),
+        (symbol: "3", label: "周二"),
+        (symbol: "4", label: "周三"),
+        (symbol: "5", label: "周四"),
+        (symbol: "6", label: "周五"),
+        (symbol: "7", label: "周六")
     ]
 
     var body: some View {
@@ -460,7 +460,7 @@ private struct FrontmostAppTriggerEditor: View {
     }
 
     private var displayLabel: String {
-        if model.bundleIdentifier.isEmpty { return "Pick app…" }
+        if model.bundleIdentifier.isEmpty { return "选择应用…" }
         if let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: model.bundleIdentifier) {
             return FileManager.default.displayName(atPath: app.path)
         }
@@ -530,7 +530,7 @@ private struct SpaceTriggerEditor: View {
     }
 
     private var displayLabel: String {
-        if model.bundleIdentifier.isEmpty { return "Pick app…" }
+        if model.bundleIdentifier.isEmpty { return "选择应用…" }
         if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: model.bundleIdentifier) {
             return FileManager.default.displayName(atPath: url.path)
         }

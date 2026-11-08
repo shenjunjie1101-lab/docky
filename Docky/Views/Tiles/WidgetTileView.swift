@@ -225,7 +225,7 @@ private final class MissingExternalWidgetPlaceholderView: NSView {
         wantsLayer = true
         layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
 
-        let label = NSTextField(labelWithString: "Missing widget: \(identifier)")
+        let label = NSTextField(labelWithString: "缺少小组件：\(identifier)")
         label.font = .systemFont(ofSize: 11)
         label.textColor = .secondaryLabelColor
         label.translatesAutoresizingMaskIntoConstraints = false

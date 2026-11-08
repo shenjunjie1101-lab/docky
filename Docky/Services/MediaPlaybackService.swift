@@ -381,7 +381,7 @@ final class MediaPlaybackService: ObservableObject {
 
     nonisolated private static func resolvedLyrics(from entry: LRCEntry) -> LyricsContent? {
         if entry.instrumental == true {
-            return LyricsContent(plain: "♪ Instrumental ♪", lines: [])
+            return LyricsContent(plain: "♪ 纯音乐 ♪", lines: [])
         }
         let synced = entry.syncedLyrics.map(parseLRC) ?? []
         let plain: String = {

@@ -103,7 +103,7 @@ final class WindowSwitcherService: ObservableObject {
         }
 
         guard PermissionsService.shared.accessibility == .granted else {
-            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "switch between windows")
+            PermissionsService.shared.presentPermissionAlert(for: .accessibility, actionTitle: "切换窗口")
             return
         }
 

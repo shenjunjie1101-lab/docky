@@ -1271,7 +1271,7 @@ final class WorkspaceService: ObservableObject {
         // Earlier callers first attempt the existing CGWindow capture path.
         guard #available(macOS 14.0, *) else {
             throw NSError(domain: "Docky.WindowPreview", code: -1,
-                          userInfo: [NSLocalizedDescriptionKey: "ScreenCaptureKit screenshots require macOS 14."])
+                          userInfo: [NSLocalizedDescriptionKey: "ScreenCaptureKit 截图功能需要 macOS 14 或更新版本。"])
         }
         return try await withCheckedThrowingContinuation { continuation in
             SCScreenshotManager.captureImage(contentFilter: contentFilter, configuration: configuration) { image, error in

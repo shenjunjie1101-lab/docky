@@ -351,7 +351,7 @@ private struct StartMenuView: View {
     }
 
     private var appsSectionTitle: String {
-        query.isEmpty ? "Recent Apps" : "Apps"
+        query.isEmpty ? "最近使用的应用" : String(localized: "Apps")
     }
 
     /// Map persisted bundle IDs to AppTile by resolving each via
@@ -558,7 +558,7 @@ private struct StartMenuView: View {
     private var recentsSection: some View {
         let items = Array(filteredRecents.prefix(8))
         if !items.isEmpty {
-            sectionHeader("Recents")
+            sectionHeader("最近使用")
             VStack(spacing: 4) {
                 ForEach(items, id: \.self) { url in
                     WithPerceptionTracking {
@@ -808,10 +808,10 @@ private enum SystemAction {
 
     var title: String {
         switch self {
-        case .sleep: return "Sleep"
+        case .sleep: return "睡眠"
         case .restart: return "Restart..."
-        case .shutDown: return "Shut Down..."
-        case .logOut: return "Log Out..."
+        case .shutDown: return "关机…"
+        case .logOut: return "退出登录…"
         }
     }
 

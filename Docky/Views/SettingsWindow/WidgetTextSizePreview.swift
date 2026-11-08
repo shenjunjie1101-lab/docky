@@ -67,7 +67,7 @@ struct WidgetTextSizePreview: View {
             .map { $0.makeTile(span: span) }
         return SmartStackTile(
             identifier: "settings.widgetTextSizePreview",
-            title: "Smart Stack",
+            title: String(localized: "Smart Stack"),
             widgets: widgets,
             span: span
         )

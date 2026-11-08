@@ -195,12 +195,12 @@ struct BehaviorSettingsView: View {
             .disabled(!preferences.autohidesWindow)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Animation Duration")
+                Text("动画时长")
                     .font(.headline)
 
                 HStack {
                     Slider(value: $preferences.autohideAnimationDuration, in: 0...1, step: 0.05) {
-                        Text("Animation Duration")
+                        Text("动画时长")
                     }
                     .labelsHidden()
 
@@ -209,7 +209,7 @@ struct BehaviorSettingsView: View {
                         .frame(width: 56, alignment: .trailing)
                 }
 
-                Text("How long the slide takes when Docky shows or hides its window. Set to 0 to snap instantly.")
+                Text("设置 Docky 窗口显示或隐藏时的滑动时长。设为 0 则立即切换，不播放动画。")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -342,10 +342,10 @@ struct BehaviorSettingsView: View {
             .padding(.vertical, 4)
 
             VStack(alignment: .leading, spacing: 8) {
-                Toggle("Dim Idle App Icons", isOn: $preferences.dimsIdleAppIcons)
+                Toggle("淡化闲置应用图标", isOn: $preferences.dimsIdleAppIcons)
                     .font(.headline)
 
-                Text("Fades an app's tile to half opacity while the app is hidden or has no windows open. Turn off to keep icons fully opaque regardless of state. Detecting open windows needs Accessibility permission.")
+                Text("应用已隐藏或没有打开的窗口时，将其图标不透明度降为一半。关闭后始终完全显示。检测打开的窗口需要辅助功能权限。")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -606,7 +606,7 @@ struct BehaviorSettingsView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Icon Size in Opened Folders")
+                    Text("已展开文件夹中的图标大小")
                         .font(.headline)
 
                     Spacer()
@@ -618,7 +618,7 @@ struct BehaviorSettingsView: View {
 
                 Slider(value: $preferences.appFolderIconSize, in: 56...128, step: 1)
 
-                Text("Size of the app icons in an opened app folder. The folder window grows and shrinks with it. Default is 96 pt.")
+                Text("设置展开的应用文件夹中的图标大小，文件夹窗口也会随之调整。默认值为 96 磅。")
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -628,10 +628,10 @@ struct BehaviorSettingsView: View {
 
     private func spanTitle(for span: TileSpan) -> String {
         switch span {
-        case .one: "Small"
-        case .two: "Medium"
-        case .three: "Large"
-        case .four: "Extra Large"
+        case .one: "小"
+        case .two: "中"
+        case .three: "大"
+        case .four: "特大"
         }
     }
 

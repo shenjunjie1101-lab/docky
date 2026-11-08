@@ -47,15 +47,15 @@ struct DividerTileView: View {
 
     private var dividerContextActions: [ContextAction] {
         [
-            .action(preferences.autohidesWindow ? "Turn Hiding Off" : "Turn Hiding On") {
+            .action(preferences.autohidesWindow ? "关闭自动隐藏" : "开启自动隐藏") {
                 preferences.autohidesWindow.toggle()
             },
-            .action(dockSettings.magnification ? "Turn Magnification Off" : "Turn Magnification On") {
+            .action(dockSettings.magnification ? "关闭放大效果" : "开启放大效果") {
                 dockSettings.setMagnification(!dockSettings.magnification)
             },
             .submenu(String(localized: "Position on Screen"), children: positionActions),
             .divider,
-//            .action("Smart Organize Pinned Items") {
+//            .action(String(localized: "Smart Organize Pinned Items")) {
 //                TileStore.shared.smartOrganizePinnedItems()
 //            },
             .divider,

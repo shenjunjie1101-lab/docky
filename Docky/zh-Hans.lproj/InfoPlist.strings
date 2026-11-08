@@ -1,0 +1,7 @@
+"CFBundleDisplayName" = "Docky";
+"NSAppleEventsUsageDescription" = "Docky 需要自动化权限，以便通过访达、System Events 和支持的应用执行文件、菜单及窗口操作。";
+"NSCalendarsFullAccessUsageDescription" = "Docky 需要访问日历，以便在日历小组件中显示即将开始的日程。";
+"NSCalendarsUsageDescription" = "Docky 需要访问日历，以便在日历小组件中显示即将开始的日程。";
+"NSLocationWhenInUseUsageDescription" = "Docky 需要使用你的位置，以便在天气小组件中显示本地天气。";
+"NSRemindersFullAccessUsageDescription" = "Docky 需要访问提醒事项，以便在提醒事项小组件中显示未完成任务。";
+"NSRemindersUsageDescription" = "Docky 需要访问提醒事项，以便在提醒事项小组件中显示未完成任务。";

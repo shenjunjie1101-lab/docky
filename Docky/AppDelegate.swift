@@ -11,7 +11,6 @@ import Cocoa
 import Combine
 import UniformTypeIdentifiers
 
-@main
 class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
     @IBOutlet var window: NSWindow!
@@ -119,10 +118,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
         if let firstError {
             let alert = NSAlert()
-            alert.messageText = "Could not import theme"
+            alert.messageText = String(localized: "Could not import theme")
             alert.informativeText = firstError
             alert.alertStyle = .warning
-            alert.addButton(withTitle: "OK")
+            alert.addButton(withTitle: String(localized: "OK"))
             alert.runModal()
         }
     }
@@ -249,7 +248,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             let scheme = downloadURL.scheme?.lowercased(),
             scheme == "https"
         else {
-            presentInstallAlert(title: "Invalid widget install link", message: "The link did not include a valid HTTPS download URL.", style: .warning)
+            presentInstallAlert(title: "无效的小组件安装链接", message: "链接中没有有效的 HTTPS 下载地址。", style: .warning)
             return
         }
 
@@ -267,17 +266,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
                 try? FileManager.default.removeItem(at: staged.deletingLastPathComponent())
 
                 let alert = NSAlert()
-                alert.messageText = "Widget installed"
-                alert.informativeText = "Restart Docky to start using \(downloadURL.lastPathComponent)."
+                alert.messageText = "小组件已安装"
+                alert.informativeText = "重新启动 Docky，即可使用 \(downloadURL.lastPathComponent)。"
                 alert.alertStyle = .informational
-                alert.addButton(withTitle: "Restart Docky")
-                alert.addButton(withTitle: "Later")
+                alert.addButton(withTitle: "重新启动 Docky")
+                alert.addButton(withTitle: "稍后")
                 if alert.runModal() == .alertFirstButtonReturn {
                     NSApp.terminate(nil)
                 }
             } catch {
                 presentInstallAlert(
-                    title: "Couldn't install widget",
+                    title: "无法安装小组件",
                     message: (error as? LocalizedError)?.errorDescription ?? error.localizedDescription,
                     style: .warning
                 )
@@ -289,11 +288,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     /// user to the toggle rather than silently doing nothing.
     private func presentLinkInstallsDisabledAlert() {
         let alert = NSAlert()
-        alert.messageText = "Installing widgets from links is off"
-        alert.informativeText = "For safety, Docky won't install a widget from a link until you turn this on in Settings › Widget Store."
+        alert.messageText = "尚未允许通过链接安装小组件"
+        alert.informativeText = "为确保安全，请先在“设置 → 小组件商店”中开启此选项，再通过链接安装小组件。"
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "Open Settings")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: String(localized: "Open Settings"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
         if alert.runModal() == .alertFirstButtonReturn {
             SettingsNavigator.shared.requestPane(id: "externalWidgets")
         }
@@ -303,11 +302,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     /// install is always a deliberate choice.
     private func confirmLinkInstall(host: String) -> Bool {
         let alert = NSAlert()
-        alert.messageText = "Install a widget from “\(host)”?"
-        alert.informativeText = "Widgets are native plugins that run inside Docky with the same access Docky has — Accessibility, Automation, files, and more. Docky can't verify what a widget does. Only continue if you trust this source."
+        alert.messageText = "安装来自“\(host)”的小组件？"
+        alert.informativeText = "小组件是直接在 Docky 内运行的原生插件，可使用 Docky 已获得的辅助功能、自动化和文件等权限。Docky 无法验证小组件的具体行为，请仅安装你信任的来源。"
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "Cancel")
-        alert.addButton(withTitle: "Download & Install")
+        alert.addButton(withTitle: String(localized: "Cancel"))
+        alert.addButton(withTitle: "下载并安装")
         return alert.runModal() == .alertSecondButtonReturn
     }
 
@@ -316,7 +315,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         alert.messageText = title
         alert.informativeText = message
         alert.alertStyle = style
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: String(localized: "OK"))
         alert.runModal()
     }
 
@@ -416,15 +415,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
     private func configureMainMenu() {
         let appMenu = NSApp.mainMenu?.items.first?.submenu
-        if let item = appMenu?.item(withTitle: "Preferences…") ?? appMenu?.item(withTitle: "Settings…") {
-            item.title = "Settings…"
+        if let item = appMenu?.items.first(where: { $0.keyEquivalent == "," }) {
+            item.title = String(localized: "Settings…")
             item.action = #selector(showSettingsWindow(_:))
             item.target = self
         }
 
-        if appMenu?.item(withTitle: "Check for Updates…") == nil {
+        if appMenu?.item(withTitle: String(localized: "Check for Updates…")) == nil {
             let item = NSMenuItem(
-                title: "Check for Updates…",
+                title: String(localized: "Check for Updates…"),
                 action: #selector(checkForUpdates(_:)),
                 keyEquivalent: ""
             )
@@ -461,7 +460,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             viewController.view = scrollView
 
             let window = NSWindow(contentViewController: viewController)
-            window.title = "Dock Debug Snapshot"
+            window.title = String(localized: "Dock Debug Snapshot")
             window.setContentSize(scrollView.frame.size)
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             window.isReleasedWhenClosed = false
@@ -599,21 +598,21 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         windowPreviewsItem.target = self
 
         let settingsItem = NSMenuItem(
-            title: "Settings…",
+            title: String(localized: "Settings…"),
             action: #selector(showSettingsWindow(_:)),
             keyEquivalent: ","
         )
         settingsItem.target = self
 
         let checkForUpdatesItem = NSMenuItem(
-            title: "Check for Updates…",
+            title: String(localized: "Check for Updates…"),
             action: #selector(checkForUpdates(_:)),
             keyEquivalent: ""
         )
         checkForUpdatesItem.target = self
 
         let quitItem = NSMenuItem(
-            title: "Quit Docky",
+            title: String(localized: "Quit Docky"),
             action: #selector(NSApplication.terminate(_:)),
             keyEquivalent: "q"
         )
@@ -752,7 +751,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             confirm.messageText = "Override \(dockyKeys.count) docky.* keys?"
             confirm.informativeText = "Existing docky.* UserDefaults will be cleared first, then replaced with the values from \(url.lastPathComponent). Docky will relaunch after."
             confirm.addButton(withTitle: "Override and Relaunch")
-            confirm.addButton(withTitle: "Cancel")
+            confirm.addButton(withTitle: String(localized: "Cancel"))
             guard confirm.runModal() == .alertFirstButtonReturn else { return }
 
             let defaults = UserDefaults.standard

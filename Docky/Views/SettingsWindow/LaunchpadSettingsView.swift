@@ -289,7 +289,7 @@ struct LaunchpadSettingsView: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
-        panel.prompt = "Choose Image"
+        panel.prompt = "选择图片"
         panel.directoryURL = startingDirectoryForBackgroundImagePicker()
 
         // The launchpad overlay (`.mainMenu + 1`) and the launchpad

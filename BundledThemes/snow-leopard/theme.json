@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "snow-leopard",
-  "name": "Snow Leopard",
+  "name": "雪豹风格",
   "author": "Docky",
   "version": "1.0.0",
-  "description": "A faithful Snow Leopard recreation: classic chrome with sprite background, custom dividers, and a curated set of per-app icons from the Leopard Snow pack.",
+  "description": "还原经典 macOS 雪豹程序坞，采用三段拉伸背景、自定义分隔线，以及 Leopard Snow 图标包中的应用图标。",
   "appearance": {
     "disablesGlassLook": true,
     "indicators": {

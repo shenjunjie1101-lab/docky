@@ -15,7 +15,7 @@ struct ShortcutRecorderControl: View {
     var body: some View {
         WithPerceptionTracking {
             HStack(spacing: 8) {
-                Button(isRecording ? "Type Shortcut" : shortcut.displayString) {
+                Button(isRecording ? "输入快捷键" : shortcut.displayString) {
                     isRecording = true
                 }
                 .buttonStyle(.borderedProminent)

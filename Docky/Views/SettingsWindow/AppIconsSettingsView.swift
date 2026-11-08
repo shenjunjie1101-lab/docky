@@ -237,7 +237,7 @@ private struct AppIconOverrideRow: View {
                             .textSelection(.enabled)
 
                         if let overrideName {
-                            Text("Override: \(overrideName)")
+                            Text("自定义：\(overrideName)")
                                 .foregroundStyle(.secondary)
                                 .font(.caption)
                         }
@@ -455,7 +455,7 @@ private struct TrashIconOverrideRow: View {
                         .frame(width: 36, height: 36)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Trash (\(state.title))")
+                        Text("废纸篓（\(state.title)）")
                             .font(.headline)
 
                         Text(state == .empty
@@ -465,7 +465,7 @@ private struct TrashIconOverrideRow: View {
                             .font(.caption)
 
                         if let overrideName {
-                            Text("Override: \(overrideName)")
+                            Text("自定义：\(overrideName)")
                                 .foregroundStyle(.secondary)
                                 .font(.caption)
                         }
@@ -590,7 +590,7 @@ private struct FolderIconOverrideRow: View {
                             .truncationMode(.middle)
 
                         if let overrideName {
-                            Text("Override: \(overrideName)")
+                            Text("自定义：\(overrideName)")
                                 .foregroundStyle(.secondary)
                                 .font(.caption)
                         }
@@ -703,7 +703,7 @@ private struct LaunchpadIconOverrideRow: View {
                             .font(.caption)
 
                         if let overrideName {
-                            Text("Override: \(overrideName)")
+                            Text("自定义：\(overrideName)")
                                 .foregroundStyle(.secondary)
                                 .font(.caption)
                         }
@@ -813,7 +813,7 @@ private struct StartMenuIconOverrideRow: View {
                             .font(.caption)
 
                         if let overrideName {
-                            Text("Override: \(overrideName)")
+                            Text("自定义：\(overrideName)")
                                 .foregroundStyle(.secondary)
                                 .font(.caption)
                         }

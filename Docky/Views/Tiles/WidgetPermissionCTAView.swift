@@ -115,7 +115,7 @@ struct WidgetPermissionCTAView: View {
     private var buttonTitle: String {
         switch status {
         case .denied:
-            return "Open Settings"
+            return String(localized: "Open Settings")
         case .notDetermined, .granted:
             return enableTitle
         }
@@ -123,18 +123,18 @@ struct WidgetPermissionCTAView: View {
 
     private var enableTitle: String {
         switch permission {
-        case .location: return "Enable Location"
-        case .calendar: return "Enable Calendar"
-        case .reminders: return "Enable Reminders"
-        default: return "Enable Access"
+        case .location: return "启用定位"
+        case .calendar: return "启用日历"
+        case .reminders: return "启用提醒事项"
+        default: return "允许访问"
         }
     }
 
     private var reasonText: String {
         switch permission {
-        case .location: return "Show local weather in the dock."
-        case .calendar: return "Show your upcoming events."
-        case .reminders: return "Show your open tasks."
+        case .location: return "在程序坞中显示本地天气。"
+        case .calendar: return "显示即将开始的日程。"
+        case .reminders: return "显示未完成任务。"
         default: return permission.explanation
         }
     }
