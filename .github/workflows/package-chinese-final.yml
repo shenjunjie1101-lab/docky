@@ -1,0 +1,44 @@
+name: Verify final Chinese resource correction
+
+on:
+  push:
+    branches: [compat/macos-12.6-zh-final]
+    paths: [.github/workflows/package-chinese-final.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  package:
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify code matches the successful Chinese build
+        run: git diff --exit-code 786432f6c131a84b6dd86514b548a5a00471d0fd -- Docky DockyDockWatchdog Config ':!Docky/Localizable.xcstrings'
+      - name: Validate translations and executable action data
+        run: python3 scripts/validate_chinese_localization.py
+      - uses: actions/download-artifact@v4
+        with:
+          name: Docky-Monterey-12.6-arm64-zh-CN
+          run-id: 42476590277
+          github-token: ${{ github.token }}
+          path: incoming
+      - name: Unpack verified app and correct the resource
+        run: |
+          mkdir -p build/Build/Products/Release
+          ditto -x -k incoming/Docky-0.9.7-Monterey-12.6-arm64-zh-CN.zip build/Build/Products/Release
+          plutil -replace Switcher -string '切换器' build/Build/Products/Release/Docky.app/Contents/Resources/zh-Hans.lproj/Localizable.strings
+      - name: Verify and sign the corrected package
+        run: bash scripts/package_monterey.sh
+      - name: Check Chinese startup and render seven settings pages
+        run: build/Build/Products/Release/Docky.app/Contents/MacOS/Docky --localization-smoke-test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Docky-Chinese-Monterey-final
+          path: dist/
+          retention-days: 30
