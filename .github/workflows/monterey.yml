@@ -44,6 +44,14 @@ jobs:
             MACOSX_DEPLOYMENT_TARGET=12.6 \
             ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO \
             build 2>&1 | tee build.log
+      - name: Verify and package the app
+        run: bash scripts/package_monterey.sh
+      - name: Upload Monterey test build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Docky-Monterey-12.6-arm64
+          path: dist/
+          retention-days: 30
       - name: Collect build log
         if: always()
         uses: actions/upload-artifact@v4

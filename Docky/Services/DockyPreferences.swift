@@ -3730,7 +3730,7 @@ enum LaunchpadSortMode: String, CaseIterable, Codable, Identifiable {
         static let windowPreviewHoverDelay: TimeInterval = 1.0
         static let windowPreviewLayout: WindowSwitcherLayout = .auto
         static let maximizedWindowBehavior: MaximizedWindowBehavior = .ignore
-        static let hidesSystemDock = true
+        static let hidesSystemDock = false
         static let overflowBehavior: DockOverflowBehavior = .rescale
         static let windowAxisSizing: DockWindowAxisSizing = .fitContent
         static let enablesWidgetHoverPreview = true

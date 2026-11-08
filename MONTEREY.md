@@ -1,0 +1,48 @@
+# Docky 0.9.7 — macOS Monterey compatibility build
+
+This fork targets macOS 12.6 on Apple Silicon. It is an experimental source
+port of upstream tag `v0.9.7`, not an official Docky release.
+
+## Validation status
+
+The GitHub Actions workflow compiles with a macOS 12.6 deployment target and
+checks the resulting ARM64 executable's minimum OS version and ad hoc signature.
+A successful workflow does **not** constitute testing on macOS 12.6. Window
+management, permissions, magnification, multi-display behavior and the built-in
+widgets still need testing on a real Monterey Mac.
+
+## Changes and limits
+
+- Perception 1.6.0 replaces the macOS 14 Observation runtime, including tracking
+  inside lazy SwiftUI view builders and the AppKit observation bridge.
+- Settings, corner shapes, geometry observation, path helpers, delays, app
+  activation and calendar/reminder requests have Monterey-compatible versions.
+- Pointer magnification uses a 60 Hz timer that stops when the pointer rests.
+- Monterey uses ordinary scrolling with explicit page buttons, without the newer
+  snapping behavior. Adaptive widget content uses its compact presentation.
+- Window snapshots first use the existing CoreGraphics capture path. The newer
+  ScreenCaptureKit screenshot fallback is unavailable before macOS 14.
+- The bundled Now Playing adapter requires macOS 15 and is not launched on
+  Monterey; the widget displays an unavailable message.
+- Automatic upstream updates are disabled because upstream releases require a
+  newer operating system. New installations keep the system Dock visible.
+- External widget bundles must themselves support macOS 12.6. A newer bundle
+  does not become compatible simply because the host is compatible.
+
+## Build
+
+Use Xcode 26 on a supported build Mac; the target Mac may stay on macOS 12.6.
+
+```sh
+bash scripts/prepare_monterey_icon.sh
+xcodebuild -project Docky.xcodeproj -scheme Docky \
+  -configuration Release -destination 'generic/platform=macOS' \
+  -derivedDataPath build -skipMacroValidation -skipPackagePluginValidation \
+  MACOSX_DEPLOYMENT_TARGET=12.6 ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+  CODE_SIGNING_ALLOWED=NO build
+bash scripts/package_monterey.sh
+```
+
+The package script produces a ZIP and DMG in `dist/`. These local builds are ad
+hoc signed and are not notarized by Apple. The upstream GPLv3 license applies;
+included Perception and IssueReporting notices are preserved in the app bundle.

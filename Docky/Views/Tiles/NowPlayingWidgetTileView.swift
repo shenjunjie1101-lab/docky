@@ -554,6 +554,7 @@ struct NowPlayingWidgetTileView: View {
     }
 
     private var playbackTitle: String {
+        guard #available(macOS 15.0, *) else { return "Widget unavailable" }
         guard let playbackState, playbackState.hasContent else {
             return "Not Playing"
         }
@@ -562,6 +563,7 @@ struct NowPlayingWidgetTileView: View {
     }
 
     private var playbackArtist: String {
+        guard #available(macOS 15.0, *) else { return "Requires macOS 15 or later" }
         guard let playbackState, playbackState.hasContent else {
             return ownerDisplayName
         }

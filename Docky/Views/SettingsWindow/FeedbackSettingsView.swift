@@ -178,40 +178,40 @@ private enum FeedbackBundle {
         let timestamp = ISO8601DateFormatter().string(from: Date())
             .replacingOccurrences(of: ":", with: "-")
         let stagingRoot = fileManager.temporaryDirectory
-            .appendingPathComponent( "docky-feedback-\(timestamp)", isDirectory: true)
+            .appendingPathComponent("docky-feedback-\(timestamp)", isDirectory: true)
         try fileManager.createDirectory(at: stagingRoot, withIntermediateDirectories: true)
 
         // 1. docky-defaults.plist, filtered to our namespace so we
         //    don't leak unrelated UserDefaults from other domains.
         let allDefaults = UserDefaults.standard.dictionaryRepresentation()
         let dockyDefaults = allDefaults.filter { $0.key.hasPrefix("docky.") }
-        try writePlist(dockyDefaults, to: stagingRoot.appendingPathComponent( "docky-defaults.plist"))
+        try writePlist(dockyDefaults, to: stagingRoot.appendingPathComponent("docky-defaults.plist"))
 
         // 2. com.apple.dock plist, exact snapshot of system dock prefs.
         if let dockPlist = DockPlistReader.read() {
-            try writePlist(dockPlist, to: stagingRoot.appendingPathComponent( "com.apple.dock.plist"))
+            try writePlist(dockPlist, to: stagingRoot.appendingPathComponent("com.apple.dock.plist"))
         }
 
         // 3. system.json, Mac specs (kept minimal: no usernames or
         //    paths). Enough to tell apart "M1 Air on macOS 14" vs
         //    "Mac Pro on macOS 26".
         let system = systemSnapshot()
-        try writeJSON(system, to: stagingRoot.appendingPathComponent( "system.json"))
+        try writeJSON(system, to: stagingRoot.appendingPathComponent("system.json"))
 
         // 4. feedback.txt, verbatim user message.
         try feedbackText
-            .write(to: stagingRoot.appendingPathComponent( "feedback.txt"), atomically: true, encoding: .utf8)
+            .write(to: stagingRoot.appendingPathComponent("feedback.txt"), atomically: true, encoding: .utf8)
 
         // 5. Optional asset, copied alongside (preserves original name).
         if let attachmentURL {
-            let dest = stagingRoot.appendingPathComponent( attachmentURL.lastPathComponent)
+            let dest = stagingRoot.appendingPathComponent(attachmentURL.lastPathComponent)
             try fileManager.copyItem(at: attachmentURL, to: dest)
         }
 
         // Zip the staging directory in place so the share sheet has
         // one cohesive attachment rather than a directory tree.
         let zipURL = stagingRoot.deletingLastPathComponent()
-            .appendingPathComponent( stagingRoot.lastPathComponent + ".zip")
+            .appendingPathComponent(stagingRoot.lastPathComponent + ".zip")
         try fileManager.removeItemIfExists(at: zipURL)
         try ditto(source: stagingRoot, destination: zipURL)
         return zipURL
