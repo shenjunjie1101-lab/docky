@@ -21,7 +21,7 @@ final class MenuClickService {
 
         if action.requiresFrontmost {
             WorkspaceService.shared.activateOrOpen(bundleIdentifier: targetApp)
-            try? await Task.sleep(for: .milliseconds(250))
+            try? await dockySleep(for: .milliseconds(250))
         }
 
         let processName = runningApplicationName(for: targetApp)

@@ -24,7 +24,7 @@ final class WindowPreviewWindowController: NSWindowController, ObservableObject 
     fileprivate static let contentPadding: CGFloat = 6
     private static let animationDuration: TimeInterval = 0.18
     private static let slideOffset: CGFloat = 12
-    private static let dismissGrace: Duration = .milliseconds(120)
+    private static let dismissGrace: DockyDelay = .milliseconds(120)
 
     private var currentTileID: String?
     private var currentBundleIdentifier: String?
@@ -194,7 +194,7 @@ final class WindowPreviewWindowController: NSWindowController, ObservableObject 
 
         pendingDismissTask?.cancel()
         pendingDismissTask = Task { @MainActor in
-            try? await Task.sleep(for: Self.dismissGrace)
+            try? await dockySleep(for: Self.dismissGrace)
             guard !Task.isCancelled else { return }
             guard self.currentTileID == sourceTileID, !self.isPreviewHovered else { return }
             self.dismiss(sourceTileID: sourceTileID)

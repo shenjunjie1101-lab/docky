@@ -558,7 +558,12 @@ private enum WeatherUnits: Equatable {
     case us
 
     static var current: WeatherUnits {
-        switch Locale.autoupdatingCurrent.measurementSystem {
+        let locale = Locale.autoupdatingCurrent
+        guard #available(macOS 13.0, *) else {
+            if locale.regionCode == "GB" { return .uk }
+            return locale.usesMetricSystem ? .metric : .us
+        }
+        return switch locale.measurementSystem {
         case .us:
             .us
         case .uk:

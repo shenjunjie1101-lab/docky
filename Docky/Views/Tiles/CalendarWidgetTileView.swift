@@ -127,7 +127,7 @@ struct CalendarWidgetTileView: View {
             Text(shortWeekdayText(for: now))
                 .font(.system(size: layout.captionFontSize * 1.25, weight: .semibold))
                 .foregroundStyle(Color.red)
-                .tracking(0.6)
+                .dockyTracking(0.6)
                 .offset(y: 2)
 
             Text(dayNumberText(for: now))
@@ -241,7 +241,7 @@ struct CalendarWidgetTileView: View {
             .font(.system(size: layout.headerFontSize, weight: .semibold))
             .foregroundStyle(Color.red)
             .lineLimit(1)
-            .tracking(0.4)
+            .dockyTracking(0.4)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -256,7 +256,7 @@ struct CalendarWidgetTileView: View {
                             Text(section.title)
                                 .font(.system(size: layout.sectionTitleFontSize, weight: .semibold))
                                 .foregroundStyle(Color.primary.opacity(0.55))
-                                .tracking(0.5)
+                                .dockyTracking(0.5)
                                 .textCase(.uppercase)
 
                             ForEach(Array(section.events.enumerated()), id: \.offset) { _, event in
@@ -374,7 +374,7 @@ struct CalendarWidgetTileView: View {
     /// Drops the icon (or spinner) when larger widget text no longer
     /// leaves room for it, so the message itself stays readable.
     private func emptyState(layout: LayoutMetrics) -> some View {
-        ViewThatFits(in: .vertical) {
+        DockyViewThatFits(in: .vertical) {
             emptyStateStack(layout: layout, showsIcon: true)
             emptyStateStack(layout: layout, showsIcon: false)
         }
@@ -429,7 +429,7 @@ struct CalendarWidgetTileView: View {
                     NSWorkspace.shared.open(quickJoinURL)
                 }
                 .buttonStyle(.plain)
-                .underline()
+                .dockyUnderline()
                 .lineLimit(1)
             }
 

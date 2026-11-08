@@ -380,7 +380,7 @@ private enum AppIconsInstalledAppScanner {
             URL(fileURLWithPath: "/Applications", isDirectory: true),
             URL(fileURLWithPath: "/System/Applications", isDirectory: true),
             URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
-                .appending(path: "Applications", directoryHint: .isDirectory),
+                .appendingPathComponent( "Applications", isDirectory: true),
         ]
 
         let fileManager = FileManager.default

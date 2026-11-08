@@ -62,7 +62,7 @@ struct SystemStatusWidgetTileView: View {
     /// Rings with their labels when there's room; when larger widget text
     /// no longer fits, the labels go and the rings alone show the levels.
     private func indicatorStrip(metrics: [SystemStatusMetricSnapshot], layout: LayoutMetrics) -> some View {
-        ViewThatFits(in: .vertical) {
+        DockyViewThatFits(in: .vertical) {
             indicatorRow(metrics: metrics, layout: layout, showsLabels: true)
             indicatorRow(metrics: metrics, layout: layout, showsLabels: false)
         }
@@ -120,7 +120,7 @@ struct SystemStatusWidgetTileView: View {
     /// Drops the icon (or spinner) when larger widget text no longer
     /// leaves room for it, so the message itself stays readable.
     private func emptyState(layout: LayoutMetrics) -> some View {
-        ViewThatFits(in: .vertical) {
+        DockyViewThatFits(in: .vertical) {
             emptyStateStack(layout: layout, showsIcon: true)
             emptyStateStack(layout: layout, showsIcon: false)
         }

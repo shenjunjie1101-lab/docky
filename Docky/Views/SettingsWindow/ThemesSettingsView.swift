@@ -386,7 +386,7 @@ private struct ThemePreviewBadge: View {
         guard let bundle = ThemeManager.shared.installedThemes[manifest.id]?.bundleURL else {
             return nil
         }
-        let url = bundle.appending(path: asset, directoryHint: .notDirectory)
+        let url = bundle.appendingPathComponent( asset, isDirectory: false)
         return FileManager.default.fileExists(atPath: url.path) ? url : nil
     }
 }

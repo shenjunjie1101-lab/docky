@@ -658,7 +658,7 @@ private struct KaraokeLyricsView: View {
     private func trackPlayback() async {
         activeIndex = currentIndex(at: estimatedTime())
         while !Task.isCancelled {
-            try? await Task.sleep(for: .milliseconds(150))
+            try? await dockySleep(for: .milliseconds(150))
             if Task.isCancelled { return }
             let newIndex = currentIndex(at: estimatedTime())
             if newIndex != activeIndex {

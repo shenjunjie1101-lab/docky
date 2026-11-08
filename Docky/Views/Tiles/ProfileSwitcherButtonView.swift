@@ -223,7 +223,7 @@ struct ProfileSwitcherButtonView: View {
         hideAfterSelectionTask?.cancel()
         heldAfterSelection = true
         hideAfterSelectionTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1))
+            try? await dockySleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
             heldAfterSelection = false
         }

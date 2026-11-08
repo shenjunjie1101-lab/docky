@@ -46,7 +46,7 @@ struct WidgetPermissionCTAView: View {
                     // Larger widget text can outgrow the tile. Step down until it
                     // fits: drop the icon, then shorten the reason, then show only
                     // the button so access can always be granted.
-                    ViewThatFits(in: .vertical) {
+                    DockyViewThatFits(in: .vertical) {
                         stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: true, reasonLines: 2)
                         stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 2)
                         stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 1)

@@ -492,7 +492,7 @@ final class WindowSwitcherService: ObservableObject {
         }
 
         focusedPreviewTask = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(1))
+            try? await dockySleep(for: .seconds(1))
 
             await self?.runFocusedPreviewLoop(forWindowIdentifier: identifier)
         }
@@ -548,7 +548,7 @@ final class WindowSwitcherService: ObservableObject {
                 )
             }
 
-            try? await Task.sleep(for: .milliseconds(120))
+            try? await dockySleep(for: .milliseconds(120))
         }
     }
 

@@ -55,7 +55,6 @@ struct MinimizedWindowTileView: View {
                 Image(systemName: "macwindow")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .fontWeight(.medium)
                     .symbolRenderingMode(.multicolor)
                     .frame(width: cardSize.width * 0.8, height: cardSize.height * 0.8)
             }

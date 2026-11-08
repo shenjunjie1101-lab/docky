@@ -65,7 +65,7 @@ import Perception
     /// debug build without bundled themes staged).
     private static var bundledThemesDirectoryURL: URL? {
         guard let resourceURL = Bundle.main.resourceURL else { return nil }
-        let url = resourceURL.appending(path: "Themes", directoryHint: .isDirectory)
+        let url = resourceURL.appendingPathComponent( "Themes", isDirectory: true)
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
         return url
     }
@@ -99,7 +99,7 @@ import Perception
     func activeAssetURL(_ relativePath: String?) -> URL? {
         guard let relativePath, !relativePath.isEmpty else { return nil }
         guard let activeBundleURL else { return nil }
-        let url = activeBundleURL.appending(path: relativePath, directoryHint: .notDirectory)
+        let url = activeBundleURL.appendingPathComponent( relativePath, isDirectory: false)
         guard fileManager.fileExists(atPath: url.path) else { return nil }
         return url
     }
@@ -112,11 +112,11 @@ import Perception
     /// asset exists.
     func activeAppIconURL(forBundleIdentifier bundleIdentifier: String) -> URL? {
         guard !bundleIdentifier.isEmpty, let activeBundleURL else { return nil }
-        let assetsDir = activeBundleURL.appending(path: "assets", directoryHint: .isDirectory)
+        let assetsDir = activeBundleURL.appendingPathComponent( "assets", isDirectory: true)
         for ext in ["png", "jpg", "jpeg"] {
             let url = assetsDir.appending(
                 path: "\(bundleIdentifier).\(ext)",
-                directoryHint: .notDirectory
+                isDirectory: false
             )
             if fileManager.fileExists(atPath: url.path) {
                 return url
@@ -133,7 +133,7 @@ import Perception
     /// which per-app icons to bundle into the new theme.
     func activeAppIconBundleIDs() -> [String] {
         guard let activeBundleURL else { return [] }
-        let assetsDir = activeBundleURL.appending(path: "assets", directoryHint: .isDirectory)
+        let assetsDir = activeBundleURL.appendingPathComponent( "assets", isDirectory: true)
         guard let entries = try? fileManager.contentsOfDirectory(
             at: assetsDir,
             includingPropertiesForKeys: nil,
@@ -225,7 +225,7 @@ import Perception
     @discardableResult
     func importTheme(from zipURL: URL) throws -> ThemeManifest {
         let tempRoot = fileManager.temporaryDirectory
-            .appending(path: "docky-theme-import-\(UUID().uuidString)", directoryHint: .isDirectory)
+            .appendingPathComponent( "docky-theme-import-\(UUID().uuidString)", isDirectory: true)
         try fileManager.createDirectory(at: tempRoot, withIntermediateDirectories: true)
         defer { try? fileManager.removeItem(at: tempRoot) }
 
@@ -236,7 +236,7 @@ import Perception
         //  (b) zip extracted to a single subfolder containing them
         let bundleRoot = try Self.locateBundleRoot(in: tempRoot)
 
-        let manifestURL = bundleRoot.appending(path: "theme.json", directoryHint: .notDirectory)
+        let manifestURL = bundleRoot.appendingPathComponent( "theme.json", isDirectory: false)
         guard let data = try? Data(contentsOf: manifestURL) else {
             throw ThemeImportError.missingManifest
         }
@@ -252,7 +252,7 @@ import Perception
         }
 
         let destination = themesDirectoryURL
-            .appending(path: manifest.id, directoryHint: .isDirectory)
+            .appendingPathComponent( manifest.id, isDirectory: true)
 
         let wasActive = activeThemeID == manifest.id
         if wasActive {
@@ -295,7 +295,7 @@ import Perception
 
     private static func locateBundleRoot(in directory: URL) throws -> URL {
         let fileManager = FileManager.default
-        let manifestAtRoot = directory.appending(path: "theme.json", directoryHint: .notDirectory)
+        let manifestAtRoot = directory.appendingPathComponent( "theme.json", isDirectory: false)
         if fileManager.fileExists(atPath: manifestAtRoot.path) {
             return directory
         }
@@ -312,7 +312,7 @@ import Perception
             (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true
         }
         if directories.count == 1 {
-            let nested = directories[0].appending(path: "theme.json", directoryHint: .notDirectory)
+            let nested = directories[0].appendingPathComponent( "theme.json", isDirectory: false)
             if fileManager.fileExists(atPath: nested.path) {
                 return directories[0]
             }
@@ -377,12 +377,12 @@ import Perception
         }
 
         let staging = fileManager.temporaryDirectory
-            .appending(path: "docky-theme-export-\(UUID().uuidString)", directoryHint: .isDirectory)
+            .appendingPathComponent( "docky-theme-export-\(UUID().uuidString)", isDirectory: true)
         try fileManager.createDirectory(at: staging, withIntermediateDirectories: true)
         defer { try? fileManager.removeItem(at: staging) }
 
-        let bundleDir = staging.appending(path: id, directoryHint: .isDirectory)
-        let assetsDir = bundleDir.appending(path: "assets", directoryHint: .isDirectory)
+        let bundleDir = staging.appendingPathComponent( id, isDirectory: true)
+        let assetsDir = bundleDir.appendingPathComponent( "assets", isDirectory: true)
         try fileManager.createDirectory(at: assetsDir, withIntermediateDirectories: true)
 
         let copier = AssetCopier(assetsDir: assetsDir)
@@ -393,11 +393,11 @@ import Perception
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         let manifestData = try encoder.encode(manifest)
         try manifestData.write(
-            to: bundleDir.appending(path: "theme.json", directoryHint: .notDirectory),
+            to: bundleDir.appendingPathComponent( "theme.json", isDirectory: false),
             options: .atomic
         )
 
-        let stagedZip = staging.appending(path: "\(id).dockytheme", directoryHint: .notDirectory)
+        let stagedZip = staging.appendingPathComponent( "\(id).dockytheme", isDirectory: false)
         try Self.createZip(of: bundleDir, at: stagedZip)
 
         if fileManager.fileExists(atPath: destinationURL.path) {
@@ -541,10 +541,10 @@ import Perception
 
     private static var themesDirectoryURL: URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
-            ?? URL(fileURLWithPath: NSHomeDirectory()).appending(path: "Library/Application Support", directoryHint: .isDirectory)
+            ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent( "Library/Application Support", isDirectory: true)
         return base
-            .appending(path: "Docky", directoryHint: .isDirectory)
-            .appending(path: "Themes", directoryHint: .isDirectory)
+            .appendingPathComponent( "Docky", isDirectory: true)
+            .appendingPathComponent( "Themes", isDirectory: true)
     }
 
     private static func scanInstalledThemes(
@@ -566,7 +566,7 @@ import Perception
             let values = try? entry.resourceValues(forKeys: [.isDirectoryKey])
             guard values?.isDirectory == true else { continue }
 
-            let manifestURL = entry.appending(path: "theme.json", directoryHint: .notDirectory)
+            let manifestURL = entry.appendingPathComponent( "theme.json", isDirectory: false)
             guard let data = try? Data(contentsOf: manifestURL),
                   let manifest = try? decoder.decode(ThemeManifest.self, from: data) else {
                 continue
@@ -601,7 +601,7 @@ struct InstalledTheme: Equatable {
     var coverImageURL: URL? {
         let fileManager = FileManager.default
         for name in ["cover_image.png", "cover_image.jpg", "cover_image.jpeg"] {
-            let url = bundleURL.appending(path: name, directoryHint: .notDirectory)
+            let url = bundleURL.appendingPathComponent( name, isDirectory: false)
             if fileManager.fileExists(atPath: url.path) {
                 return url
             }
@@ -647,7 +647,7 @@ private final class AssetCopier {
     /// manifest). No-op if the destination already exists.
     func copyAt(_ sourceURL: URL, named fixedName: String) {
         guard !usedNames.contains(fixedName) else { return }
-        let destination = assetsDir.appending(path: fixedName, directoryHint: .notDirectory)
+        let destination = assetsDir.appendingPathComponent( fixedName, isDirectory: false)
         guard !fileManager.fileExists(atPath: destination.path) else {
             usedNames.insert(fixedName)
             return
@@ -664,7 +664,7 @@ private final class AssetCopier {
     private func uniqueDestination(for sourceURL: URL) -> URL {
         let originalName = sourceURL.lastPathComponent
         if !usedNames.contains(originalName) {
-            return assetsDir.appending(path: originalName, directoryHint: .notDirectory)
+            return assetsDir.appendingPathComponent( originalName, isDirectory: false)
         }
         let stem = sourceURL.deletingPathExtension().lastPathComponent
         let ext = sourceURL.pathExtension
@@ -672,7 +672,7 @@ private final class AssetCopier {
         while true {
             let candidate = ext.isEmpty ? "\(stem)-\(counter)" : "\(stem)-\(counter).\(ext)"
             if !usedNames.contains(candidate) {
-                return assetsDir.appending(path: candidate, directoryHint: .notDirectory)
+                return assetsDir.appendingPathComponent( candidate, isDirectory: false)
             }
             counter += 1
         }

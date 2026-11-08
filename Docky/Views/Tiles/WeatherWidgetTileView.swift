@@ -442,7 +442,7 @@ private struct WeatherWidgetContentView: View {
     /// Drops the icon (or spinner) when larger widget text no longer
     /// leaves room for it, so the message itself stays readable.
     private func placeholder(layout: LayoutMetrics) -> some View {
-        ViewThatFits(in: .vertical) {
+        DockyViewThatFits(in: .vertical) {
             placeholderStack(layout: layout, showsIcon: true)
             placeholderStack(layout: layout, showsIcon: false)
         }

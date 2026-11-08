@@ -63,13 +63,13 @@ final class WorkspaceService: ObservableObject {
     /// after one miss (which left it permanently thumbnail-less), retry a
     /// few times with a short delay before giving up.
     private let maxMinimizedPreviewAttempts = 3
-    private let minimizedPreviewRetryDelay: Duration = .milliseconds(400)
+    private let minimizedPreviewRetryDelay: DockyDelay = .milliseconds(400)
 
     /// Delay between focusing a window and grabbing a fresh thumbnail of
     /// it. Long enough for the window to finish coming forward and render
     /// its current content, short enough to land before the user flips
     /// back to the switcher.
-    private let postFocusPreviewCaptureDelay: Duration = .milliseconds(250)
+    private let postFocusPreviewCaptureDelay: DockyDelay = .milliseconds(250)
 
     /// Backstop refresh interval for app-window thumbnails. Title-change
     /// invalidation handles the common case (browsers, IDEs); this catches
@@ -315,7 +315,7 @@ final class WorkspaceService: ObservableObject {
 
         Task { [weak self] in
             guard let self else { return }
-            try? await Task.sleep(for: self.postFocusPreviewCaptureDelay)
+            try? await dockySleep(for: self.postFocusPreviewCaptureDelay)
             guard let preview = await self.captureAppWindowPreview(for: window) else { return }
 
             var updatedPreviews = self.appWindowPreviews
@@ -839,7 +839,7 @@ final class WorkspaceService: ObservableObject {
             // of times before giving up instead of leaving the window
             // permanently thumbnail-less after a single miss.
             guard attempt < self.maxMinimizedPreviewAttempts else { return }
-            try? await Task.sleep(for: self.minimizedPreviewRetryDelay)
+            try? await dockySleep(for: self.minimizedPreviewRetryDelay)
             guard self.minimizedWindows.contains(where: { $0.windowIdentifier == window.windowIdentifier }),
                   self.minimizedWindowPreviews[window.windowIdentifier] == nil else {
                 return

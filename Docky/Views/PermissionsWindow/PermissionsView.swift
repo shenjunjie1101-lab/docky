@@ -427,7 +427,7 @@ struct PermissionsView: View {
 
         let nextStep = step
         Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(120))
+            try? await dockySleep(for: .milliseconds(120))
             guard !isDismissing, self.step == nextStep else { return }
             onOpenSystemSettings(nextStep)
         }
@@ -442,7 +442,7 @@ struct PermissionsView: View {
         advanceIfReady()
 
         while !Task.isCancelled {
-            try? await Task.sleep(for: .seconds(1))
+            try? await dockySleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
 
             service.refresh()

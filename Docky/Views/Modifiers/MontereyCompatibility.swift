@@ -1,5 +1,58 @@
 import SwiftUI
 
+struct DockyViewThatFits<Content: View>: View {
+    let axes: Axis.Set
+    let content: Content
+    init(in axes: Axis.Set = [.horizontal, .vertical], @ViewBuilder content: () -> Content) {
+        self.axes = axes
+        self.content = content()
+    }
+    @ViewBuilder var body: some View {
+        if #available(macOS 13.0, *) {
+            ViewThatFits(in: axes) { content }
+        } else {
+            // Each call site supplies its most compact presentation last.
+            _VariadicView.Tree(MontereyCompactPresentation()) { content }
+        }
+    }
+}
+
+private struct MontereyCompactPresentation: _VariadicView_UnaryViewRoot {
+    @ViewBuilder func body(children: _VariadicView.Children) -> some View {
+        if let compact = children.last { compact }
+    }
+}
+
+private struct MontereyGeometryPreference<Value: Equatable>: PreferenceKey {
+    static var defaultValue: Value? { nil }
+    static func reduce(value: inout Value?, nextValue: () -> Value?) {
+        value = nextValue() ?? value
+    }
+}
+
+extension View {
+    func dockyOnGeometryChange<Value: Equatable>(
+        for type: Value.Type,
+        of transform: @escaping (GeometryProxy) -> Value,
+        action: @escaping (Value) -> Void
+    ) -> some View {
+        self.background(GeometryReader { proxy in
+            Color.clear.preference(key: MontereyGeometryPreference<Value>.self, value: transform(proxy))
+        })
+        .onPreferenceChange(MontereyGeometryPreference<Value>.self) { value in
+            if let value { action(value) }
+        }
+    }
+
+    @ViewBuilder func dockyTracking(_ amount: CGFloat) -> some View {
+        if #available(macOS 13.0, *) { self.tracking(amount) } else { self }
+    }
+
+    @ViewBuilder func dockyUnderline() -> some View {
+        if #available(macOS 13.0, *) { self.underline() } else { self }
+    }
+}
+
 enum DockyScrollBehavior {
     enum LimitBehavior { case always }
     case paging

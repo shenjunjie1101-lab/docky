@@ -35,7 +35,7 @@ final class SmartOrganizeProgressService: ObservableObject {
             guard let self else { return }
             var index = 1
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(2))
+                try? await dockySleep(for: .seconds(2))
                 guard !Task.isCancelled else { return }
                 guard self.activeToken == token else { return }
                 self.message = self.messages[index % self.messages.count]

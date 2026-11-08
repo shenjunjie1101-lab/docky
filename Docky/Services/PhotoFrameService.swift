@@ -223,7 +223,7 @@ final class PhotoFrameService: ObservableObject {
         // isolation and `advance()` runs on the main thread without a hop.
         slideshowTask = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(interval))
+                try? await dockySleep(for: .seconds(interval))
                 guard let self, !Task.isCancelled else { return }
                 self.advance()
             }

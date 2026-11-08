@@ -24,7 +24,7 @@ extension NSRunningApplication {
     @discardableResult
     func activateTransferringFrontmost(options: NSApplication.ActivationOptions = []) -> Bool {
         let donor = NSWorkspace.shared.frontmostApplication ?? .current
-        if activate(from: donor, options: options) {
+        if #available(macOS 14.0, *), activate(from: donor, options: options) {
             return true
         }
 

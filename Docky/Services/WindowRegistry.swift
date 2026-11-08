@@ -934,7 +934,7 @@ final class WindowRegistry: ObservableObject {
         guard PermissionsService.shared.screenCapture == .granted else { return }
         screenCaptureReconciliationTask?.cancel()
         screenCaptureReconciliationTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(180))
+            try? await dockySleep(for: .milliseconds(180))
             guard let self, !Task.isCancelled else { return }
             await self.reconcileWithScreenCapture()
         }

@@ -268,7 +268,7 @@ struct AppearanceSettingsView: View {
     private var alphaBadge: some View {
         Text("ALPHA")
             .font(.system(size: 9, weight: .bold))
-            .tracking(0.5)
+            .dockyTracking(0.5)
             .foregroundStyle(.orange)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)

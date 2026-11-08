@@ -134,7 +134,7 @@ final class RemindersService: ObservableObject {
         case .denied, .restricted:
             return false
         case .notDetermined:
-            if #unavailable(macOS 14.0) {
+            guard #available(macOS 14.0, *) else {
                 let granted = (try? await eventStore.requestAccess(to: .reminder)) ?? false
                 refreshAuthorizationStatus()
                 return granted

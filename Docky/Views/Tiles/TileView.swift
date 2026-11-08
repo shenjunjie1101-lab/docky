@@ -577,7 +577,7 @@ struct TileView: View {
             .contentShape(Rectangle())
             .onHover(perform: updateHoverState)
             .onTapGesture(perform: handleTap)
-            .onGeometryChange(for: CGRect.self) { proxy in
+            .dockyOnGeometryChange(for: CGRect.self) { proxy in
                 proxy.frame(in: .global)
             } action: { newFrame in
                 globalTileFrame = newFrame
@@ -1278,7 +1278,7 @@ struct TileView: View {
 
         let delay = max(0, preferences.windowPreviewHoverDelay)
         windowPreviewDelayTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(delay))
+            try? await dockySleep(for: .seconds(delay))
             guard !Task.isCancelled, self.isHovering else { return }
             WindowPreviewWindowController.shared.present(
                 forBundleIdentifiers: bundleIDs,
@@ -1346,7 +1346,7 @@ struct TileView: View {
         }
 
         widgetExpansionTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(max(0, preferences.widgetHoverPreviewDelay)))
+            try? await dockySleep(for: .seconds(max(0, preferences.widgetHoverPreviewDelay)))
             guard !Task.isCancelled else { return }
             guard self.isHovering, !self.isContextMenuPresented, !self.editMode.isActive else { return }
             WidgetExpansionWindowController.shared.present(

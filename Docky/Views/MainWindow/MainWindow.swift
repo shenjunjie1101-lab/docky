@@ -8,6 +8,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import Perception
 
 final class MainWindowContainerView: NSView {
     private let contentView = ClickThroughHostingView(rootView: MainWindowView())
@@ -16,7 +17,7 @@ final class MainWindowContainerView: NSView {
     private var bottomConstraint: NSLayoutConstraint!
     private var leadingConstraint: NSLayoutConstraint!
     private var trailingConstraint: NSLayoutConstraint!
-    private var pointerDisplayLink: CADisplayLink?
+    private var pointerDisplayLink: Timer?
     private var lastPolledPointerLocation: NSPoint?
     private var lastPointerMoveTime: CFTimeInterval = 0
     private static let pointerRestDuration: CFTimeInterval = 0.5
@@ -36,7 +37,7 @@ final class MainWindowContainerView: NSView {
         // The window frame is set explicitly by `MainWindow`. Without this,
         // a chrome grown by magnification raises the hosting view's minimum
         // size and Auto Layout stretches the window to fit it.
-        contentView.sizingOptions = []
+        if #available(macOS 13.0, *) { contentView.sizingOptions = [] }
         addSubview(contentView)
 
         topConstraint = contentView.topAnchor.constraint(equalTo: topAnchor)
@@ -139,9 +140,9 @@ final class MainWindowContainerView: NSView {
     /// pointer rests, and the next mouse-moved event starts it again.
     private func startPointerPolling() {
         guard pointerDisplayLink == nil, DockSettingsService.shared.magnification else { return }
-        let link = displayLink(target: self, selector: #selector(pollPointer(_:)))
+        let link = Timer(timeInterval: 1.0 / 60.0, target: self, selector: #selector(pollPointer(_:)), userInfo: nil, repeats: true)
         // Not `.common`: the dock must hold still while a context menu tracks.
-        link.add(to: .main, forMode: .default)
+        RunLoop.main.add(link, forMode: .default)
         pointerDisplayLink = link
         lastPolledPointerLocation = nil
     }
@@ -151,7 +152,7 @@ final class MainWindowContainerView: NSView {
         pointerDisplayLink = nil
     }
 
-    @objc private func pollPointer(_ link: CADisplayLink) {
+    @objc private func pollPointer(_ link: Timer) {
         guard let window else {
             stopPointerPolling()
             return
@@ -159,8 +160,8 @@ final class MainWindowContainerView: NSView {
         let mouseLocation = NSEvent.mouseLocation
         if mouseLocation != lastPolledPointerLocation {
             lastPolledPointerLocation = mouseLocation
-            lastPointerMoveTime = link.timestamp
-        } else if link.timestamp - lastPointerMoveTime > Self.pointerRestDuration {
+            lastPointerMoveTime = CACurrentMediaTime()
+        } else if CACurrentMediaTime() - lastPointerMoveTime > Self.pointerRestDuration {
             stopPointerPolling()
             return
         }

@@ -1033,7 +1033,7 @@ private struct LaunchpadOverlayView: View {
         pendingMergeHoverID = hoveredID
         mergeDwellTask?.cancel()
         mergeDwellTask = Task { @MainActor in
-            try? await Task.sleep(for: .seconds(mergeDwellDuration))
+            try? await dockySleep(for: .seconds(mergeDwellDuration))
             guard !Task.isCancelled,
                   pendingMergeHoverID == hoveredID,
                   var state = dragState,
