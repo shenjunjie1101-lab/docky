@@ -52,32 +52,34 @@ struct CalendarWidgetTileView: View {
 
             TimelineView(.periodic(from: .now, by: 60)) { context in
                 GeometryReader { proxy in
-                    let layout = layout(in: proxy.size)
-                    let expandedLayout = expandedLayout(in: proxy.size)
+                    WithPerceptionTracking {
+                        let layout = layout(in: proxy.size)
+                        let expandedLayout = expandedLayout(in: proxy.size)
 
-                    ZStack {
-                        Color(nsColor: backgroundTintColor)
-                            .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                        ZStack {
+                            Color(nsColor: backgroundTintColor)
+                                .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                        if !isWithinStack {
-                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                            if !isWithinStack {
+                                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                    .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                            }
+
+                            content(layout: layout, now: context.date)
+                                .opacity(isExpandedPreviewOpen && isExpanded ? 0 : 1)
+
+                            if isExpanded {
+                                expandedContent(layout: expandedLayout, now: context.date)
+                                    .transition(
+                                        .opacity.animation(
+                                            .easeInOut(duration: 0.22).delay(0.22)
+                                        ).combined(with: .scale).combined(with: .slide)
+                                    )
+                            }
                         }
-
-                        content(layout: layout, now: context.date)
-                            .opacity(isExpandedPreviewOpen && isExpanded ? 0 : 1)
-
-                        if isExpanded {
-                            expandedContent(layout: expandedLayout, now: context.date)
-                                .transition(
-                                    .opacity.animation(
-                                        .easeInOut(duration: 0.22).delay(0.22)
-                                    ).combined(with: .scale).combined(with: .slide)
-                                )
-                        }
+                        .animation(.easeInOut(duration: 0.22), value: isExpanded)
+                        .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
                     }
-                    .animation(.easeInOut(duration: 0.22), value: isExpanded)
-                    .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
                 }
             }
             .opacity(isExpandedPreviewOpen && !isExpanded ? 0.5 : 1)
@@ -249,19 +251,23 @@ struct CalendarWidgetTileView: View {
         return ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: layout.sectionGroupSpacing) {
                 ForEach(sections) { section in
-                    VStack(alignment: .leading, spacing: layout.eventRowSpacing) {
-                        Text(section.title)
-                            .font(.system(size: layout.sectionTitleFontSize, weight: .semibold))
-                            .foregroundStyle(Color.primary.opacity(0.55))
-                            .tracking(0.5)
-                            .textCase(.uppercase)
+                    WithPerceptionTracking {
+                        VStack(alignment: .leading, spacing: layout.eventRowSpacing) {
+                            Text(section.title)
+                                .font(.system(size: layout.sectionTitleFontSize, weight: .semibold))
+                                .foregroundStyle(Color.primary.opacity(0.55))
+                                .tracking(0.5)
+                                .textCase(.uppercase)
 
-                        ForEach(Array(section.events.enumerated()), id: \.offset) { _, event in
-                            ExpandedEventRow(
-                                event: event,
-                                scheduleText: expandedScheduleText(for: event, now: now),
-                                layout: layout
-                            )
+                            ForEach(Array(section.events.enumerated()), id: \.offset) { _, event in
+                                WithPerceptionTracking {
+                                    ExpandedEventRow(
+                                        event: event,
+                                        scheduleText: expandedScheduleText(for: event, now: now),
+                                        layout: layout
+                                    )
+                                }
+                            }
                         }
                     }
                 }

@@ -84,7 +84,9 @@ struct WindowManagementSettingsView: View {
 
                         Picker("Layout", selection: $preferences.windowSwitcherLayout) {
                             ForEach(WindowSwitcherLayout.allCases) { layout in
-                                Text(layout.title).tag(layout)
+                                WithPerceptionTracking {
+                                    Text(layout.title).tag(layout)
+                                }
                             }
                         }
                         .pickerStyle(.segmented)
@@ -124,7 +126,9 @@ struct WindowManagementSettingsView: View {
 
                         Picker("Preview Mode", selection: $preferences.windowSwitcherPreviewMode) {
                             ForEach(WindowSwitcherPreviewMode.allCases) { mode in
-                                Text(mode.title).tag(mode)
+                                WithPerceptionTracking {
+                                    Text(mode.title).tag(mode)
+                                }
                             }
                         }
                         .pickerStyle(.segmented)
@@ -204,7 +208,9 @@ struct WindowManagementSettingsView: View {
 
                         Picker("Layout", selection: $preferences.windowPreviewLayout) {
                             ForEach(WindowSwitcherLayout.allCases) { layout in
-                                Text(layout.title).tag(layout)
+                                WithPerceptionTracking {
+                                    Text(layout.title).tag(layout)
+                                }
                             }
                         }
                         .pickerStyle(.segmented)
@@ -270,14 +276,16 @@ private struct SingleKeyRecorderControl: View {
                 .disabled(keyCode == defaultKeyCode)
             }
             .background {
-                SingleKeyRecorderMonitor(
-                    isRecording: isRecording,
-                    onKey: { event in
-                        onChange(event.keyCode)
-                        isRecording = false
-                    },
-                    onCancel: { isRecording = false }
-                )
+                WithPerceptionTracking {
+                    SingleKeyRecorderMonitor(
+                        isRecording: isRecording,
+                        onKey: { event in
+                            onChange(event.keyCode)
+                            isRecording = false
+                        },
+                        onCancel: { isRecording = false }
+                    )
+                }
             }
         }
     }

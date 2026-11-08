@@ -44,8 +44,10 @@ struct AppTileView: View {
     var body: some View {
         WithPerceptionTracking {
             GeometryReader { proxy in
-                iconView(in: proxy.size)
-                    .frame(width: proxy.size.width, height: proxy.size.height)
+                WithPerceptionTracking {
+                    iconView(in: proxy.size)
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }

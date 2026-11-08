@@ -250,8 +250,10 @@ private struct DockEditorHintChipView: View {
                 .padding(.vertical, 10)
                 .background(.regularMaterial, in: Capsule())
                 .overlay {
-                    Capsule()
-                        .strokeBorder(Color.white.opacity(0.16))
+                    WithPerceptionTracking {
+                        Capsule()
+                            .strokeBorder(Color.white.opacity(0.16))
+                    }
                 }
                 .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
             }

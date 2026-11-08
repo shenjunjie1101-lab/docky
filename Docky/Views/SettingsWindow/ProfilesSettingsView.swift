@@ -38,8 +38,10 @@ struct ProfilesSettingsView: View {
 
                 Section("Profiles") {
                     ForEach(profileService.profiles) { profile in
-                        ProfileRow(profile: profile)
-                            .padding(.vertical, 2)
+                        WithPerceptionTracking {
+                            ProfileRow(profile: profile)
+                                .padding(.vertical, 2)
+                        }
                     }
 
                     Button {
@@ -151,10 +153,12 @@ private struct ProfileRow: View {
     private var symbolPicker: some View {
         Menu {
             ForEach(Self.symbolOptions, id: \.self) { symbol in
-                Button {
-                    profileService.updateProfileSymbol(id: profile.id, symbolName: symbol)
-                } label: {
-                    Label(symbol, systemImage: symbol)
+                WithPerceptionTracking {
+                    Button {
+                        profileService.updateProfileSymbol(id: profile.id, symbolName: symbol)
+                    } label: {
+                        Label(symbol, systemImage: symbol)
+                    }
                 }
             }
         } label: {
@@ -215,7 +219,9 @@ private struct ProfileTriggersSection: View {
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(profile.triggers) { trigger in
-                        TriggerRow(profile: profile, trigger: trigger)
+                        WithPerceptionTracking {
+                            TriggerRow(profile: profile, trigger: trigger)
+                        }
                     }
                 }
 
@@ -343,27 +349,29 @@ private struct TimeOfDayTriggerEditor: View {
 
                 HStack(spacing: 4) {
                     ForEach(Self.weekdays, id: \.label) { day in
-                        let weekdayIndex = Int(day.symbol) ?? 1
-                        let isOn = model.weekdays.contains(weekdayIndex)
-                        Button {
-                            if isOn {
-                                model.weekdays.remove(weekdayIndex)
-                            } else {
-                                model.weekdays.insert(weekdayIndex)
+                        WithPerceptionTracking {
+                            let weekdayIndex = Int(day.symbol) ?? 1
+                            let isOn = model.weekdays.contains(weekdayIndex)
+                            Button {
+                                if isOn {
+                                    model.weekdays.remove(weekdayIndex)
+                                } else {
+                                    model.weekdays.insert(weekdayIndex)
+                                }
+                                commit()
+                            } label: {
+                                Text(day.label)
+                                    .font(.caption2)
+                                    .frame(minWidth: 30)
+                                    .padding(.vertical, 3)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 4)
+                                            .fill(isOn ? Color.accentColor.opacity(0.25) : Color.secondary.opacity(0.1))
+                                    )
+                                    .foregroundStyle(isOn ? Color.accentColor : Color.secondary)
                             }
-                            commit()
-                        } label: {
-                            Text(day.label)
-                                .font(.caption2)
-                                .frame(minWidth: 30)
-                                .padding(.vertical, 3)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .fill(isOn ? Color.accentColor.opacity(0.25) : Color.secondary.opacity(0.1))
-                                )
-                                .foregroundStyle(isOn ? Color.accentColor : Color.secondary)
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -422,11 +430,13 @@ private struct FrontmostAppTriggerEditor: View {
 
                 Menu {
                     ForEach(runningApps(), id: \.bundleIdentifier) { app in
-                        Button {
-                            model.bundleIdentifier = app.bundleIdentifier
-                            commit()
-                        } label: {
-                            Text(app.displayName)
+                        WithPerceptionTracking {
+                            Button {
+                                model.bundleIdentifier = app.bundleIdentifier
+                                commit()
+                            } label: {
+                                Text(app.displayName)
+                            }
                         }
                     }
                 } label: {
@@ -494,11 +504,13 @@ private struct SpaceTriggerEditor: View {
 
                 Menu {
                     ForEach(runningApps(), id: \.bundleIdentifier) { app in
-                        Button {
-                            model.bundleIdentifier = app.bundleIdentifier
-                            commit()
-                        } label: {
-                            Text(app.displayName)
+                        WithPerceptionTracking {
+                            Button {
+                                model.bundleIdentifier = app.bundleIdentifier
+                                commit()
+                            } label: {
+                                Text(app.displayName)
+                            }
                         }
                     }
                 } label: {

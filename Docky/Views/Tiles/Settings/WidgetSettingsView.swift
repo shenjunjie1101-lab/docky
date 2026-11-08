@@ -88,7 +88,9 @@ struct ExternalWidgetSettingsForm: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(schema) { field in
-                    fieldView(for: field)
+                    WithPerceptionTracking {
+                        fieldView(for: field)
+                    }
                 }
             }
         }
@@ -214,7 +216,9 @@ struct WidgetSettingsPicker: View {
             WidgetSettingsRow(title: title) {
                 Picker("", selection: $selection) {
                     ForEach(options, id: \.value) { option in
-                        Text(option.label).tag(option.value)
+                        WithPerceptionTracking {
+                            Text(option.label).tag(option.value)
+                        }
                     }
                 }
                 .labelsHidden()

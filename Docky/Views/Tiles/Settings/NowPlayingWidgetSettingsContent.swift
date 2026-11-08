@@ -41,7 +41,9 @@ struct NowPlayingWidgetSettingsContent: View {
                     Divider()
 
                     ForEach(mediaApps) { app in
-                        Text(app.displayName).tag(app.bundleIdentifier)
+                        WithPerceptionTracking {
+                            Text(app.displayName).tag(app.bundleIdentifier)
+                        }
                     }
                 }
                 .labelsHidden()

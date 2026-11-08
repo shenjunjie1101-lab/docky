@@ -97,7 +97,9 @@ struct AppearanceSettingsView: View {
 
                     Picker("Active Indicator Shape", selection: $preferences.activeIndicatorShape) {
                         ForEach(DockTileIndicatorShape.allCases) { shape in
-                            Text(shape.title).tag(shape)
+                            WithPerceptionTracking {
+                                Text(shape.title).tag(shape)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -342,7 +344,9 @@ struct AppearanceSettingsView: View {
 
                     Picker("Tile Clip Shape", selection: $preferences.tileClipShape) {
                         ForEach(DockClipShape.allCases) { shape in
-                            Text(shape.title).tag(shape)
+                            WithPerceptionTracking {
+                                Text(shape.title).tag(shape)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -659,7 +663,9 @@ struct AppearanceSettingsView: View {
 
                     Picker("Chrome Clip Shape", selection: $preferences.windowClipShape) {
                         ForEach(DockClipShape.allCases) { shape in
-                            Text(shape.title).tag(shape)
+                            WithPerceptionTracking {
+                                Text(shape.title).tag(shape)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -945,7 +951,9 @@ struct AppearanceSettingsView: View {
 
                     Picker("Background Image Mode", selection: $preferences.windowBackgroundImageMode) {
                         ForEach(DockBackgroundImageMode.allCases) { mode in
-                            Text(mode.title).tag(mode)
+                            WithPerceptionTracking {
+                                Text(mode.title).tag(mode)
+                            }
                         }
                     }
                     .pickerStyle(.menu)

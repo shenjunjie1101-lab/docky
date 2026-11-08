@@ -15,14 +15,16 @@ struct TrashTileView: View {
     var body: some View {
         WithPerceptionTracking {
             GeometryReader { proxy in
-                Image(nsImage: icon)
-                    .resizable()
-                    .interpolation(.high)
-                    .aspectRatio(contentMode: .fit)
-                    .padding(overridePadding(in: proxy.size))
-                    .brightness(isDropTarget ? -0.35 : 0)
-                    .scaleEffect(isDropTarget ? 1.1 : 1)
-                    .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isDropTarget)
+                WithPerceptionTracking {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .interpolation(.high)
+                        .aspectRatio(contentMode: .fit)
+                        .padding(overridePadding(in: proxy.size))
+                        .brightness(isDropTarget ? -0.35 : 0)
+                        .scaleEffect(isDropTarget ? 1.1 : 1)
+                        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isDropTarget)
+                }
             }
         }
     }

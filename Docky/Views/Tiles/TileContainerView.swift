@@ -39,31 +39,33 @@ struct TileContainerView: View {
             #endif
 
             GeometryReader { proxy in
-                overflowWrappedContent(in: proxy)
-                .onPreferenceChange(TileFramePreferenceKey.self) { tileFrames = $0 }
-                .onAppear { layout.setTileCanvasFrame(proxy.frame(in: .global)) }
-                .onChange(of: proxy.frame(in: .global)) { frame in
-                    layout.setTileCanvasFrame(frame)
-                }
-                .onChange(of: dockDrag.cursorLocation) { location in
-                    updateExternalDragDestinationIndex(at: location)
-                    updatePaletteDropDestinationFromCursor(at: location)
-                }
-                .onChange(of: dockDrag.kind) { kind in
-                    if kind == nil {
-                        dockDrag.destinationIndex = nil
-                    } else {
-                        updateExternalDragDestinationIndex(at: dockDrag.cursorLocation)
+                WithPerceptionTracking {
+                    overflowWrappedContent(in: proxy)
+                    .onPreferenceChange(TileFramePreferenceKey.self) { tileFrames = $0 }
+                    .onAppear { layout.setTileCanvasFrame(proxy.frame(in: .global)) }
+                    .onChange(of: proxy.frame(in: .global)) { frame in
+                        layout.setTileCanvasFrame(frame)
                     }
-                }
-                .onChange(of: editMode.paletteDrag) { paletteDrag in
-                    if paletteDrag == nil {
-                        editMode.paletteDropDestination = nil
-                    } else {
-                        updatePaletteDropDestinationFromCursor(at: dockDrag.cursorLocation)
+                    .onChange(of: dockDrag.cursorLocation) { location in
+                        updateExternalDragDestinationIndex(at: location)
+                        updatePaletteDropDestinationFromCursor(at: location)
                     }
+                    .onChange(of: dockDrag.kind) { kind in
+                        if kind == nil {
+                            dockDrag.destinationIndex = nil
+                        } else {
+                            updateExternalDragDestinationIndex(at: dockDrag.cursorLocation)
+                        }
+                    }
+                    .onChange(of: editMode.paletteDrag) { paletteDrag in
+                        if paletteDrag == nil {
+                            editMode.paletteDropDestination = nil
+                        } else {
+                            updatePaletteDropDestinationFromCursor(at: dockDrag.cursorLocation)
+                        }
+                    }
+                    .animation(tileMutationAnimation, value: displayTiles)
                 }
-                .animation(tileMutationAnimation, value: displayTiles)
             }
         }
     }
@@ -145,8 +147,10 @@ struct TileContainerView: View {
     ) -> some View {
         let count = Double(layoutComponents.count)
         ForEach(layoutComponents) { component in
-            componentView(component, scrollableSectionLayout: scrollableSectionLayout)
-                .zIndex(count - Double(component.index ?? 0))
+            WithPerceptionTracking {
+                componentView(component, scrollableSectionLayout: scrollableSectionLayout)
+                    .zIndex(count - Double(component.index ?? 0))
+            }
         }
     }
 
@@ -180,29 +184,31 @@ struct TileContainerView: View {
         let trailingScrollInset = scrollContentTrailingInset(for: section)
 
         ScrollViewReader { scrollProxy in
-            ScrollView(scrollAxes, showsIndicators: false) {
-                if position.isVertical {
-                    sectionTilesView(section.tiles)
-                        .frame(maxWidth: .infinity, alignment: .top)
-                        .padding(.top, leadingScrollInset)
-                        .padding(.bottom, trailingScrollInset)
-                } else {
-                    sectionTilesView(section.tiles)
-                        .padding(.leading, leadingScrollInset)
-                        .padding(.trailing, trailingScrollInset)
+            WithPerceptionTracking {
+                ScrollView(scrollAxes, showsIndicators: false) {
+                    if position.isVertical {
+                        sectionTilesView(section.tiles)
+                            .frame(maxWidth: .infinity, alignment: .top)
+                            .padding(.top, leadingScrollInset)
+                            .padding(.bottom, trailingScrollInset)
+                    } else {
+                        sectionTilesView(section.tiles)
+                            .padding(.leading, leadingScrollInset)
+                            .padding(.trailing, trailingScrollInset)
+                    }
                 }
-            }
-            .padding(position.isVertical ? .bottom : .trailing, -trailingScrollInset)
-            .padding(position.isVertical ? .top : .leading, -leadingScrollInset)
-            .frame(
-                width: position.isVertical ? nil : axisLength,
-                height: position.isVertical ? axisLength : nil
-            )
-            .onAppear {
-                scrollSectionToEnd(section, using: scrollProxy)
-            }
-            .onChange(of: section.tiles.map(\.id)) { _ in
-                scrollSectionToEnd(section, using: scrollProxy)
+                .padding(position.isVertical ? .bottom : .trailing, -trailingScrollInset)
+                .padding(position.isVertical ? .top : .leading, -leadingScrollInset)
+                .frame(
+                    width: position.isVertical ? nil : axisLength,
+                    height: position.isVertical ? axisLength : nil
+                )
+                .onAppear {
+                    scrollSectionToEnd(section, using: scrollProxy)
+                }
+                .onChange(of: section.tiles.map(\.id)) { _ in
+                    scrollSectionToEnd(section, using: scrollProxy)
+                }
             }
         }
     }
@@ -212,13 +218,17 @@ struct TileContainerView: View {
         if position.isVertical {
             VStack(alignment: stackHorizontalAlignment, spacing: effectiveTileSpacing) {
                 ForEach(tiles) { tile in
-                    tileView(for: tile)
+                    WithPerceptionTracking {
+                        tileView(for: tile)
+                    }
                 }
             }
         } else {
             HStack(alignment: stackVerticalAlignment, spacing: effectiveTileSpacing) {
                 ForEach(tiles) { tile in
-                    tileView(for: tile)
+                    WithPerceptionTracking {
+                        tileView(for: tile)
+                    }
                 }
             }
         }
@@ -238,11 +248,15 @@ struct TileContainerView: View {
         )
             .opacity(isHiddenForActiveDrag(tileID: tile.id) ? 0 : 1)
             .background(alignment: .topLeading) {
-                GeometryReader { proxy in
-                    Color.clear.preference(
-                        key: TileFramePreferenceKey.self,
-                        value: [tile.id: proxy.frame(in: .global)]
-                    )
+                WithPerceptionTracking {
+                    GeometryReader { proxy in
+                        WithPerceptionTracking {
+                            Color.clear.preference(
+                                key: TileFramePreferenceKey.self,
+                                value: [tile.id: proxy.frame(in: .global)]
+                            )
+                        }
+                    }
                 }
             }
             // simultaneousGesture (not gesture) so the parent reorder drag
@@ -284,18 +298,20 @@ struct TileContainerView: View {
         let additionalBundleIdentifiers = draggedPreviewAdditionalBundleIdentifiers
         if !additionalBundleIdentifiers.isEmpty {
             ForEach(Array(additionalBundleIdentifiers.enumerated()), id: \.element) { index, bundleIdentifier in
-                let depth = additionalBundleIdentifiers.count - index
-                AppTileView(
-                    tile: AppTile(bundleIdentifier: bundleIdentifier, displayName: ""),
-                    clipShape: preferences.effectiveTileClipShape,
-                    transparencyCompensationInset: dragPreviewStackTileChromeInset
-                )
-                .frame(width: size.width, height: size.height)
-                .rotationEffect(.degrees(dragPreviewStackRotationDegrees(for: depth)))
-                .offset(
-                    x: dragPreviewStackOffset(for: depth),
-                    y: dragPreviewStackOffset(for: depth + 1)
-                )
+                WithPerceptionTracking {
+                    let depth = additionalBundleIdentifiers.count - index
+                    AppTileView(
+                        tile: AppTile(bundleIdentifier: bundleIdentifier, displayName: ""),
+                        clipShape: preferences.effectiveTileClipShape,
+                        transparencyCompensationInset: dragPreviewStackTileChromeInset
+                    )
+                    .frame(width: size.width, height: size.height)
+                    .rotationEffect(.degrees(dragPreviewStackRotationDegrees(for: depth)))
+                    .offset(
+                        x: dragPreviewStackOffset(for: depth),
+                        y: dragPreviewStackOffset(for: depth + 1)
+                    )
+                }
             }
         }
     }
@@ -852,7 +868,7 @@ struct TileContainerView: View {
         let magnitude = Double(depth) * (Double(depth) + 0.5)
         return depth.isMultiple(of: 2) ? magnitude : -magnitude
     }
-    
+
     private func dragPreviewStackOffset(for depth: Int) -> Double {
         let magnitude = Double(depth) * 2.5
         return depth.isMultiple(of: 2) ? magnitude : -magnitude

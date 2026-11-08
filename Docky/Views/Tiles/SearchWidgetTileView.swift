@@ -39,14 +39,16 @@ struct SearchWidgetTileView: View {
             #endif
 
             GeometryReader { proxy in
-                let metrics = layout(in: proxy.size)
-                ZStack {
-                    Rectangle()
-                        .fill(.primary)
-                    content(metrics: metrics)
+                WithPerceptionTracking {
+                    let metrics = layout(in: proxy.size)
+                    ZStack {
+                        Rectangle()
+                            .fill(.primary)
+                        content(metrics: metrics)
+                    }
+                    .colorScheme(.dark)
+                    .padding(.horizontal, renderedSpan != .one ? 12 : 0)
                 }
-                .colorScheme(.dark)
-                .padding(.horizontal, renderedSpan != .one ? 12 : 0)
             }
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .onChange(of: isFieldFocused) { focused in

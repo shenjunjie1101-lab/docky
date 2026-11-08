@@ -526,18 +526,20 @@ private struct DockEditorOverlayView: View {
     var body: some View {
         WithPerceptionTracking {
             GeometryReader { proxy in
-                ZStack {
-                    Color.clear
-                        .frame(width: proxy.size.width, height: proxy.size.height)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            editMode.exit()
-                        }
+                WithPerceptionTracking {
+                    ZStack {
+                        Color.clear
+                            .frame(width: proxy.size.width, height: proxy.size.height)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                editMode.exit()
+                            }
 
-                    layout(in: proxy.size)
-                        .offset(y: position == .bottom ? -28 : 0)
+                        layout(in: proxy.size)
+                            .offset(y: position == .bottom ? -28 : 0)
+                    }
+                    .ignoresSafeArea()
                 }
-                .ignoresSafeArea()
             }
         }
     }
@@ -696,12 +698,14 @@ private struct DockEditorBrowserView: View {
                     ScrollView(showsIndicators: false) {
                         LazyVStack(alignment: .leading, spacing: 0) {
                             ForEach(Array(visibleSections.enumerated()), id: \.element.id) { index, section in
-                                if index > 0 {
-                                    horizontalSeparator
-                                        .padding(.vertical, 24)
-                                }
+                                WithPerceptionTracking {
+                                    if index > 0 {
+                                        horizontalSeparator
+                                            .padding(.vertical, 24)
+                                    }
 
-                                sectionView(section)
+                                    sectionView(section)
+                                }
                             }
                         }
                         .padding(24)
@@ -714,8 +718,10 @@ private struct DockEditorBrowserView: View {
                 in: panelChromeShape
             )
             .overlay {
-                panelChromeShape
-                    .stroke(.primary.opacity(0.14), lineWidth: 1)
+                WithPerceptionTracking {
+                    panelChromeShape
+                        .stroke(.primary.opacity(0.14), lineWidth: 1)
+                }
             }
         }
     }
@@ -754,8 +760,10 @@ private struct DockEditorBrowserView: View {
             .frame(width: 300)
             .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(.white.opacity(0.08), lineWidth: 1)
+                WithPerceptionTracking {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(.white.opacity(0.08), lineWidth: 1)
+                }
             }
 
 
@@ -781,12 +789,14 @@ private struct DockEditorBrowserView: View {
 
             LazyVGrid(columns: gridColumns, alignment: .leading, spacing: 16) {
                 ForEach(section.variants) { variant in
-                    DockEditorGalleryVariantCard(
-                        variant: variant,
-                        onDrag: {
-                            startDrag(for: variant)
-                        }
-                    )
+                    WithPerceptionTracking {
+                        DockEditorGalleryVariantCard(
+                            variant: variant,
+                            onDrag: {
+                                startDrag(for: variant)
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -1005,8 +1015,10 @@ private struct DockEditorUtilityPreview: View {
             .fill(.primary.opacity(0.14))
             .frame(width: scale.tileHeight * 0.78, height: scale.tileHeight * 0.78)
             .overlay {
-                RoundedRectangle(cornerRadius: scale.tileHeight * 0.24, style: .continuous)
-                    .strokeBorder(.primary.opacity(0.08), lineWidth: 1)
+                WithPerceptionTracking {
+                    RoundedRectangle(cornerRadius: scale.tileHeight * 0.24, style: .continuous)
+                        .strokeBorder(.primary.opacity(0.08), lineWidth: 1)
+                }
             }
     }
 }

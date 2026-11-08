@@ -39,19 +39,21 @@ struct MainWindowView: View {
             // tile canvas, throwing off the cursor-to-tile mapping.
             TileContainerView()
                 .background(alignment: dockEdge) {
-                    chromeBackground()
-                        .frame(width: chromeFrameSize?.width, height: chromeFrameSize?.height)
-                        .offset(x: isVertical ? 0 : chromeOffset, y: isVertical ? chromeOffset : 0)
-                        .allowsHitTesting(true)
-                        // Suppress the implicit easeInOut while magnification is
-                        // tracking the cursor — chrome growth updates per frame
-                        // and a 0.18s tween would visibly lag the pointer. Tile
-                        // add/remove and other resting layout changes still
-                        // animate normally.
-                        .animation(
-                            isTrackingMagnification ? nil : chromeResizeAnimation,
-                            value: chromeFrameSize
-                        )
+                    WithPerceptionTracking {
+                        chromeBackground()
+                            .frame(width: chromeFrameSize?.width, height: chromeFrameSize?.height)
+                            .offset(x: isVertical ? 0 : chromeOffset, y: isVertical ? chromeOffset : 0)
+                            .allowsHitTesting(true)
+                            // Suppress the implicit easeInOut while magnification is
+                            // tracking the cursor — chrome growth updates per frame
+                            // and a 0.18s tween would visibly lag the pointer. Tile
+                            // add/remove and other resting layout changes still
+                            // animate normally.
+                            .animation(
+                                isTrackingMagnification ? nil : chromeResizeAnimation,
+                                value: chromeFrameSize
+                            )
+                    }
                 }
             // Keeps the dock at its resting spot inside a window that extends
             // past it along the axis (see `alongAxisLeadingInset`).
@@ -80,23 +82,25 @@ struct MainWindowView: View {
         let radii = chromeCornerRadii
         backgroundFill(radii: radii)
             .background {
-                if !preferences.effectiveDisablesGlassLook,
-                   FeatureGate.shared.isAvailable(.liquidGlass),
-                   #available(macOS 26.0, *) {
-                    // NSGlassEffectView only supports a uniform corner
-                    // radius via `layer.cornerRadius`. Pass the largest
-                    // of the four so the material extends out to the
-                    // widest curve; the SwiftUI `clipShape` below then
-                    // trims the smaller corners down to their target
-                    // radii. Net result: per-corner radii visually, no
-                    // private-API surface area added.
-                    LiquidGlassChromeView(
-                        variant: 11,
-                        cornerRadius: max(
-                            radii.topLeading, radii.topTrailing,
-                            radii.bottomLeading, radii.bottomTrailing
+                WithPerceptionTracking {
+                    if !preferences.effectiveDisablesGlassLook,
+                       FeatureGate.shared.isAvailable(.liquidGlass),
+                       #available(macOS 26.0, *) {
+                        // NSGlassEffectView only supports a uniform corner
+                        // radius via `layer.cornerRadius`. Pass the largest
+                        // of the four so the material extends out to the
+                        // widest curve; the SwiftUI `clipShape` below then
+                        // trims the smaller corners down to their target
+                        // radii. Net result: per-corner radii visually, no
+                        // private-API surface area added.
+                        LiquidGlassChromeView(
+                            variant: 11,
+                            cornerRadius: max(
+                                radii.topLeading, radii.topTrailing,
+                                radii.bottomLeading, radii.bottomTrailing
+                            )
                         )
-                    )
+                    }
                 }
             }
             .clipShape(DockyRoundedRectangle(cornerRadii: radii, style: .continuous))
@@ -105,17 +109,19 @@ struct MainWindowView: View {
                 // default glass stroke. When no theme border is set
                 // and glass isn't disabled, we draw the gradient
                 // outline that lives with the dock chrome.
-                if let themeBorder = preferences.effectiveWindowBorderColor {
-                    let width = max(0, preferences.effectiveWindowBorderWidth)
-                    if width > 0 {
+                WithPerceptionTracking {
+                    if let themeBorder = preferences.effectiveWindowBorderColor {
+                        let width = max(0, preferences.effectiveWindowBorderWidth)
+                        if width > 0 {
+                            DockyRoundedRectangle(cornerRadii: radii, style: .continuous)
+                                .inset(by: width / 2)
+                                .strokeBorder(Color(nsColor: themeBorder), lineWidth: width)
+                        }
+                    } else if !preferences.effectiveDisablesGlassLook {
                         DockyRoundedRectangle(cornerRadii: radii, style: .continuous)
-                            .inset(by: width / 2)
-                            .strokeBorder(Color(nsColor: themeBorder), lineWidth: width)
+                            .inset(by: borderWidth / 2)
+                            .strokeBorder(borderGradient, lineWidth: borderWidth)
                     }
-                } else if !preferences.effectiveDisablesGlassLook {
-                    DockyRoundedRectangle(cornerRadii: radii, style: .continuous)
-                        .inset(by: borderWidth / 2)
-                        .strokeBorder(borderGradient, lineWidth: borderWidth)
                 }
             }
     }
@@ -127,19 +133,23 @@ struct MainWindowView: View {
         DockyRoundedRectangle(cornerRadii: radii, style: .continuous)
             .fill(Color.clear)
             .background {
-                if let backgroundImage = resolvedBackgroundImage {
-                    GeometryReader { proxy in
-                        backgroundImageContent(image: backgroundImage)
-                            .frame(
-                                width: rotated ? proxy.size.height : proxy.size.width,
-                                height: rotated ? proxy.size.width : proxy.size.height
-                            )
-                            .rotationEffect(.degrees(backgroundImageRotationDegrees(for: resolvedPosition)))
-                            .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                WithPerceptionTracking {
+                    if let backgroundImage = resolvedBackgroundImage {
+                        GeometryReader { proxy in
+                            WithPerceptionTracking {
+                                backgroundImageContent(image: backgroundImage)
+                                    .frame(
+                                        width: rotated ? proxy.size.height : proxy.size.width,
+                                        height: rotated ? proxy.size.width : proxy.size.height
+                                    )
+                                    .rotationEffect(.degrees(backgroundImageRotationDegrees(for: resolvedPosition)))
+                                    .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                            }
+                        }
+                    } else {
+                        Color(nsColor: preferences.effectiveWindowTintColor)
+                            .opacity(preferences.effectiveWindowTintOpacity)
                     }
-                } else {
-                    Color(nsColor: preferences.effectiveWindowTintColor)
-                        .opacity(preferences.effectiveWindowTintOpacity)
                 }
             }
             .clipped()

@@ -65,7 +65,9 @@ struct ThemesSettingsView: View {
                         }
                     } else {
                         ForEach(installed, id: \.manifest.id) { theme in
-                            installedThemeRow(theme)
+                            WithPerceptionTracking {
+                                installedThemeRow(theme)
+                            }
                         }
                     }
                 }
@@ -349,19 +351,23 @@ private struct ThemePreviewBadge: View {
                 .fill(tint.map(Color.init(nsColor:)) ?? Color.secondary.opacity(0.2))
                 .frame(width: Self.size.width, height: Self.size.height)
                 .overlay {
-                    if let cover {
-                        Image(nsImage: cover)
-                            .resizable()
-                            .scaledToFill()
-                    } else if let background {
-                        Image(nsImage: background)
-                            .resizable()
-                            .scaledToFill()
+                    WithPerceptionTracking {
+                        if let cover {
+                            Image(nsImage: cover)
+                                .resizable()
+                                .scaledToFill()
+                        } else if let background {
+                            Image(nsImage: background)
+                                .resizable()
+                                .scaledToFill()
+                        }
                     }
                 }
                 .clipShape(clipShape)
                 .overlay {
-                    clipShape.strokeBorder(.separator, lineWidth: 0.5)
+                    WithPerceptionTracking {
+                        clipShape.strokeBorder(.separator, lineWidth: 0.5)
+                    }
                 }
         }
     }

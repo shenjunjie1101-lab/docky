@@ -139,12 +139,12 @@ struct ProfileSwitcherButtonView: View {
     private var scrollViewportHeight: CGFloat {
         isHorizontalScroll ? ballSize : viewportLength
     }
-    
+
     private var maximumCornerRadius: CGFloat {
         let iconHeight = layoutService.scaled(dockSettings.displayTileSize)
         return (iconHeight + layoutService.scaled(preferences.effectiveTileVerticalPadding) * 2) / 2
     }
-    
+
     /// Per-corner radii used by every chrome shape (fill, glass clip,
     /// border). Each corner is the theme/user override clamped to the
     /// max curve, falling through to the uniform value when unset.
@@ -242,20 +242,22 @@ struct ProfileSwitcherButtonView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 24) {
                     ForEach(profileService.profiles) { profile in
-                        Text(profile.name)
-                            .font(.headline)
-                            .lineLimit(1)
-                            .fixedSize(horizontal: true, vertical: false)
-                            .foregroundStyle(.white)
-                            .blendMode(.difference)
-                            .opacity(profile.id == profileService.activeProfileID ? 1 : 0.5)
-                            .frame(height: ballSize)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                profileService.setActiveProfile(id: profile.id)
-                                scheduleHideAfterSelection()
-                            }
-                            .id(profile.id)
+                        WithPerceptionTracking {
+                            Text(profile.name)
+                                .font(.headline)
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
+                                .foregroundStyle(.white)
+                                .blendMode(.difference)
+                                .opacity(profile.id == profileService.activeProfileID ? 1 : 0.5)
+                                .frame(height: ballSize)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    profileService.setActiveProfile(id: profile.id)
+                                    scheduleHideAfterSelection()
+                                }
+                                .id(profile.id)
+                        }
                     }
                 }
                 .padding(.leading, leadingStripPadding)
@@ -274,18 +276,20 @@ struct ProfileSwitcherButtonView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 0) {
                     ForEach(profileService.profiles) { profile in
-                        Image(systemName: profile.symbolName)
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .blendMode(.difference)
-                            .opacity(profile.id == profileService.activeProfileID ? 1 : 0.5)
-                            .frame(width: ballSize, height: ballSize)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                profileService.setActiveProfile(id: profile.id)
-                                scheduleHideAfterSelection()
-                            }
-                            .id(profile.id)
+                        WithPerceptionTracking {
+                            Image(systemName: profile.symbolName)
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                                .blendMode(.difference)
+                                .opacity(profile.id == profileService.activeProfileID ? 1 : 0.5)
+                                .frame(width: ballSize, height: ballSize)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    profileService.setActiveProfile(id: profile.id)
+                                    scheduleHideAfterSelection()
+                                }
+                                .id(profile.id)
+                        }
                     }
                 }
                 .padding(.vertical, (viewportLength - ballSize) / 2)
@@ -310,13 +314,15 @@ struct ProfileSwitcherButtonView: View {
         Color.clear
             .frame(width: ballWidth, height: ballHeight)
             .background {
-                if !preferences.effectiveDisablesGlassLook,
-                   FeatureGate.shared.isAvailable(.liquidGlass),
-                   #available(macOS 26.0, *) {
-                    LiquidGlassChromeView(
-                        variant: 19,
-                        cornerRadius: ballSize / 2
-                    )
+                WithPerceptionTracking {
+                    if !preferences.effectiveDisablesGlassLook,
+                       FeatureGate.shared.isAvailable(.liquidGlass),
+                       #available(macOS 26.0, *) {
+                        LiquidGlassChromeView(
+                            variant: 19,
+                            cornerRadius: ballSize / 2
+                        )
+                    }
                 }
             }
             .dockyGlassBorder(in: Capsule(), lineWidth: 1)

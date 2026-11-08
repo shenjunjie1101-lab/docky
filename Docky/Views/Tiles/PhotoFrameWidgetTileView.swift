@@ -33,26 +33,28 @@ struct PhotoFrameWidgetTileView: View {
             #endif
 
             GeometryReader { proxy in
-                ZStack {
-                    if let image = photos.currentImage {
-                        Image(nsImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: proxy.size.width, height: proxy.size.height)
-                            .clipped()
-                            .transition(.opacity)
-                            .id(image)
-                    } else {
-                        emptyState(shortSide: min(proxy.size.width, proxy.size.height))
-                    }
+                WithPerceptionTracking {
+                    ZStack {
+                        if let image = photos.currentImage {
+                            Image(nsImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: proxy.size.width, height: proxy.size.height)
+                                .clipped()
+                                .transition(.opacity)
+                                .id(image)
+                        } else {
+                            emptyState(shortSide: min(proxy.size.width, proxy.size.height))
+                        }
 
-                    if !isWithinStack {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                        if !isWithinStack {
+                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                        }
                     }
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                    .animation(.easeInOut(duration: 0.6), value: photos.currentImage)
                 }
-                .frame(width: proxy.size.width, height: proxy.size.height)
-                .animation(.easeInOut(duration: 0.6), value: photos.currentImage)
             }
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         }

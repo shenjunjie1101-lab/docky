@@ -215,13 +215,15 @@ struct SettingsRootView: View {
             HSplitView {
                 List(selection: Binding<SettingsPane?>(get: { selection }, set: { if let pane = $0 { selection = pane } })) {
                     ForEach(settingsSections) { section in
-                        if let title = section.title {
-                            Section(title) {
-                                paneRows(section.panes)
-                            }
-                        } else {
-                            Section {
-                                paneRows(section.panes)
+                        WithPerceptionTracking {
+                            if let title = section.title {
+                                Section(title) {
+                                    paneRows(section.panes)
+                                }
+                            } else {
+                                Section {
+                                    paneRows(section.panes)
+                                }
                             }
                         }
                     }
@@ -297,12 +299,14 @@ struct SettingsRootView: View {
     @ViewBuilder
     private func paneRows(_ panes: [SettingsPane]) -> some View {
         ForEach(panes) { pane in
-            HStack(spacing: 8) {
-                PaneIconBadge(symbol: pane.symbolName, color: pane.tileColor)
-                Text(pane.title)
-                Spacer(minLength: 8)
+            WithPerceptionTracking {
+                HStack(spacing: 8) {
+                    PaneIconBadge(symbol: pane.symbolName, color: pane.tileColor)
+                    Text(pane.title)
+                    Spacer(minLength: 8)
+                }
+                .tag(pane)
             }
-            .tag(pane)
         }
     }
 }
@@ -324,9 +328,11 @@ private struct PaneIconBadge: View {
                 .fill(isDark ? Color.black : color)
                 .frame(width: Self.tileSize, height: Self.tileSize)
                 .overlay {
-                    Image(systemName: symbol)
-                        .font(.system(size: Self.symbolSize, weight: .semibold))
-                        .foregroundStyle(isDark ? color : Color.white)
+                    WithPerceptionTracking {
+                        Image(systemName: symbol)
+                            .font(.system(size: Self.symbolSize, weight: .semibold))
+                            .foregroundStyle(isDark ? color : Color.white)
+                    }
                 }
         }
     }

@@ -70,8 +70,10 @@ struct FolderPopoverView: View {
                     reportPopoverSize()
                 }
                 .background {
-                    FolderPopoverKeyMonitor { event in
-                        handleKeyDown(event)
+                    WithPerceptionTracking {
+                        FolderPopoverKeyMonitor { event in
+                            handleKeyDown(event)
+                        }
                     }
                 }
                 .onAppear {
@@ -131,12 +133,14 @@ struct FolderPopoverView: View {
         ScrollView(showsIndicators: false) {
             LazyVGrid(columns: gridColumns, spacing: gridItemSpacing) {
                 ForEach(popoverItems) { item in
-                    cardButton(for: item) {
-                        switch item {
-                        case .url(let itemURL):
-                            FolderPopoverItemView(url: itemURL)
-                        case .action(let action):
-                            FolderPopoverActionItemView(action: action)
+                    WithPerceptionTracking {
+                        cardButton(for: item) {
+                            switch item {
+                            case .url(let itemURL):
+                                FolderPopoverItemView(url: itemURL)
+                            case .action(let action):
+                                FolderPopoverActionItemView(action: action)
+                            }
                         }
                     }
                 }
@@ -165,8 +169,10 @@ struct FolderPopoverView: View {
                 selectedItemID = item.id
             }
             .background {
-                ContextActionMenuPresenter { _ in
-                    contextActions(for: itemURL)
+                WithPerceptionTracking {
+                    ContextActionMenuPresenter { _ in
+                        contextActions(for: itemURL)
+                    }
                 }
             }
             // Folder-only drop target: hover-dwell navigates into the folder

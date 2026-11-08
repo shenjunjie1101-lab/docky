@@ -435,7 +435,9 @@ struct MoreActionsButton: View {
                     .frame(width: 26, height: 26)
                     .background(.ultraThinMaterial, in: Circle())
                     .overlay {
-                        Circle().strokeBorder(.white.opacity(0.25), lineWidth: 0.5)
+                        WithPerceptionTracking {
+                            Circle().strokeBorder(.white.opacity(0.25), lineWidth: 0.5)
+                        }
                     }
                     .shadow(color: .black.opacity(0.4), radius: 3, y: 1)
             }

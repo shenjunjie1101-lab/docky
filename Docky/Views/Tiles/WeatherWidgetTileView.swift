@@ -161,40 +161,42 @@ private struct WeatherWidgetContentView: View {
             #endif
 
             GeometryReader { proxy in
-                let layout = layout(in: proxy.size)
-                let expandedLayout = expandedLayout(in: proxy.size)
+                WithPerceptionTracking {
+                    let layout = layout(in: proxy.size)
+                    let expandedLayout = expandedLayout(in: proxy.size)
 
-                ZStack {
-                    LinearGradient(
-                        colors: backgroundColors,
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    ZStack {
+                        LinearGradient(
+                            colors: backgroundColors,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                    if !isWithinStack {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                        if !isWithinStack {
+                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                        }
+
+                        content(layout: layout)
+                            .opacity(isExpanded || isExpandedPreviewOpen ? 0 : 1)
+                            .animation(.easeOut(duration: 0.12), value: isExpanded)
+                            .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
+
+                        if isExpanded {
+                            expandedContent(layout: expandedLayout)
+                                .transition(
+                                    .opacity.animation(
+                                        .easeInOut(duration: 0.22).delay(
+                                            0.22
+                                        )
+                                    ).combined(with: .scale).combined(with: .slide)
+                                )
+                        }
                     }
-
-                    content(layout: layout)
-                        .opacity(isExpanded || isExpandedPreviewOpen ? 0 : 1)
-                        .animation(.easeOut(duration: 0.12), value: isExpanded)
-                        .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
-
-                    if isExpanded {
-                        expandedContent(layout: expandedLayout)
-                            .transition(
-                                .opacity.animation(
-                                    .easeInOut(duration: 0.22).delay(
-                                        0.22
-                                    )
-                                ).combined(with: .scale).combined(with: .slide)
-                            )
-                    }
+                    .animation(.easeInOut(duration: 0.22), value: isExpanded)
+                    .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
                 }
-                .animation(.easeInOut(duration: 0.22), value: isExpanded)
-                .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
             }
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         }
@@ -293,7 +295,9 @@ private struct WeatherWidgetContentView: View {
         if !forecast.isEmpty {
             HStack(spacing: layout.forecastSpacing) {
                 ForEach(forecast.prefix(5)) { day in
-                    forecastColumn(day: day, layout: layout)
+                    WithPerceptionTracking {
+                        forecastColumn(day: day, layout: layout)
+                    }
                 }
             }
             .frame(maxWidth: .infinity)

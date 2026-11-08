@@ -39,12 +39,14 @@ struct FeedbackSettingsView: View {
                             .font(.body)
                             .frame(minHeight: 140)
                             .overlay(alignment: .topLeading) {
-                                if feedbackText.isEmpty {
-                                    Text("Describe the steps to reproduce, or what you'd like to see…")
-                                        .foregroundStyle(.tertiary)
-                                        .padding(.horizontal, 4)
-                                        .padding(.vertical, 8)
-                                        .allowsHitTesting(false)
+                                WithPerceptionTracking {
+                                    if feedbackText.isEmpty {
+                                        Text("Describe the steps to reproduce, or what you'd like to see…")
+                                            .foregroundStyle(.tertiary)
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 8)
+                                            .allowsHitTesting(false)
+                                    }
                                 }
                             }
                             .dockyHideScrollBackground()

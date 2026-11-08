@@ -106,7 +106,9 @@ struct WidgetsSettingsView: View {
                 }
             } else {
                 ForEach(entries) { entry in
-                    entryRow(entry)
+                    WithPerceptionTracking {
+                        entryRow(entry)
+                    }
                 }
             }
         }
@@ -168,7 +170,9 @@ struct WidgetsSettingsView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(widgets) { widget in
-                    marketplaceRow(widget)
+                    WithPerceptionTracking {
+                        marketplaceRow(widget)
+                    }
                 }
             }
         }

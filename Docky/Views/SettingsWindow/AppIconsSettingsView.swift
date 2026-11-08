@@ -23,8 +23,10 @@ struct AppIconsSettingsView: View {
                         .fixedSize(horizontal: false, vertical: true)
 
                     ForEach(TrashIconState.allCases) { state in
-                        TrashIconOverrideRow(state: state)
-                            .padding(.vertical, 4)
+                        WithPerceptionTracking {
+                            TrashIconOverrideRow(state: state)
+                                .padding(.vertical, 4)
+                        }
                     }
                 }
 
@@ -38,8 +40,10 @@ struct AppIconsSettingsView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(folderEntries) { entry in
-                            FolderIconOverrideRow(entry: entry)
-                                .padding(.vertical, 4)
+                            WithPerceptionTracking {
+                                FolderIconOverrideRow(entry: entry)
+                                    .padding(.vertical, 4)
+                            }
                         }
                     }
                 }
@@ -72,8 +76,10 @@ struct AppIconsSettingsView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(appEntries) { entry in
-                            AppIconOverrideRow(entry: entry)
-                                .padding(.vertical, 4)
+                            WithPerceptionTracking {
+                                AppIconOverrideRow(entry: entry)
+                                    .padding(.vertical, 4)
+                            }
                         }
                     }
                 }
@@ -95,8 +101,10 @@ struct AppIconsSettingsView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(otherApps) { entry in
-                            AppIconOverrideRow(entry: entry)
-                                .padding(.vertical, 4)
+                            WithPerceptionTracking {
+                                AppIconOverrideRow(entry: entry)
+                                    .padding(.vertical, 4)
+                            }
                         }
                     }
                 }

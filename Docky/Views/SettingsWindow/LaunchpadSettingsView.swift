@@ -76,7 +76,9 @@ struct LaunchpadSettingsView: View {
 
                             Picker("Scroll Direction", selection: $preferences.launchpadLayoutAxis) {
                                 ForEach(LaunchpadLayoutAxis.allCases) { axis in
-                                    Text(axis.title).tag(axis)
+                                    WithPerceptionTracking {
+                                        Text(axis.title).tag(axis)
+                                    }
                                 }
                             }
                             .labelsHidden()

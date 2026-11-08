@@ -16,18 +16,22 @@ struct DividerTileView: View {
     var body: some View {
         WithPerceptionTracking {
             GeometryReader { proxy in
-                divider(globalFrame: proxy.frame(in: .global))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .offset(x: dividerOffsetVector.width, y: dividerOffsetVector.height)
-                    .background(.black.opacity(0.001))
-                    .contentShape(Path(CGRect(origin: .zero, size: proxy.size)))
-                    .background {
-                        if !isPinnedCustomDivider {
-                            ContextActionMenuPresenter { _ in
-                                dividerContextActions
+                WithPerceptionTracking {
+                    divider(globalFrame: proxy.frame(in: .global))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .offset(x: dividerOffsetVector.width, y: dividerOffsetVector.height)
+                        .background(.black.opacity(0.001))
+                        .contentShape(Path(CGRect(origin: .zero, size: proxy.size)))
+                        .background {
+                            WithPerceptionTracking {
+                                if !isPinnedCustomDivider {
+                                    ContextActionMenuPresenter { _ in
+                                        dividerContextActions
+                                    }
+                                }
                             }
                         }
-                    }
+                }
             }
         }
     }
@@ -136,10 +140,12 @@ struct DividerTileView: View {
             // the 90° spin. Without this, fit operates on the pre-rotation
             // box and the rotated image under-fills the slot's cross axis.
             GeometryReader { proxy in
-                image
-                    .frame(width: proxy.size.height, height: proxy.size.width)
-                    .rotationEffect(.degrees(90))
-                    .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                WithPerceptionTracking {
+                    image
+                        .frame(width: proxy.size.height, height: proxy.size.width)
+                        .rotationEffect(.degrees(90))
+                        .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                }
             }
             .padding(.horizontal, lineInset)
         } else {

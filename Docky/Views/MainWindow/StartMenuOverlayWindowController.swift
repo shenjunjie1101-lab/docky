@@ -452,8 +452,10 @@ private struct StartMenuView: View {
             Color.clear
                 .dockyGlass(in: shape)
                 .overlay {
-                    shape.fill(Color(nsColor: preferences.effectiveWindowTintColor))
-                        .opacity(preferences.effectiveWindowTintOpacity)
+                    WithPerceptionTracking {
+                        shape.fill(Color(nsColor: preferences.effectiveWindowTintColor))
+                            .opacity(preferences.effectiveWindowTintOpacity)
+                    }
                 }
                 .dockyGlassBorder(in: shape)
 
@@ -484,8 +486,10 @@ private struct StartMenuView: View {
             Color.clear
                 .dockyGlass(in: shape)
                 .overlay {
-                    shape.fill(Color(nsColor: preferences.effectiveWindowTintColor))
-                        .opacity(preferences.effectiveWindowTintOpacity)
+                    WithPerceptionTracking {
+                        shape.fill(Color(nsColor: preferences.effectiveWindowTintColor))
+                            .opacity(preferences.effectiveWindowTintOpacity)
+                    }
                 }
                 .dockyGlassBorder(in: shape)
 
@@ -518,7 +522,9 @@ private struct StartMenuView: View {
             let columns = [GridItem(.adaptive(minimum: 88, maximum: 110), spacing: 10)]
             LazyVGrid(columns: columns, alignment: .leading, spacing: 10) {
                 ForEach(items) { folder in
-                    homeFolderCell(folder)
+                    WithPerceptionTracking {
+                        homeFolderCell(folder)
+                    }
                 }
             }
         }
@@ -555,7 +561,9 @@ private struct StartMenuView: View {
             sectionHeader("Recents")
             VStack(spacing: 4) {
                 ForEach(items, id: \.self) { url in
-                    recentRow(url: url)
+                    WithPerceptionTracking {
+                        recentRow(url: url)
+                    }
                 }
             }
         }
@@ -569,7 +577,9 @@ private struct StartMenuView: View {
             let columns = [GridItem(.adaptive(minimum: 88, maximum: 110), spacing: 10)]
             LazyVGrid(columns: columns, alignment: .leading, spacing: 10) {
                 ForEach(apps, id: \.bundleIdentifier) { app in
-                    appCell(app)
+                    WithPerceptionTracking {
+                        appCell(app)
+                    }
                 }
             }
         }
@@ -630,7 +640,9 @@ private struct StartMenuView: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
                     ForEach(allAppsAlphabetical, id: \.bundleIdentifier) { app in
-                        allAppsRow(app)
+                        WithPerceptionTracking {
+                            allAppsRow(app)
+                        }
                     }
                 }
                 .padding(.horizontal, 8)

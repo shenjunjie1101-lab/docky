@@ -70,53 +70,61 @@ struct SmartStackTileView: View {
                     // visible. With `.id(widget.identifier)` SwiftUI
                     // swaps the view on selection change and the
                     // transition gives the same vertical-slide feel.
-                    ZStack {
-                        if let selectedWidget = selectedWidget {
-                            WidgetTileView(
-                                tile: selectedWidget,
-                                cornerRadius: cornerRadius,
-                                renderedSpan: renderedSpan,
-                                isWithinStack: true
-                            )
-                            .frame(width: proxy.size.width, height: proxy.size.height)
-                            .id(selectedWidget.identifier)
-                            .transition(
-                                .asymmetric(
-                                    insertion: .move(edge: .bottom).combined(with: .opacity),
-                                    removal: .move(edge: .top).combined(with: .opacity)
+                    WithPerceptionTracking {
+                        ZStack {
+                            if let selectedWidget = selectedWidget {
+                                WidgetTileView(
+                                    tile: selectedWidget,
+                                    cornerRadius: cornerRadius,
+                                    renderedSpan: renderedSpan,
+                                    isWithinStack: true
                                 )
-                            )
+                                .frame(width: proxy.size.width, height: proxy.size.height)
+                                .id(selectedWidget.identifier)
+                                .transition(
+                                    .asymmetric(
+                                        insertion: .move(edge: .bottom).combined(with: .opacity),
+                                        removal: .move(edge: .top).combined(with: .opacity)
+                                    )
+                                )
+                            }
                         }
+                        .animation(.easeInOut(duration: 0.2), value: selection)
                     }
-                    .animation(.easeInOut(duration: 0.2), value: selection)
                 }
                 .clipped()
                 .clipShape(.rect(cornerRadius: cornerRadius, style: .continuous))
                 .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
                 .overlay(alignment: .trailing) {
-                    if tile.widgets.count > 1 {
-                        VStack(spacing: 5) {
-                            ForEach(tile.widgets.indices, id: \.self) { index in
-                                Capsule(style: .continuous)
-                                    .fill(index == selection ? Color.primary.opacity(0.9) : Color.primary.opacity(0.22))
-                                    .frame(width: 3, height: index == selection ? 18 : 8)
-                                    .animation(.easeInOut(duration: 0.18), value: selection)
+                    WithPerceptionTracking {
+                        if tile.widgets.count > 1 {
+                            VStack(spacing: 5) {
+                                ForEach(tile.widgets.indices, id: \.self) { index in
+                                    WithPerceptionTracking {
+                                        Capsule(style: .continuous)
+                                            .fill(index == selection ? Color.primary.opacity(0.9) : Color.primary.opacity(0.22))
+                                            .frame(width: 3, height: index == selection ? 18 : 8)
+                                            .animation(.easeInOut(duration: 0.18), value: selection)
+                                    }
+                                }
                             }
+                            .frame(width: 6)
+                            .opacity(showsPagingIndicator ? 1 : 0)
+                            .animation(.easeInOut(duration: 0.18), value: showsPagingIndicator)
+                            .offset(x: 8)
                         }
-                        .frame(width: 6)
-                        .opacity(showsPagingIndicator ? 1 : 0)
-                        .animation(.easeInOut(duration: 0.18), value: showsPagingIndicator)
-                        .offset(x: 8)
                     }
                 }
                 .background {
-                    Color
-                        .primary.opacity(0.2)
-                        .clipShape(.rect(cornerRadius: cornerRadius, style: .continuous))
-                        .padding(showsPagingIndicator ? -4 : 0)
-                        .padding(.trailing, showsPagingIndicator ? -8 : 0)
-                        .opacity(showsPagingIndicator ? 1 : 0)
-                        .animation(.easeInOut(duration: 0.20), value: showsPagingIndicator)
+                    WithPerceptionTracking {
+                        Color
+                            .primary.opacity(0.2)
+                            .clipShape(.rect(cornerRadius: cornerRadius, style: .continuous))
+                            .padding(showsPagingIndicator ? -4 : 0)
+                            .padding(.trailing, showsPagingIndicator ? -8 : 0)
+                            .opacity(showsPagingIndicator ? 1 : 0)
+                            .animation(.easeInOut(duration: 0.20), value: showsPagingIndicator)
+                    }
                 }
             }
         }
@@ -136,15 +144,17 @@ struct SmartStackTileView: View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             .fill(.black.opacity(0.12))
             .overlay {
-                VStack(spacing: 4) {
-                    Label("Smart Stack", systemImage: "square.stack.3d.up")
-                        .font(.caption.weight(.semibold))
-                    Text("No widgets available")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                WithPerceptionTracking {
+                    VStack(spacing: 4) {
+                        Label("Smart Stack", systemImage: "square.stack.3d.up")
+                            .font(.caption.weight(.semibold))
+                        Text("No widgets available")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 }
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
     }
 

@@ -27,18 +27,20 @@ struct BatteriesWidgetTileView: View {
 
             TimelineView(.periodic(from: .now, by: 60)) { _ in
                 GeometryReader { proxy in
-                    let layout = layout(in: proxy.size, visibleDeviceCount: currentVisibleDeviceCount)
+                    WithPerceptionTracking {
+                        let layout = layout(in: proxy.size, visibleDeviceCount: currentVisibleDeviceCount)
 
-                    ZStack {
-                        Color(nsColor: backgroundTintColor)
-                            .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                        ZStack {
+                            Color(nsColor: backgroundTintColor)
+                                .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                        if !isWithinStack {
-                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                            if !isWithinStack {
+                                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                    .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                            }
+
+                            content(layout: layout)
                         }
-
-                        content(layout: layout)
                     }
                 }
             }
@@ -71,8 +73,10 @@ struct BatteriesWidgetTileView: View {
     private func indicatorRow(devices: [BatteryDeviceSnapshot], layout: LayoutMetrics, showsLabels: Bool) -> some View {
         HStack(alignment: .center, spacing: layout.contentGap) {
             ForEach(devices) { device in
-                batteryIndicator(device: device, layout: layout, showsLabel: showsLabels)
-                    .offset(y: 2)
+                WithPerceptionTracking {
+                    batteryIndicator(device: device, layout: layout, showsLabel: showsLabels)
+                        .offset(y: 2)
+                }
             }
         }
         .padding(layout.contentPadding)
@@ -101,17 +105,19 @@ struct BatteriesWidgetTileView: View {
                     .foregroundStyle(Color.primary.opacity(0.9))
             }
             .overlay(alignment: .topTrailing) {
-                if device.isCharging {
-                    ZStack {
-                        Circle()
-                            .fill(Color(nsColor: accentColor(for: device)).opacity(0.96))
+                WithPerceptionTracking {
+                    if device.isCharging {
+                        ZStack {
+                            Circle()
+                                .fill(Color(nsColor: accentColor(for: device)).opacity(0.96))
 
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: layout.boltSize, weight: .bold))
-                            .foregroundStyle(.white)
+                            Image(systemName: "bolt.fill")
+                                .font(.system(size: layout.boltSize, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
+                        .frame(width: layout.chargeBadgeDiameter, height: layout.chargeBadgeDiameter)
+                        .offset(x: layout.chargeBadgeOffset, y: -layout.chargeBadgeOffset)
                     }
-                    .frame(width: layout.chargeBadgeDiameter, height: layout.chargeBadgeDiameter)
-                    .offset(x: layout.chargeBadgeOffset, y: -layout.chargeBadgeOffset)
                 }
             }
             .frame(width: layout.circleDiameter, height: layout.circleDiameter)

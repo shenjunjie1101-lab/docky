@@ -24,9 +24,11 @@ struct DockBadgeView: View {
     var body: some View {
         WithPerceptionTracking {
             GeometryReader { proxy in
-                let side = min(proxy.size.width, proxy.size.height)
-                badge(forTileSide: side)
-                    .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
+                WithPerceptionTracking {
+                    let side = min(proxy.size.width, proxy.size.height)
+                    badge(forTileSide: side)
+                        .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
+                }
             }
             .allowsHitTesting(false)
         }
@@ -79,9 +81,11 @@ struct DockBadgeDotView: View {
     var body: some View {
         WithPerceptionTracking {
             GeometryReader { proxy in
-                let side = min(proxy.size.width, proxy.size.height)
-                dot(forTileSide: side)
-                    .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
+                WithPerceptionTracking {
+                    let side = min(proxy.size.width, proxy.size.height)
+                    dot(forTileSide: side)
+                        .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topTrailing)
+                }
             }
             .allowsHitTesting(false)
         }

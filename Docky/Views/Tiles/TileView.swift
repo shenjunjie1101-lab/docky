@@ -560,14 +560,18 @@ struct TileView: View {
             .background(hoverBackground)
             .background(activeBackground)
             .overlay(alignment: runningIndicatorAlignment) {
-                runningIndicator
-                    .padding(runningIndicatorEdge, runningIndicatorInset)
-                    .offset(x: runningIndicatorOffsetVector.width, y: runningIndicatorOffsetVector.height)
+                WithPerceptionTracking {
+                    runningIndicator
+                        .padding(runningIndicatorEdge, runningIndicatorInset)
+                        .offset(x: runningIndicatorOffsetVector.width, y: runningIndicatorOffsetVector.height)
+                }
             }
             .overlay(alignment: .topTrailing) {
-                if let badgeText {
-                    DockBadgeView(text: badgeText)
-                        .padding(appliedTileIconPadding)
+                WithPerceptionTracking {
+                    if let badgeText {
+                        DockBadgeView(text: badgeText)
+                            .padding(appliedTileIconPadding)
+                    }
                 }
             }
             .contentShape(Rectangle())
@@ -634,98 +638,100 @@ struct TileView: View {
                 }
             }
             .background {
-                ContextActionMenuPresenter(
-                    actionProvider: contextActions(modifierFlags:),
-                    preferredEdge: inwardMenuEdge,
-                    onPresentationChanged: updateContextMenuPresentation
-                )
-
-                if let tooltipTitle {
-                    TileTooltipPopoverPresenter(
-                        title: tooltipTitle,
-                        isPresented: isTooltipPresented,
-                        preferredEdge: inwardPopoverEdge,
-                        repositionKey: effectiveTileSize
+                WithPerceptionTracking {
+                    ContextActionMenuPresenter(
+                        actionProvider: contextActions(modifierFlags:),
+                        preferredEdge: inwardMenuEdge,
+                        onPresentationChanged: updateContextMenuPresentation
                     )
-                    .allowsHitTesting(false)
-                }
 
-                if case .folder(let folder) = tile.content {
-                    if folderContentViewMode == .list {
-                        FolderListMenuPresenter(
-                            tile: FolderTile(
-                                url: folder.url,
-                                displayName: folder.displayName,
-                                displayMode: folderDisplayMode,
-                                contentViewMode: folderContentViewMode,
-                                sortMode: folderSortMode
-                            ),
-                            isPresented: $isFolderListMenuPresented,
-                            preferredEdge: inwardPopoverEdge
+                    if let tooltipTitle {
+                        TileTooltipPopoverPresenter(
+                            title: tooltipTitle,
+                            isPresented: isTooltipPresented,
+                            preferredEdge: inwardPopoverEdge,
+                            repositionKey: effectiveTileSize
                         )
-                    } else if folderContentViewMode == .fan,
-                              position == .bottom,
-                              case .loaded(let snapshotItems) = folderSnapshot,
-                              snapshotItems.count <= FolderFanView.maximumItemCount {
-                        // Fan mode: bottom-anchored parabolic overlay,
-                        // only when the folder fits in a single bow.
-                        // Larger folders silently fall through to the
-                        // grid popover below — `>10 items → grid` is
-                        // intentional per spec.
-                        // Keep the sort order as-is. The fan curve
-                        // already places item 0 at the bottom of the
-                        // arc (closest to the tile) and the last item
-                        // at the top — so the newest entry (sorted
-                        // first) sits near the tile and the oldest
-                        // ends up at the top of the fan naturally.
-                        let fanItems = FolderAccessService.shared.sortedItems(
-                            in: snapshotItems,
-                            sortMode: folderSortMode
-                        )
-                        FolderFanPresenter(
-                            folderURL: folder.url,
-                            items: fanItems,
-                            isPresented: $isFolderPopoverPresented
-                        )
-                    } else {
-                        FolderPopoverPresenter(
-                            tile: FolderTile(
-                                url: folder.url,
-                                displayName: folder.displayName,
-                                displayMode: folderDisplayMode,
-                                contentViewMode: folderContentViewMode,
-                                sortMode: folderSortMode
-                            ),
-                            initialSnapshot: folderSnapshot,
-                            isPresented: $isFolderPopoverPresented,
-                            preferredEdge: inwardPopoverEdge
-                        )
+                        .allowsHitTesting(false)
                     }
-                }
 
-                if case .appFolder(let folder) = tile.content {
-                    let presentedFolder = AppFolderTile(
-                        identifier: folder.identifier,
-                        displayName: folder.displayName,
-                        apps: folder.apps,
-                        displayMode: appFolderDisplayMode,
-                        contentViewMode: appFolderContentViewMode
-                    )
+                    if case .folder(let folder) = tile.content {
+                        if folderContentViewMode == .list {
+                            FolderListMenuPresenter(
+                                tile: FolderTile(
+                                    url: folder.url,
+                                    displayName: folder.displayName,
+                                    displayMode: folderDisplayMode,
+                                    contentViewMode: folderContentViewMode,
+                                    sortMode: folderSortMode
+                                ),
+                                isPresented: $isFolderListMenuPresented,
+                                preferredEdge: inwardPopoverEdge
+                            )
+                        } else if folderContentViewMode == .fan,
+                                  position == .bottom,
+                                  case .loaded(let snapshotItems) = folderSnapshot,
+                                  snapshotItems.count <= FolderFanView.maximumItemCount {
+                            // Fan mode: bottom-anchored parabolic overlay,
+                            // only when the folder fits in a single bow.
+                            // Larger folders silently fall through to the
+                            // grid popover below — `>10 items → grid` is
+                            // intentional per spec.
+                            // Keep the sort order as-is. The fan curve
+                            // already places item 0 at the bottom of the
+                            // arc (closest to the tile) and the last item
+                            // at the top — so the newest entry (sorted
+                            // first) sits near the tile and the oldest
+                            // ends up at the top of the fan naturally.
+                            let fanItems = FolderAccessService.shared.sortedItems(
+                                in: snapshotItems,
+                                sortMode: folderSortMode
+                            )
+                            FolderFanPresenter(
+                                folderURL: folder.url,
+                                items: fanItems,
+                                isPresented: $isFolderPopoverPresented
+                            )
+                        } else {
+                            FolderPopoverPresenter(
+                                tile: FolderTile(
+                                    url: folder.url,
+                                    displayName: folder.displayName,
+                                    displayMode: folderDisplayMode,
+                                    contentViewMode: folderContentViewMode,
+                                    sortMode: folderSortMode
+                                ),
+                                initialSnapshot: folderSnapshot,
+                                isPresented: $isFolderPopoverPresented,
+                                preferredEdge: inwardPopoverEdge
+                            )
+                        }
+                    }
 
-                    if appFolderContentViewMode == .list {
-                        AppFolderListMenuPresenter(
-                            tile: presentedFolder,
-                            tileID: tile.id,
-                            isPresented: $isAppFolderListMenuPresented,
-                            preferredEdge: inwardPopoverEdge
+                    if case .appFolder(let folder) = tile.content {
+                        let presentedFolder = AppFolderTile(
+                            identifier: folder.identifier,
+                            displayName: folder.displayName,
+                            apps: folder.apps,
+                            displayMode: appFolderDisplayMode,
+                            contentViewMode: appFolderContentViewMode
                         )
-                    } else if appFolderContentViewMode == .grid {
-                        AppFolderPopoverPresenter(
-                            tile: presentedFolder,
-                            tileID: tile.id,
-                            isPresented: $isAppFolderPopoverPresented,
-                            preferredEdge: inwardPopoverEdge
-                        )
+
+                        if appFolderContentViewMode == .list {
+                            AppFolderListMenuPresenter(
+                                tile: presentedFolder,
+                                tileID: tile.id,
+                                isPresented: $isAppFolderListMenuPresented,
+                                preferredEdge: inwardPopoverEdge
+                            )
+                        } else if appFolderContentViewMode == .grid {
+                            AppFolderPopoverPresenter(
+                                tile: presentedFolder,
+                                tileID: tile.id,
+                                isPresented: $isAppFolderPopoverPresented,
+                                preferredEdge: inwardPopoverEdge
+                            )
+                        }
                     }
                 }
             }
@@ -736,21 +742,25 @@ struct TileView: View {
         switch tile.content {
         case .app(let app) where app.displayedWidget != nil:
             GeometryReader { proxy in
-                displayedContent
-                    .frame(
-                        width: max(0, proxy.size.width - contentInsets.width * 2),
-                        height: max(0, proxy.size.height - contentInsets.height * 2)
-                    )
-                    .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                WithPerceptionTracking {
+                    displayedContent
+                        .frame(
+                            width: max(0, proxy.size.width - contentInsets.width * 2),
+                            height: max(0, proxy.size.height - contentInsets.height * 2)
+                        )
+                        .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                }
             }
         case .appFolder, .launchpad, .startMenu, .widget, .smartStack:
             GeometryReader { proxy in
-                displayedContent
-                    .frame(
-                        width: max(0, proxy.size.width - contentInsets.width * 2),
-                        height: max(0, proxy.size.height - contentInsets.height * 2)
-                    )
-                    .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                WithPerceptionTracking {
+                    displayedContent
+                        .frame(
+                            width: max(0, proxy.size.width - contentInsets.width * 2),
+                            height: max(0, proxy.size.height - contentInsets.height * 2)
+                        )
+                        .position(x: proxy.size.width / 2, y: proxy.size.height / 2)
+                }
             }
         case .folder, .trash:
             displayedContent

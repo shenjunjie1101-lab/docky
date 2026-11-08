@@ -26,19 +26,21 @@ struct SystemStatusWidgetTileView: View {
             #endif
 
             GeometryReader { proxy in
-                let metrics = visibleMetrics
-                let layout = layout(in: proxy.size, visibleMetricCount: max(1, metrics.count))
+                WithPerceptionTracking {
+                    let metrics = visibleMetrics
+                    let layout = layout(in: proxy.size, visibleMetricCount: max(1, metrics.count))
 
-                ZStack {
-                    Color(nsColor: backgroundTintColor)
-                        .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    ZStack {
+                        Color(nsColor: backgroundTintColor)
+                            .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                    if !isWithinStack {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                        if !isWithinStack {
+                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                        }
+
+                        content(metrics: metrics, layout: layout)
                     }
-
-                    content(metrics: metrics, layout: layout)
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
@@ -70,7 +72,9 @@ struct SystemStatusWidgetTileView: View {
     private func indicatorRow(metrics: [SystemStatusMetricSnapshot], layout: LayoutMetrics, showsLabels: Bool) -> some View {
         HStack(alignment: .center, spacing: layout.contentGap) {
             ForEach(metrics) { metric in
-                metricIndicator(metric: metric, layout: layout, showsLabel: showsLabels)
+                WithPerceptionTracking {
+                    metricIndicator(metric: metric, layout: layout, showsLabel: showsLabels)
+                }
             }
         }
         .padding(layout.contentPadding)

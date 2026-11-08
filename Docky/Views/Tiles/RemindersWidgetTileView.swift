@@ -27,18 +27,20 @@ struct RemindersWidgetTileView: View {
 
             TimelineView(.periodic(from: .now, by: 60)) { context in
                 GeometryReader { proxy in
-                    let layout = layout(in: proxy.size)
+                    WithPerceptionTracking {
+                        let layout = layout(in: proxy.size)
 
-                    ZStack {
-                        Color(nsColor: backgroundTintColor)
-                            .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                        ZStack {
+                            Color(nsColor: backgroundTintColor)
+                                .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                        if !isWithinStack {
-                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                            if !isWithinStack {
+                                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                    .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                            }
+
+                            content(layout: layout, now: context.date)
                         }
-
-                        content(layout: layout, now: context.date)
                     }
                 }
             }

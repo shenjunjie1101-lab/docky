@@ -23,8 +23,10 @@ struct HiddenAppsSettingsView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(hiddenApps) { app in
-                            HiddenAppRow(app: app)
-                                .padding(.vertical, 4)
+                            WithPerceptionTracking {
+                                HiddenAppRow(app: app)
+                                    .padding(.vertical, 4)
+                            }
                         }
                     }
                 }

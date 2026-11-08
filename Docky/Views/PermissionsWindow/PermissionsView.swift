@@ -46,14 +46,16 @@ struct PermissionsView: View {
             .padding(.top, topBarAdjustment)
             .background(
                 GeometryReader { proxy in
-                    Color.clear
-                        .preference(
-                            key: PermissionsWindowFramePreferenceKey.self,
-                            value: PermissionsWindowFramePreference(
-                                frame: proxy.frame(in: .local),
-                                layoutKey: "\(currentIndex)-\(statusLabel)"
+                    WithPerceptionTracking {
+                        Color.clear
+                            .preference(
+                                key: PermissionsWindowFramePreferenceKey.self,
+                                value: PermissionsWindowFramePreference(
+                                    frame: proxy.frame(in: .local),
+                                    layoutKey: "\(currentIndex)-\(statusLabel)"
+                                )
                             )
-                        )
+                    }
                 }
             )
             .onAppear {
@@ -92,12 +94,16 @@ struct PermissionsView: View {
                 .strokeBorder(Color.secondary.opacity(0.12))
         )
         .overlay(alignment: .topLeading) {
-            quitButton
-                .padding(18)
+            WithPerceptionTracking {
+                quitButton
+                    .padding(18)
+            }
         }
         .overlay(alignment: .topTrailing) {
-            skipButton
-                .padding(18)
+            WithPerceptionTracking {
+                skipButton
+                    .padding(18)
+            }
         }
     }
 
@@ -691,9 +697,11 @@ private struct PageDots: View {
         WithPerceptionTracking {
             HStack(spacing: 8) {
                 ForEach(0..<totalPages, id: \.self) { index in
-                    Capsule(style: .continuous)
-                        .fill(index == currentIndex ? Color.accentColor : Color.secondary.opacity(0.30))
-                        .frame(width: index == currentIndex ? 24 : 8, height: 8)
+                    WithPerceptionTracking {
+                        Capsule(style: .continuous)
+                            .fill(index == currentIndex ? Color.accentColor : Color.secondary.opacity(0.30))
+                            .frame(width: index == currentIndex ? 24 : 8, height: 8)
+                    }
                 }
             }
             .accessibilityElement(children: .ignore)

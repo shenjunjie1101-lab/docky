@@ -31,6 +31,8 @@ jobs:
           path: build
           key: monterey-xcode263-${{ github.sha }}
           restore-keys: monterey-xcode263-
+      - name: Prepare classic Mac icon
+        run: bash scripts/prepare_monterey_icon.sh
       - name: Build for macOS 12.6 on Apple Silicon
         shell: bash
         run: |

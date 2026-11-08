@@ -127,7 +127,9 @@ struct FolderFanView: View {
         WithPerceptionTracking {
             ZStack(alignment: .topLeading) {
                 ForEach(Array(items.enumerated()), id: \.offset) { index, url in
-                    fanItem(url: url, index: index, total: items.count)
+                    WithPerceptionTracking {
+                        fanItem(url: url, index: index, total: items.count)
+                    }
                 }
             }
             .frame(width: viewWidth, height: viewHeight, alignment: .topLeading)

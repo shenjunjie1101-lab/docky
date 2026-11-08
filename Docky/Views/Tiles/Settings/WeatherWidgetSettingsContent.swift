@@ -109,28 +109,30 @@ struct WeatherWidgetSettingsContent: View {
         } else if !results.isEmpty {
             VStack(spacing: 0) {
                 ForEach(results) { result in
-                    Button { select(result) } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "mappin.circle")
-                                .foregroundStyle(.secondary)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(result.name)
-                                    .foregroundStyle(.primary)
-                                if let subtitle = result.subtitle, !subtitle.isEmpty {
-                                    Text(subtitle)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                    WithPerceptionTracking {
+                        Button { select(result) } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "mappin.circle")
+                                    .foregroundStyle(.secondary)
+                                VStack(alignment: .leading, spacing: 1) {
+                                    Text(result.name)
+                                        .foregroundStyle(.primary)
+                                    if let subtitle = result.subtitle, !subtitle.isEmpty {
+                                        Text(subtitle)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
                                 }
+                                Spacer(minLength: 0)
                             }
-                            Spacer(minLength: 0)
+                            .contentShape(Rectangle())
+                            .padding(.vertical, 5)
                         }
-                        .contentShape(Rectangle())
-                        .padding(.vertical, 5)
-                    }
-                    .buttonStyle(.plain)
+                        .buttonStyle(.plain)
 
-                    if result.id != results.last?.id {
-                        Divider()
+                        if result.id != results.last?.id {
+                            Divider()
+                        }
                     }
                 }
             }

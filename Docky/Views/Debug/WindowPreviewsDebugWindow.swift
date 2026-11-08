@@ -64,10 +64,12 @@ private struct WindowPreviewsDebugView: View {
                     ScrollView {
                         LazyVStack(spacing: 0) {
                             ForEach(filteredWindows) { window in
-                                row(for: window)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                Divider()
+                                WithPerceptionTracking {
+                                    row(for: window)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                    Divider()
+                                }
                             }
                         }
                         .padding(.vertical, 4)

@@ -28,21 +28,23 @@ struct ShortcutRecorderControl: View {
                 .disabled(isRecording && shortcut == (resetShortcut ?? .empty))
             }
             .background {
-                ShortcutRecorderMonitor(
-                    isRecording: isRecording,
-                    onShortcut: { event in
-                        guard let shortcut = KeyboardShortcut.from(event: event) else {
-                            return false
-                        }
+                WithPerceptionTracking {
+                    ShortcutRecorderMonitor(
+                        isRecording: isRecording,
+                        onShortcut: { event in
+                            guard let shortcut = KeyboardShortcut.from(event: event) else {
+                                return false
+                            }
 
-                        onChange(shortcut)
-                        isRecording = false
-                        return true
-                    },
-                    onCancel: {
-                        isRecording = false
-                    }
-                )
+                            onChange(shortcut)
+                            isRecording = false
+                            return true
+                        },
+                        onCancel: {
+                            isRecording = false
+                        }
+                    )
+                }
             }
         }
     }

@@ -94,7 +94,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Window Position", selection: $preferences.windowPosition) {
                         ForEach(DockWindowPosition.allCases) { position in
-                            Text(position.title).tag(position)
+                            WithPerceptionTracking {
+                                Text(position.title).tag(position)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -116,7 +118,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Display", selection: $preferences.windowDisplayTarget) {
                         ForEach(DockWindowDisplayTarget.allCases) { target in
-                            Text(target.title).tag(target)
+                            WithPerceptionTracking {
+                                Text(target.title).tag(target)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -138,7 +142,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Spaces", selection: $preferences.windowSpaceBehavior) {
                         ForEach(DockWindowSpaceBehavior.allCases) { behavior in
-                            Text(behavior.title).tag(behavior)
+                            WithPerceptionTracking {
+                                Text(behavior.title).tag(behavior)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -251,7 +257,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Maximized Windows", selection: $preferences.maximizedWindowBehavior) {
                         ForEach(MaximizedWindowBehavior.allCases) { behavior in
-                            Text(behavior.title).tag(behavior)
+                            WithPerceptionTracking {
+                                Text(behavior.title).tag(behavior)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -273,7 +281,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Overflow Behavior", selection: $preferences.overflowBehavior) {
                         ForEach(DockOverflowBehavior.allCases) { behavior in
-                            Text(behavior.title).tag(behavior)
+                            WithPerceptionTracking {
+                                Text(behavior.title).tag(behavior)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -295,7 +305,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Window Axis Size", selection: $preferences.windowAxisSizing) {
                         ForEach(DockWindowAxisSizing.allCases) { sizing in
-                            Text(sizing.title).tag(sizing)
+                            WithPerceptionTracking {
+                                Text(sizing.title).tag(sizing)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -358,7 +370,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Folder Badges", selection: $preferences.folderBadgeMode) {
                         ForEach(FolderBadgeMode.allCases) { mode in
-                            Text(mode.title).tag(mode)
+                            WithPerceptionTracking {
+                                Text(mode.title).tag(mode)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -381,7 +395,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("Per-App Badge Style", selection: $preferences.folderBadgePreviewStyle) {
                         ForEach(FolderBadgePreviewStyle.allCases) { style in
-                            Text(style.title).tag(style)
+                            WithPerceptionTracking {
+                                Text(style.title).tag(style)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -454,7 +470,9 @@ struct BehaviorSettingsView: View {
 
                     Picker("When App Is Already Active", selection: frontmostClickBehaviorBinding) {
                         ForEach(AppTileFrontmostClickBehavior.allCases) { behavior in
-                            Text(frontmostClickBehaviorTitle(behavior)).tag(behavior)
+                            WithPerceptionTracking {
+                                Text(frontmostClickBehaviorTitle(behavior)).tag(behavior)
+                            }
                         }
                     }
                     .pickerStyle(.menu)
@@ -489,7 +507,9 @@ struct BehaviorSettingsView: View {
                 // `.four` is theme-only; skip it in the user-facing
                 // hover-preview span toggles.
                 ForEach(TileSpan.allCases.filter { $0 != .four }) { span in
-                    Toggle(spanTitle(for: span), isOn: spanBinding(for: span))
+                    WithPerceptionTracking {
+                        Toggle(spanTitle(for: span), isOn: spanBinding(for: span))
+                    }
                 }
 
                 Text("Choose which tile sizes trigger the expanded preview. Widgets pinned at other sizes stay at their pinned size on hover.")
