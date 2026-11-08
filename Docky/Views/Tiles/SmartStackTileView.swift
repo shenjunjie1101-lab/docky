@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct SmartStackTileView: View {
     let tile: SmartStackTile
@@ -22,33 +23,35 @@ struct SmartStackTileView: View {
     @State private var previousWidgetIdentifiers: [String] = []
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        SmartStackScrollHostingView(content: contentView) { deltaX, deltaY in
-            handleScroll(deltaX: deltaX, deltaY: deltaY)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .onChange(of: tile.widgets.map(\.identifier)) { newIdentifiers in
-            let oldIdentifiers = previousWidgetIdentifiers
-            previousWidgetIdentifiers = newIdentifiers
-            if let newWidgetIdentifier = newIdentifiers.first(where: { !oldIdentifiers.contains($0) }),
-               let newSelection = newIdentifiers.firstIndex(of: newWidgetIdentifier) {
-                selection = newSelection
-                showPagingIndicator()
-            } else {
-                selection = min(selection, max(0, newIdentifiers.count - 1))
+            SmartStackScrollHostingView(content: contentView) { deltaX, deltaY in
+                handleScroll(deltaX: deltaX, deltaY: deltaY)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .onChange(of: tile.widgets.map(\.identifier)) { newIdentifiers in
+                let oldIdentifiers = previousWidgetIdentifiers
+                previousWidgetIdentifiers = newIdentifiers
+                if let newWidgetIdentifier = newIdentifiers.first(where: { !oldIdentifiers.contains($0) }),
+                   let newSelection = newIdentifiers.firstIndex(of: newWidgetIdentifier) {
+                    selection = newSelection
+                    showPagingIndicator()
+                } else {
+                    selection = min(selection, max(0, newIdentifiers.count - 1))
+                }
 
-            if newIdentifiers.count <= 1 {
-                hidePagingIndicator()
+                if newIdentifiers.count <= 1 {
+                    hidePagingIndicator()
+                }
             }
+            .onAppear {
+                previousWidgetIdentifiers = tile.widgets.map(\.identifier)
+            }
+            .onDisappear(perform: hidePagingIndicator)
         }
-        .onAppear {
-            previousWidgetIdentifiers = tile.widgets.map(\.identifier)
-        }
-        .onDisappear(perform: hidePagingIndicator)
     }
 
     @ViewBuilder

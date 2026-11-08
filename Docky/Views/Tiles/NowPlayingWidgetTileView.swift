@@ -6,6 +6,7 @@
 import AppKit
 import CoreImage
 import SwiftUI
+import Perception
 
 struct NowPlayingWidgetTileView: View {
     @Environment(\.widgetTextScale) private var textScale
@@ -21,48 +22,50 @@ struct NowPlayingWidgetTileView: View {
     @State private var isLyricsOverlayPresented = false
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        GeometryReader { proxy in
-            let layout = layout(in: proxy.size)
-            let expandedLayout = expandedLayout(in: proxy.size)
+            GeometryReader { proxy in
+                let layout = layout(in: proxy.size)
+                let expandedLayout = expandedLayout(in: proxy.size)
 
-            ZStack {
-                Color(nsColor: prominentTintColor)
-                    .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                ZStack {
+                    Color(nsColor: prominentTintColor)
+                        .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                if !isWithinStack {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                    if !isWithinStack {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                    }
+
+                    content(layout: layout)
+                        .opacity(isExpandedPreviewOpen && isExpanded ? 0 : 1)
+
+                    if isExpanded {
+                        expandedContent(layout: expandedLayout)
+                            .frame(height: proxy.size.height)
+                            .transition(
+                                .opacity.animation(
+                                    .easeInOut(duration: 0.22).delay(0.22)
+                                ).combined(with: .scale).combined(with: .slide)
+                            )
+                    }
+
+                    if isExpanded && isLyricsOverlayPresented {
+                        lyricsOverlay(layout: expandedLayout)
+                            .transition(.opacity)
+                    }
                 }
-
-                content(layout: layout)
-                    .opacity(isExpandedPreviewOpen && isExpanded ? 0 : 1)
-
-                if isExpanded {
-                    expandedContent(layout: expandedLayout)
-                        .frame(height: proxy.size.height)
-                        .transition(
-                            .opacity.animation(
-                                .easeInOut(duration: 0.22).delay(0.22)
-                            ).combined(with: .scale).combined(with: .slide)
-                        )
-                }
-
-                if isExpanded && isLyricsOverlayPresented {
-                    lyricsOverlay(layout: expandedLayout)
-                        .transition(.opacity)
-                }
+                .animation(.easeInOut(duration: 0.18), value: isLyricsOverlayPresented)
+                .animation(.easeInOut(duration: 0.22), value: isExpanded)
+                .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
             }
-            .animation(.easeInOut(duration: 0.18), value: isLyricsOverlayPresented)
-            .animation(.easeInOut(duration: 0.22), value: isExpanded)
+            .opacity(isExpandedPreviewOpen && !isExpanded ? 0.5 : 1)
             .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
         }
-        .opacity(isExpandedPreviewOpen && !isExpanded ? 0.5 : 1)
-        .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 
     @ViewBuilder
@@ -593,39 +596,41 @@ private struct KaraokeLyricsView: View {
     @State private var activeIndex = 0
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: layout.titleStackSpacing * 4) {
-                    Color.clear.frame(height: layout.controlButtonSize)
+        WithPerceptionTracking {
+            ScrollViewReader { proxy in
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: layout.titleStackSpacing * 4) {
+                        Color.clear.frame(height: layout.controlButtonSize)
 
-                    ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
-                        Text(line.text.isEmpty ? "♪" : line.text)
-                            .font(.system(
-                                size: layout.titleFontSize * 1.2,
-                                weight: .semibold,
-                                design: .rounded
-                            ))
-                            .foregroundStyle(index == activeIndex ? primaryColor : secondaryColor)
-                            .opacity(opacity(for: index))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .id(index)
-                            .animation(.easeInOut(duration: 0.22), value: activeIndex)
+                        ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
+                            Text(line.text.isEmpty ? "♪" : line.text)
+                                .font(.system(
+                                    size: layout.titleFontSize * 1.2,
+                                    weight: .semibold,
+                                    design: .rounded
+                                ))
+                                .foregroundStyle(index == activeIndex ? primaryColor : secondaryColor)
+                                .opacity(opacity(for: index))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .id(index)
+                                .animation(.easeInOut(duration: 0.22), value: activeIndex)
+                        }
+
+                        Color.clear.frame(height: layout.controlButtonSize)
                     }
-
-                    Color.clear.frame(height: layout.controlButtonSize)
+                }
+                .onChange(of: activeIndex) { newIndex in
+                    withAnimation(.easeInOut(duration: 0.35)) {
+                        proxy.scrollTo(newIndex, anchor: .center)
+                    }
+                }
+                .onAppear {
+                    proxy.scrollTo(activeIndex, anchor: .center)
                 }
             }
-            .onChange(of: activeIndex) { newIndex in
-                withAnimation(.easeInOut(duration: 0.35)) {
-                    proxy.scrollTo(newIndex, anchor: .center)
-                }
+            .task {
+                await trackPlayback()
             }
-            .onAppear {
-                proxy.scrollTo(activeIndex, anchor: .center)
-            }
-        }
-        .task {
-            await trackPlayback()
         }
     }
 

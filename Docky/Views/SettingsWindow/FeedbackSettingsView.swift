@@ -16,6 +16,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 private let feedbackDestinationEmail = "hello@quintero.gt"
@@ -27,87 +28,89 @@ struct FeedbackSettingsView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        Form {
-            Section("What's going on?") {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Describe the issue, idea, or feedback. The diagnostic bundle below is attached automatically so the maintainer can replicate your setup.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                    TextEditor(text: $feedbackText)
-                        .font(.body)
-                        .frame(minHeight: 140)
-                        .overlay(alignment: .topLeading) {
-                            if feedbackText.isEmpty {
-                                Text("Describe the steps to reproduce, or what you'd like to see…")
-                                    .foregroundStyle(.tertiary)
-                                    .padding(.horizontal, 4)
-                                    .padding(.vertical, 8)
-                                    .allowsHitTesting(false)
+        WithPerceptionTracking {
+            Form {
+                Section("What's going on?") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Describe the issue, idea, or feedback. The diagnostic bundle below is attached automatically so the maintainer can replicate your setup.")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        TextEditor(text: $feedbackText)
+                            .font(.body)
+                            .frame(minHeight: 140)
+                            .overlay(alignment: .topLeading) {
+                                if feedbackText.isEmpty {
+                                    Text("Describe the steps to reproduce, or what you'd like to see…")
+                                        .foregroundStyle(.tertiary)
+                                        .padding(.horizontal, 4)
+                                        .padding(.vertical, 8)
+                                        .allowsHitTesting(false)
+                                }
                             }
-                        }
-                        .scrollContentBackground(.hidden)
-                        .background(Color(nsColor: .textBackgroundColor))
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
-                        )
-                }
-                .padding(.vertical, 4)
-            }
-
-            Section("Attachment (optional)") {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Button("Choose Screenshot / Video…") { chooseAttachment() }
-                        if attachmentURL != nil {
-                            Button("Clear") { attachmentURL = nil }
-                        }
-                        Spacer()
+                            .dockyHideScrollBackground()
+                            .background(Color(nsColor: .textBackgroundColor))
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                            )
                     }
-                    if let attachmentURL {
-                        Text(attachmentURL.lastPathComponent)
+                    .padding(.vertical, 4)
+                }
+
+                Section("Attachment (optional)") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Button("Choose Screenshot / Video…") { chooseAttachment() }
+                            if attachmentURL != nil {
+                                Button("Clear") { attachmentURL = nil }
+                            }
+                            Spacer()
+                        }
+                        if let attachmentURL {
+                            Text(attachmentURL.lastPathComponent)
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
+                        Text("Optional, a screen recording or screenshot helps explain UI issues. Images and videos are supported.")
                             .foregroundStyle(.secondary)
                             .font(.caption)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    Text("Optional, a screen recording or screenshot helps explain UI issues. Images and videos are supported.")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-                        .fixedSize(horizontal: false, vertical: true)
+                    .padding(.vertical, 4)
                 }
-                .padding(.vertical, 4)
-            }
 
-            Section("What gets sent") {
-                VStack(alignment: .leading, spacing: 4) {
-                    Label("Your message", systemImage: "text.alignleft")
-                    Label("Docky preferences (every `docky.*` UserDefaults key)", systemImage: "doc.text")
-                    Label("Live macOS Dock prefs (`com.apple.dock`)", systemImage: "dock.rectangle")
-                    Label("Basic system info (macOS version, screens, Docky build)", systemImage: "info.circle")
-                    if attachmentURL != nil {
-                        Label("Your attachment", systemImage: "paperclip")
+                Section("What gets sent") {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label("Your message", systemImage: "text.alignleft")
+                        Label("Docky preferences (every `docky.*` UserDefaults key)", systemImage: "doc.text")
+                        Label("Live macOS Dock prefs (`com.apple.dock`)", systemImage: "dock.rectangle")
+                        Label("Basic system info (macOS version, screens, Docky build)", systemImage: "info.circle")
+                        if attachmentURL != nil {
+                            Label("Your attachment", systemImage: "paperclip")
+                        }
                     }
+                    .foregroundStyle(.secondary)
+                    .font(.callout)
+                    .padding(.vertical, 4)
                 }
-                .foregroundStyle(.secondary)
-                .font(.callout)
-                .padding(.vertical, 4)
-            }
 
-            Section {
-                HStack {
-                    if let errorMessage {
-                        Text(errorMessage)
-                            .foregroundStyle(.red)
-                            .font(.caption)
+                Section {
+                    HStack {
+                        if let errorMessage {
+                            Text(errorMessage)
+                                .foregroundStyle(.red)
+                                .font(.caption)
+                        }
+                        Spacer()
+                        Button("Send Feedback") { sendFeedback() }
+                            .keyboardShortcut(.defaultAction)
+                            .disabled(isPreparing || feedbackText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
-                    Spacer()
-                    Button("Send Feedback") { sendFeedback() }
-                        .keyboardShortcut(.defaultAction)
-                        .disabled(isPreparing || feedbackText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
+            .dockySettingsForm()
         }
-        .formStyle(.grouped)
     }
 
     private func chooseAttachment() {

@@ -3,20 +3,20 @@
 //  Docky
 //
 //  Bridge between the `Observation` framework's
-//  `withObservationTracking` and Combine's `AnyCancellable` /
+//  `withPerceptionTracking` and Combine's `AnyCancellable` /
 //  `Set<AnyCancellable>` lifecycle pattern. Lets the existing
 //  `cancellables.store(in:)` ergonomics continue to work after
 //  services migrate from `ObservableObject + @Published` to
-//  `@Observable`.
+//  `@Perceptible`.
 //
 //  Behavior: `observe(_:)` runs `action` once (registering reads of
-//  any `@Observable` properties accessed inside it), then re-runs it
+//  any `@Perceptible` properties accessed inside it), then re-runs it
 //  whenever any of those tracked properties changes — coalesced and
 //  hopped to the main actor. The returned `AnyCancellable` stops
 //  re-running on cancel/deallocate.
 //
 //  Caveats vs. the Combine `.sink` pattern this replaces:
-//    • `onChange` from `withObservationTracking` only fires once per
+//    • `onChange` from `withPerceptionTracking` only fires once per
 //      observation-window. We re-install on each change, so we don't
 //      miss subsequent updates, but each fire is "any of the tracked
 //      reads changed" without telling us which one.
@@ -28,7 +28,7 @@
 
 import Combine
 import Foundation
-import Observation
+import Perception
 
 @discardableResult
 @MainActor
@@ -39,7 +39,7 @@ func observeChanges(
 
     func install() {
         guard !state.isCancelled else { return }
-        withObservationTracking {
+        withPerceptionTracking {
             action()
         } onChange: {
             // `onChange` is called from the mutating thread, before

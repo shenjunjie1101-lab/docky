@@ -9,9 +9,9 @@
 
 import AppKit
 import Combine
-import Observation
+import Perception
 
-@Observable
+@Perceptible
 final class DockSettingsService {
     static let shared = DockSettingsService()
 
@@ -48,7 +48,7 @@ final class DockSettingsService {
         return tileSize
     }
 
-    @ObservationIgnored private let defaults = UserDefaults.standard
+    @PerceptionIgnored private let defaults = UserDefaults.standard
 
     private init() {
         if defaults.bool(forKey: Keys.hasImportedSystemDockSettings) {

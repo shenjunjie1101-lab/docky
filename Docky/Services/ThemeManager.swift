@@ -27,10 +27,10 @@
 //
 
 import Foundation
-import Observation
+import Perception
 
 @MainActor
-@Observable final class ThemeManager {
+@Perceptible final class ThemeManager {
     static let shared = ThemeManager()
 
     /// All themes currently installed under the themes directory,

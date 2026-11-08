@@ -5,32 +5,35 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct MinimizedWindowTileView: View {
     let tile: AppWindow
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @ObservedObject private var workspace = WorkspaceService.shared
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                previewCard(in: geo.size)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        WithPerceptionTracking {
+            GeometryReader { geo in
+                ZStack {
+                    previewCard(in: geo.size)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
 
-                Image(nsImage: icon)
-                    .resizable()
-                    .interpolation(.high)
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: geo.size.width * 0.32, height: geo.size.width * 0.32)
-                    .padding(overrideIconPadding(side: geo.size.width * 0.32))
-                    .padding(5)
-                    .shadow(color: .black.opacity(0.18), radius: 4, y: 1)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                    .offset(x: 2, y: 2)
+                    Image(nsImage: icon)
+                        .resizable()
+                        .interpolation(.high)
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: geo.size.width * 0.32, height: geo.size.width * 0.32)
+                        .padding(overrideIconPadding(side: geo.size.width * 0.32))
+                        .padding(5)
+                        .shadow(color: .black.opacity(0.18), radius: 4, y: 1)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                        .offset(x: 2, y: 2)
+                }
             }
+            .padding(.horizontal, 4)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .padding(.horizontal, 4)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder

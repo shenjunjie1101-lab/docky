@@ -17,6 +17,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct SearchWidgetTileView: View {
     @Environment(\.widgetTextScale) private var textScale
@@ -32,33 +33,35 @@ struct SearchWidgetTileView: View {
     @FocusState private var isFieldFocused: Bool
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        GeometryReader { proxy in
-            let metrics = layout(in: proxy.size)
-            ZStack {
-                Rectangle()
-                    .fill(.primary)
-                content(metrics: metrics)
+            GeometryReader { proxy in
+                let metrics = layout(in: proxy.size)
+                ZStack {
+                    Rectangle()
+                        .fill(.primary)
+                    content(metrics: metrics)
+                }
+                .colorScheme(.dark)
+                .padding(.horizontal, renderedSpan != .one ? 12 : 0)
             }
-            .colorScheme(.dark)
-            .padding(.horizontal, renderedSpan != .one ? 12 : 0)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .onChange(of: isFieldFocused) { focused in
-            // Flip the panel's key-window eligibility in lockstep with
-            // focus so keystrokes reach the field, then ask AppKit to
-            // (un)make-key now (`canBecomeKey` alone doesn't change the
-            // current key window, it just gates future requests).
-            MainWindow.allowsKeyWindow = focused
-            DispatchQueue.main.async {
-                guard let window = NSApp.windows.first(where: { $0 is MainWindow }) else { return }
-                if focused {
-                    window.makeKey()
-                } else {
-                    window.resignKey()
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .onChange(of: isFieldFocused) { focused in
+                // Flip the panel's key-window eligibility in lockstep with
+                // focus so keystrokes reach the field, then ask AppKit to
+                // (un)make-key now (`canBecomeKey` alone doesn't change the
+                // current key window, it just gates future requests).
+                MainWindow.allowsKeyWindow = focused
+                DispatchQueue.main.async {
+                    guard let window = NSApp.windows.first(where: { $0 is MainWindow }) else { return }
+                    if focused {
+                        window.makeKey()
+                    } else {
+                        window.resignKey()
+                    }
                 }
             }
         }

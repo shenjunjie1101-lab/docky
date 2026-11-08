@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct BatteriesWidgetTileView: View {
     @Environment(\.widgetTextScale) private var textScale
@@ -19,30 +20,32 @@ struct BatteriesWidgetTileView: View {
     @ObservedObject private var batteries = BatteriesService.shared
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        TimelineView(.periodic(from: .now, by: 60)) { _ in
-            GeometryReader { proxy in
-                let layout = layout(in: proxy.size, visibleDeviceCount: currentVisibleDeviceCount)
+            TimelineView(.periodic(from: .now, by: 60)) { _ in
+                GeometryReader { proxy in
+                    let layout = layout(in: proxy.size, visibleDeviceCount: currentVisibleDeviceCount)
 
-                ZStack {
-                    Color(nsColor: backgroundTintColor)
-                        .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    ZStack {
+                        Color(nsColor: backgroundTintColor)
+                            .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                    if !isWithinStack {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                        if !isWithinStack {
+                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                        }
+
+                        content(layout: layout)
                     }
-
-                    content(layout: layout)
                 }
             }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .task {
-            batteries.ensureFreshBatteries()
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .task {
+                batteries.ensureFreshBatteries()
+            }
         }
     }
 

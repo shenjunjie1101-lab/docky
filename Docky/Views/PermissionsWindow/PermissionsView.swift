@@ -6,6 +6,7 @@
 import AppKit
 import AVKit
 import SwiftUI
+import Perception
 
 private struct PermissionsWindowFramePreference: Equatable {
     let frame: CGRect
@@ -36,43 +37,45 @@ struct PermissionsView: View {
     private var isLastStep: Bool { currentIndex == steps.count - 1 }
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        cardView
-        .padding(.top, topBarAdjustment)
-        .background(
-            GeometryReader { proxy in
-                Color.clear
-                    .preference(
-                        key: PermissionsWindowFramePreferenceKey.self,
-                        value: PermissionsWindowFramePreference(
-                            frame: proxy.frame(in: .local),
-                            layoutKey: "\(currentIndex)-\(statusLabel)"
+            cardView
+            .padding(.top, topBarAdjustment)
+            .background(
+                GeometryReader { proxy in
+                    Color.clear
+                        .preference(
+                            key: PermissionsWindowFramePreferenceKey.self,
+                            value: PermissionsWindowFramePreference(
+                                frame: proxy.frame(in: .local),
+                                layoutKey: "\(currentIndex)-\(statusLabel)"
+                            )
                         )
-                    )
+                }
+            )
+            .onAppear {
+                service.refresh()
             }
-        )
-        .onAppear {
-            service.refresh()
-        }
-        .onPreferenceChange(PermissionsWindowFramePreferenceKey.self) { preference in
-            guard !preference.frame.isEmpty else { return }
-            onWindowFrameChange(preference.frame)
-        }
-        .task(id: currentIndex) {
-            if (step == .finderAutomation || step == .location), status == .notDetermined {
-                _ = await service.requestPermission(for: step)
+            .onPreferenceChange(PermissionsWindowFramePreferenceKey.self) { preference in
+                guard !preference.frame.isEmpty else { return }
+                onWindowFrameChange(preference.frame)
             }
+            .task(id: currentIndex) {
+                if (step == .finderAutomation || step == .location), status == .notDetermined {
+                    _ = await service.requestPermission(for: step)
+                }
 
-            if step == .systemEventsAutomation,
-               status == .notDetermined,
-               service.status(for: .accessibility) == .granted {
-                _ = await service.requestPermission(for: step)
-            }
+                if step == .systemEventsAutomation,
+                   status == .notDetermined,
+                   service.status(for: .accessibility) == .granted {
+                    _ = await service.requestPermission(for: step)
+                }
 
-            await pollUntilAdvance()
+                await pollUntilAdvance()
+            }
         }
     }
 
@@ -685,15 +688,17 @@ private struct PageDots: View {
     let currentIndex: Int
 
     var body: some View {
-        HStack(spacing: 8) {
-            ForEach(0..<totalPages, id: \.self) { index in
-                Capsule(style: .continuous)
-                    .fill(index == currentIndex ? Color.accentColor : Color.secondary.opacity(0.30))
-                    .frame(width: index == currentIndex ? 24 : 8, height: 8)
+        WithPerceptionTracking {
+            HStack(spacing: 8) {
+                ForEach(0..<totalPages, id: \.self) { index in
+                    Capsule(style: .continuous)
+                        .fill(index == currentIndex ? Color.accentColor : Color.secondary.opacity(0.30))
+                        .frame(width: index == currentIndex ? 24 : 8, height: 8)
+                }
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Step \(currentIndex + 1) of \(max(totalPages, 1))")
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Step \(currentIndex + 1) of \(max(totalPages, 1))")
     }
 }
 

@@ -6,6 +6,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct AppFolderTileView: View {
@@ -14,7 +15,7 @@ struct AppFolderTileView: View {
     let suppressesGroupedOpenedBackdrop: Bool
     private let dockSettings = DockSettingsService.shared
     @ObservedObject private var layout = DockLayoutService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @ObservedObject private var store = TileStore.shared
     @ObservedObject private var workspace = WorkspaceService.shared
     @ObservedObject private var dockBadges = DockBadgeService.shared
@@ -102,12 +103,14 @@ struct AppFolderTileView: View {
     }
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        content
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
     }
 
     private var showsBackdrop: Bool {
@@ -359,7 +362,7 @@ struct AppFolderPopoverView: View {
     let tileID: String
     @Binding var isPresented: Bool
     let onPopoverSizeChange: (CGSize) -> Void
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @ObservedObject private var dockBadges = DockBadgeService.shared
     @ObservedObject private var workspace = WorkspaceService.shared
     @State private var isEditingTitle = false
@@ -402,60 +405,62 @@ struct AppFolderPopoverView: View {
     }
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        VStack(spacing: 0) {
-            HStack {
-                titleView
+            VStack(spacing: 0) {
+                HStack {
+                    titleView
 
-                Spacer(minLength: 0)
+                    Spacer(minLength: 0)
 
-                reorderToggle
-            }
-            .padding(.horizontal, Self.contentPadding)
-            .padding(.top, 16)
-            .frame(height: Self.headerHeight)
+                    reorderToggle
+                }
+                .padding(.horizontal, Self.contentPadding)
+                .padding(.top, 16)
+                .frame(height: Self.headerHeight)
 
-            ScrollView(showsIndicators: false) {
-                ZStack(alignment: .topLeading) {
-                    LazyVGrid(columns: gridColumns, spacing: Self.itemSpacing) {
-                        ForEach(displayedApps, id: \.bundleIdentifier) { app in
-                            gridCell(for: app)
+                ScrollView(showsIndicators: false) {
+                    ZStack(alignment: .topLeading) {
+                        LazyVGrid(columns: gridColumns, spacing: Self.itemSpacing) {
+                            ForEach(displayedApps, id: \.bundleIdentifier) { app in
+                                gridCell(for: app)
+                            }
                         }
-                    }
-                    .padding(Self.contentPadding)
-                    .coordinateSpace(name: Self.gridCoordinateSpace)
-                    .onPreferenceChange(AppFolderCellFramePreference.self) { frames in
-                        cellFrames = frames
-                    }
+                        .padding(Self.contentPadding)
+                        .coordinateSpace(name: Self.gridCoordinateSpace)
+                        .onPreferenceChange(AppFolderCellFramePreference.self) { frames in
+                            cellFrames = frames
+                        }
 
-                    // The dragged icon renders as a free-floating overlay
-                    // that follows the cursor. Its grid slot is hidden so
-                    // siblings can reflow into the freed space without a
-                    // ghost placeholder.
-                    if let dragState,
-                       let app = tile.apps.first(where: { $0.bundleIdentifier == dragState.bundleIdentifier }) {
-                        iconImage(for: app)
-                            .position(dragState.location)
-                            .allowsHitTesting(false)
+                        // The dragged icon renders as a free-floating overlay
+                        // that follows the cursor. Its grid slot is hidden so
+                        // siblings can reflow into the freed space without a
+                        // ghost placeholder.
+                        if let dragState,
+                           let app = tile.apps.first(where: { $0.bundleIdentifier == dragState.bundleIdentifier }) {
+                            iconImage(for: app)
+                                .position(dragState.location)
+                                .allowsHitTesting(false)
+                        }
                     }
                 }
             }
-        }
-        .frame(width: popoverSize.width, height: popoverSize.height)
-        .onAppear {
-            onPopoverSizeChange(popoverSize)
-        }
-        .onChange(of: tile.apps.count) { _ in
-            onPopoverSizeChange(popoverSize)
-        }
-        .onChange(of: isPresented) { presented in
-            // Reset reorder mode when the popover closes so re-opening
-            // always starts in the standard launch-on-tap state.
-            if !presented, isReorderMode {
-                isReorderMode = false
+            .frame(width: popoverSize.width, height: popoverSize.height)
+            .onAppear {
+                onPopoverSizeChange(popoverSize)
+            }
+            .onChange(of: tile.apps.count) { _ in
+                onPopoverSizeChange(popoverSize)
+            }
+            .onChange(of: isPresented) { presented in
+                // Reset reorder mode when the popover closes so re-opening
+                // always starts in the standard launch-on-tap state.
+                if !presented, isReorderMode {
+                    isReorderMode = false
+                }
             }
         }
     }
@@ -1271,15 +1276,17 @@ private struct AppFolderItemDragModifier: ViewModifier {
     let openDroppedFiles: ([NSItemProvider], AppTile) -> Void
 
     func body(content: Content) -> some View {
-        if isReorderMode {
-            content
-        } else {
-            content
-                .onDrag { beginDragOutOfFolder(app) }
-                .onDrop(of: [UTType.fileURL.identifier], isTargeted: nil) { providers in
-                    openDroppedFiles(providers, app)
-                    return true
-                }
+        WithPerceptionTracking {
+            if isReorderMode {
+                content
+            } else {
+                content
+                    .onDrag { beginDragOutOfFolder(app) }
+                    .onDrop(of: [UTType.fileURL.identifier], isTargeted: nil) { providers in
+                        openDroppedFiles(providers, app)
+                        return true
+                    }
+            }
         }
     }
 }
@@ -1294,18 +1301,20 @@ private struct AppFolderReorderGestureModifier: ViewModifier {
     let onEnd: (DragGesture.Value) -> Void
 
     func body(content: Content) -> some View {
-        if isReorderMode {
-            content
-                .highPriorityGesture(
-                    DragGesture(
-                        minimumDistance: 6,
-                        coordinateSpace: .named(coordinateSpace)
+        WithPerceptionTracking {
+            if isReorderMode {
+                content
+                    .highPriorityGesture(
+                        DragGesture(
+                            minimumDistance: 6,
+                            coordinateSpace: .named(coordinateSpace)
+                        )
+                        .onChanged { onChange($0) }
+                        .onEnded { onEnd($0) }
                     )
-                    .onChanged { onChange($0) }
-                    .onEnded { onEnd($0) }
-                )
-        } else {
-            content
+            } else {
+                content
+            }
         }
     }
 }

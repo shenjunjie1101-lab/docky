@@ -6,6 +6,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import Perception
 
 final class DockEditorHintWindowController: NSWindowController {
     private weak var mainWindow: MainWindow?
@@ -228,32 +229,34 @@ private struct DockEditorHintChipView: View {
     let onDismiss: () -> Void
 
     var body: some View {
-        Button(action: onDismiss) {
-            HStack(spacing: 10) {
-                Image(systemName: "cursorarrow.click.2")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.secondary)
+        WithPerceptionTracking {
+            Button(action: onDismiss) {
+                HStack(spacing: 10) {
+                    Image(systemName: "cursorarrow.click.2")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.secondary)
 
-                Text("Right-click the dividers to edit your dock and add widgets")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
+                    Text("Right-click the dividers to edit your dock and add widgets")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
 
-                Image(systemName: "xmark")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.tertiary)
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(.regularMaterial, in: Capsule())
+                .overlay {
+                    Capsule()
+                        .strokeBorder(Color.white.opacity(0.16))
+                }
+                .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(.regularMaterial, in: Capsule())
-            .overlay {
-                Capsule()
-                    .strokeBorder(Color.white.opacity(0.16))
-            }
-            .shadow(color: .black.opacity(0.18), radius: 10, y: 4)
+            .buttonStyle(.plain)
+            .fixedSize(horizontal: false, vertical: true)
         }
-        .buttonStyle(.plain)
-        .fixedSize(horizontal: false, vertical: true)
     }
 }

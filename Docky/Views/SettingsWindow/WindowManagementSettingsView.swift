@@ -4,9 +4,10 @@
 //
 
 import SwiftUI
+import Perception
 
 struct WindowManagementSettingsView: View {
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @ObservedObject private var permissions = PermissionsService.shared
     @State private var isRecordingShortcut = false
     @State private var isRecordingMinimizeKey = false
@@ -35,194 +36,196 @@ struct WindowManagementSettingsView: View {
     }
 
     var body: some View {
-        Form {
-            Section("Window Switcher") {
-                VStack(alignment: .leading, spacing: 8) {
-                    Toggle("Enable Window Switcher", isOn: $preferences.enablesWindowSwitcher)
-                        .font(.headline)
+        WithPerceptionTracking {
+            Form {
+                Section("Window Switcher") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Toggle("Enable Window Switcher", isOn: $preferences.enablesWindowSwitcher)
+                            .font(.headline)
 
-                    Text("Turn Docky's Cmd-Tab-style switcher on or off without clearing its shortcut or preview preference.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.vertical, 4)
+                        Text("Turn Docky's Cmd-Tab-style switcher on or off without clearing its shortcut or preview preference.")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 4)
 
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(alignment: .center, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Shortcut")
+                                    .font(.headline)
+
+                                Text("Choose the global shortcut that opens Docky's Cmd-Tab-style window switcher.")
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+
+                            Spacer()
+
+                            ShortcutRecorderControl(
+                                shortcut: preferences.windowSwitcherShortcut,
+                                isRecording: $isRecordingShortcut,
+                                resetShortcut: KeyboardShortcut(keyCode: 48, modifierFlags: [.option])
+                            ) { shortcut in
+                                preferences.windowSwitcherShortcut = shortcut
+                            }
+                            .disabled(!preferences.enablesWindowSwitcher)
+                        }
+
+                        Text(shortcutHelpText)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 4)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Layout")
+                            .font(.headline)
+
+                        Picker("Layout", selection: $preferences.windowSwitcherLayout) {
+                            ForEach(WindowSwitcherLayout.allCases) { layout in
+                                Text(layout.title).tag(layout)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .disabled(!preferences.enablesWindowSwitcher)
+
+                        Text(preferences.windowSwitcherLayout.summary)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        if preferences.windowSwitcherLayout == .auto, permissions.screenCapture != .granted {
+                            Text("Auto is using the list right now because Screen Recording permission isn't granted.")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding(.vertical, 4)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Toggle("Enable Switcher Preview", isOn: $preferences.showsWindowSwitcherFocusPreview)
+                            .font(.headline)
+                            .disabled(!preferences.enablesWindowSwitcher || !previewControlsApply)
+
+                        Text(previewControlsApply
+                             ? "Choose whether the switcher should stay purely overlaid, preview the selected window behind it, or focus each step immediately while cycling."
+                             : "Preview modes only apply to the Thumbnails layout. The List layout uses the row list itself as the preview.")
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 4)
+
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Preview Mode")
+                            .font(.headline)
+
+                        Picker("Preview Mode", selection: $preferences.windowSwitcherPreviewMode) {
+                            ForEach(WindowSwitcherPreviewMode.allCases) { mode in
+                                Text(mode.title).tag(mode)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .disabled(!preferences.enablesWindowSwitcher || !preferences.showsWindowSwitcherFocusPreview || !previewControlsApply)
+
+                        Text(preferences.windowSwitcherPreviewMode.summary)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 4)
+
+                    VStack(alignment: .leading, spacing: 10) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Shortcut")
+                            Text("Action Keys")
                                 .font(.headline)
-
-                            Text("Choose the global shortcut that opens Docky's Cmd-Tab-style window switcher.")
+                            Text("Single-key shortcuts that fire while the switcher is open and you're still holding its modifier. Re-bind to any key; navigation keys (Tab, arrows, Escape, Return) always win over a conflicting binding.")
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
 
-                        Spacer()
+                        actionKeyRow(
+                            title: "Minimize",
+                            keyCode: preferences.switcherMinimizeKeyCode,
+                            isRecording: $isRecordingMinimizeKey,
+                            defaultKeyCode: 46
+                        ) { preferences.switcherMinimizeKeyCode = $0 }
 
-                        ShortcutRecorderControl(
-                            shortcut: preferences.windowSwitcherShortcut,
-                            isRecording: $isRecordingShortcut,
-                            resetShortcut: KeyboardShortcut(keyCode: 48, modifierFlags: [.option])
-                        ) { shortcut in
-                            preferences.windowSwitcherShortcut = shortcut
-                        }
-                        .disabled(!preferences.enablesWindowSwitcher)
+                        actionKeyRow(
+                            title: "Close Window",
+                            keyCode: preferences.switcherCloseKeyCode,
+                            isRecording: $isRecordingCloseKey,
+                            defaultKeyCode: 13
+                        ) { preferences.switcherCloseKeyCode = $0 }
+
+                        actionKeyRow(
+                            title: "Zoom",
+                            keyCode: preferences.switcherZoomKeyCode,
+                            isRecording: $isRecordingZoomKey,
+                            defaultKeyCode: 6
+                        ) { preferences.switcherZoomKeyCode = $0 }
                     }
-
-                    Text(shortcutHelpText)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.vertical, 4)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Layout")
-                        .font(.headline)
-
-                    Picker("Layout", selection: $preferences.windowSwitcherLayout) {
-                        ForEach(WindowSwitcherLayout.allCases) { layout in
-                            Text(layout.title).tag(layout)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
+                    .padding(.vertical, 4)
                     .disabled(!preferences.enablesWindowSwitcher)
-
-                    Text(preferences.windowSwitcherLayout.summary)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    if preferences.windowSwitcherLayout == .auto, permissions.screenCapture != .granted {
-                        Text("Auto is using the list right now because Screen Recording permission isn't granted.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
                 }
-                .padding(.vertical, 4)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Toggle("Enable Switcher Preview", isOn: $preferences.showsWindowSwitcherFocusPreview)
-                        .font(.headline)
-                        .disabled(!preferences.enablesWindowSwitcher || !previewControlsApply)
-
-                    Text(previewControlsApply
-                         ? "Choose whether the switcher should stay purely overlaid, preview the selected window behind it, or focus each step immediately while cycling."
-                         : "Preview modes only apply to the Thumbnails layout. The List layout uses the row list itself as the preview.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.vertical, 4)
-
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Preview Mode")
-                        .font(.headline)
-
-                    Picker("Preview Mode", selection: $preferences.windowSwitcherPreviewMode) {
-                        ForEach(WindowSwitcherPreviewMode.allCases) { mode in
-                            Text(mode.title).tag(mode)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .disabled(!preferences.enablesWindowSwitcher || !preferences.showsWindowSwitcherFocusPreview || !previewControlsApply)
-
-                    Text(preferences.windowSwitcherPreviewMode.summary)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.vertical, 4)
-
-                VStack(alignment: .leading, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Action Keys")
-                            .font(.headline)
-                        Text("Single-key shortcuts that fire while the switcher is open and you're still holding its modifier. Re-bind to any key; navigation keys (Tab, arrows, Escape, Return) always win over a conflicting binding.")
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    actionKeyRow(
-                        title: "Minimize",
-                        keyCode: preferences.switcherMinimizeKeyCode,
-                        isRecording: $isRecordingMinimizeKey,
-                        defaultKeyCode: 46
-                    ) { preferences.switcherMinimizeKeyCode = $0 }
-
-                    actionKeyRow(
-                        title: "Close Window",
-                        keyCode: preferences.switcherCloseKeyCode,
-                        isRecording: $isRecordingCloseKey,
-                        defaultKeyCode: 13
-                    ) { preferences.switcherCloseKeyCode = $0 }
-
-                    actionKeyRow(
-                        title: "Zoom",
-                        keyCode: preferences.switcherZoomKeyCode,
-                        isRecording: $isRecordingZoomKey,
-                        defaultKeyCode: 6
-                    ) { preferences.switcherZoomKeyCode = $0 }
-                }
-                .padding(.vertical, 4)
-                .disabled(!preferences.enablesWindowSwitcher)
-            }
-
-            Section("Window Preview") {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Hover Delay")
-                            .font(.headline)
-
-                        Spacer()
-
+                Section("Window Preview") {
+                    VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Slider(value: $preferences.windowPreviewHoverDelay, in: 0...2, step: 0.05) {
-                                Text("Hover Delay")
+                            Text("Hover Delay")
+                                .font(.headline)
+
+                            Spacer()
+
+                            HStack {
+                                Slider(value: $preferences.windowPreviewHoverDelay, in: 0...2, step: 0.05) {
+                                    Text("Hover Delay")
+                                }
+                                .labelsHidden()
+
+                                Text(String(format: "%.2fs", preferences.windowPreviewHoverDelay))
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 56, alignment: .trailing)
+                                    .monospacedDigit()
                             }
-                            .labelsHidden()
-
-                            Text(String(format: "%.2fs", preferences.windowPreviewHoverDelay))
-                                .foregroundStyle(.secondary)
-                                .frame(width: 56, alignment: .trailing)
-                                .monospacedDigit()
                         }
-                    }
 
-                    Text("How long to wait before the per-tile window preview appears when hovering an app or app folder.")
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(.vertical, 4)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Layout")
-                        .font(.headline)
-
-                    Picker("Layout", selection: $preferences.windowPreviewLayout) {
-                        ForEach(WindowSwitcherLayout.allCases) { layout in
-                            Text(layout.title).tag(layout)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-
-                    Text(preferences.windowPreviewLayout.summary)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-
-                    if preferences.windowPreviewLayout == .auto, permissions.screenCapture != .granted {
-                        Text("Auto is using the list right now because Screen Recording permission isn't granted.")
-                            .font(.callout)
+                        Text("How long to wait before the per-tile window preview appears when hovering an app or app folder.")
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
+                    .padding(.vertical, 4)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Layout")
+                            .font(.headline)
+
+                        Picker("Layout", selection: $preferences.windowPreviewLayout) {
+                            ForEach(WindowSwitcherLayout.allCases) { layout in
+                                Text(layout.title).tag(layout)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+
+                        Text(preferences.windowPreviewLayout.summary)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        if preferences.windowPreviewLayout == .auto, permissions.screenCapture != .granted {
+                            Text("Auto is using the list right now because Screen Recording permission isn't granted.")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .padding(.vertical, 4)
                 }
-                .padding(.vertical, 4)
             }
+            .dockySettingsForm()
         }
-        .formStyle(.grouped)
     }
 
     private func actionKeyRow(
@@ -252,28 +255,30 @@ private struct SingleKeyRecorderControl: View {
     let onChange: (UInt16) -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
-            Button(isRecording ? "Press Key" : KeyboardShortcut.keyDisplayString(for: keyCode)) {
-                isRecording = true
-            }
-            .buttonStyle(.borderedProminent)
+        WithPerceptionTracking {
+            HStack(spacing: 8) {
+                Button(isRecording ? "Press Key" : KeyboardShortcut.keyDisplayString(for: keyCode)) {
+                    isRecording = true
+                }
+                .buttonStyle(.borderedProminent)
 
-            Button("Reset") {
-                onChange(defaultKeyCode)
-                isRecording = false
-            }
-            .buttonStyle(.bordered)
-            .disabled(keyCode == defaultKeyCode)
-        }
-        .background {
-            SingleKeyRecorderMonitor(
-                isRecording: isRecording,
-                onKey: { event in
-                    onChange(event.keyCode)
+                Button("Reset") {
+                    onChange(defaultKeyCode)
                     isRecording = false
-                },
-                onCancel: { isRecording = false }
-            )
+                }
+                .buttonStyle(.bordered)
+                .disabled(keyCode == defaultKeyCode)
+            }
+            .background {
+                SingleKeyRecorderMonitor(
+                    isRecording: isRecording,
+                    onKey: { event in
+                        onChange(event.keyCode)
+                        isRecording = false
+                    },
+                    onCancel: { isRecording = false }
+                )
+            }
         }
     }
 }

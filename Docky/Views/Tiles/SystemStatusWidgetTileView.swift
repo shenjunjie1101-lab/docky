@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct SystemStatusWidgetTileView: View {
     @Environment(\.widgetTextScale) private var textScale
@@ -19,29 +20,31 @@ struct SystemStatusWidgetTileView: View {
     @ObservedObject private var systemStatus = SystemStatusService.shared
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        GeometryReader { proxy in
-            let metrics = visibleMetrics
-            let layout = layout(in: proxy.size, visibleMetricCount: max(1, metrics.count))
+            GeometryReader { proxy in
+                let metrics = visibleMetrics
+                let layout = layout(in: proxy.size, visibleMetricCount: max(1, metrics.count))
 
-            ZStack {
-                Color(nsColor: backgroundTintColor)
-                    .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                ZStack {
+                    Color(nsColor: backgroundTintColor)
+                        .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                if !isWithinStack {
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                    if !isWithinStack {
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                    }
+
+                    content(metrics: metrics, layout: layout)
                 }
-
-                content(metrics: metrics, layout: layout)
             }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .task {
-            systemStatus.ensureFreshStatus()
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .task {
+                systemStatus.ensureFreshStatus()
+            }
         }
     }
 

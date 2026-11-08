@@ -16,6 +16,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 enum DockyGlassStyle {
     case regular
@@ -25,12 +26,12 @@ enum DockyGlassStyle {
 extension View {
     @ViewBuilder
     func dockyGlass<S: Shape>(_ style: DockyGlassStyle = .regular, in shape: S) -> some View {
-        modifier(DockyGlassModifier(style: style, shape: AnyShape(shape)))
+        modifier(DockyGlassModifier(style: style, shape: DockyAnyShape(shape)))
     }
 
     @ViewBuilder
     func dockyGlass(_ style: DockyGlassStyle = .regular) -> some View {
-        modifier(DockyGlassModifier(style: style, shape: AnyShape(Capsule())))
+        modifier(DockyGlassModifier(style: style, shape: DockyAnyShape(Capsule())))
     }
 
     /// Adds the dock chrome's gradient stroke "glass" outline on top of
@@ -63,17 +64,19 @@ private struct DockyGlassBorderModifier<S: InsettableShape>: ViewModifier {
 
     @ViewBuilder
     func body(content: Content) -> some View {
-        // Read `disablesGlassLook` directly instead of subscribing via
-        // `@ObservedObject DockyPreferences.shared`. The shared
-        // preferences object publishes dozens of unrelated properties
-        // (drag state, hover, etc.); subscribing here would invalidate
-        // every tile that uses this modifier on every preference write.
-        // Tile parents already observe `DockyPreferences` where they
-        // need to, so flips to `disablesGlassLook` still propagate via
-        // their existing dependency graph and re-evaluate this body.
-        content.overlay {
-            if !DockyPreferences.shared.effectiveDisablesGlassLook {
-                shape.strokeBorder(dockyGlassBorderGradient, lineWidth: lineWidth)
+        WithPerceptionTracking {
+            // Read `disablesGlassLook` directly instead of subscribing via
+            // `@ObservedObject DockyPreferences.shared`. The shared
+            // preferences object publishes dozens of unrelated properties
+            // (drag state, hover, etc.); subscribing here would invalidate
+            // every tile that uses this modifier on every preference write.
+            // Tile parents already observe `DockyPreferences` where they
+            // need to, so flips to `disablesGlassLook` still propagate via
+            // their existing dependency graph and re-evaluate this body.
+            content.overlay {
+                if !DockyPreferences.shared.effectiveDisablesGlassLook {
+                    shape.strokeBorder(dockyGlassBorderGradient, lineWidth: lineWidth)
+                }
             }
         }
     }
@@ -81,14 +84,16 @@ private struct DockyGlassBorderModifier<S: InsettableShape>: ViewModifier {
 
 private struct DockyGlassModifier: ViewModifier {
     let style: DockyGlassStyle
-    let shape: AnyShape
+    let shape: DockyAnyShape
 
     @ViewBuilder
     func body(content: Content) -> some View {
-        if FeatureGate.shared.isAvailable(.liquidGlass), #available(macOS 26.0, *) {
-            content.glassEffect(style.glass, in: shape)
-        } else {
-            content.background(SkyLightGlassFallback(style: style, shape: shape))
+        WithPerceptionTracking {
+            if FeatureGate.shared.isAvailable(.liquidGlass), #available(macOS 26.0, *) {
+                content.glassEffect(style.glass, in: shape)
+            } else {
+                content.background(SkyLightGlassFallback(style: style, shape: shape))
+            }
         }
     }
 }
@@ -110,12 +115,14 @@ private extension DockyGlassStyle {
 /// dock chrome.
 private struct SkyLightGlassFallback: View {
     let style: DockyGlassStyle
-    let shape: AnyShape
+    let shape: DockyAnyShape
 
     var body: some View {
-        ZStack {
-            SkyLightHostBlurInstaller()
-            shape.fill(.primary.opacity(tintOpacity))
+        WithPerceptionTracking {
+            ZStack {
+                SkyLightHostBlurInstaller()
+                shape.fill(.primary.opacity(tintOpacity))
+            }
         }
     }
 

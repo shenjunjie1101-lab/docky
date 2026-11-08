@@ -15,9 +15,9 @@
 //
 
 import Foundation
-import Observation
+import Perception
 
-@Observable
+@Perceptible
 final class ProfileService {
     static let shared = ProfileService()
 

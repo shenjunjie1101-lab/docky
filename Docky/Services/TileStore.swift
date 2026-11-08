@@ -80,7 +80,7 @@ final class TileStore: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.rebuildTiles() }
             .store(in: &cancellables)
-        // `DockyPreferences` is `@Observable`. We observe each
+        // `DockyPreferences` is `@Perceptible`. We observe each
         // property bundle through `observeChanges` so the same change
         // signal fires only when the relevant property mutates.
         // (`.dropFirst()` skipped the Combine initial emission; the

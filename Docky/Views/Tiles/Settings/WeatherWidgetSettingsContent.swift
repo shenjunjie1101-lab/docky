@@ -6,6 +6,7 @@
 import CoreLocation
 import MapKit
 import SwiftUI
+import Perception
 
 struct WeatherWidgetSettingsContent: View {
     let tileID: String
@@ -22,16 +23,18 @@ struct WeatherWidgetSettingsContent: View {
     @State private var unitSelection: WeatherTemperatureUnitSelection = .automatic
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            currentLocationSection
-            searchSection
-            resultsSection
-            Divider()
-            temperatureUnitSection
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 14) {
+                currentLocationSection
+                searchSection
+                resultsSection
+                Divider()
+                temperatureUnitSection
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .task { loadCurrentSelection() }
+            .onDisappear { searchTask?.cancel() }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .task { loadCurrentSelection() }
-        .onDisappear { searchTask?.cancel() }
     }
 
     private var temperatureUnitSection: some View {

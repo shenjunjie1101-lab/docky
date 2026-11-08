@@ -9,7 +9,6 @@ import ApplicationServices
 import Cocoa
 
 import Combine
-import Sparkle
 import UniformTypeIdentifiers
 
 @main
@@ -860,7 +859,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
             return
         }
 
-        // `DockyPreferences` is `@Observable` (no `objectWillChange`).
+        // `DockyPreferences` is `@Perceptible` (no `objectWillChange`).
         // Refresh on any read of `debugSnapshotText()` — the
         // Observation framework tracks every property the snapshot
         // touches and re-runs this closure when any of them change.

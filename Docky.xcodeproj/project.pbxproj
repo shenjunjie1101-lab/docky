@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		11051E012F929079005CE09D /* Frameworks/MediaRemoteAdapter.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 11051E002F929079005CE09D /* Frameworks/MediaRemoteAdapter.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		113717682FA17B980012480C /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 113717672FA17B980012480C /* Sparkle */; };
+		113717682FA17B980012480C /* Perception in Frameworks */ = {isa = PBXBuildFile; productRef = 113717672FA17B980012480C /* Perception */; };
 		D0C1000C2FA400000000000C /* DockyDockWatchdog.app in Embed Watchdog */ = {isa = PBXBuildFile; fileRef = D0C100012FA4000000000001 /* DockyDockWatchdog.app */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -71,7 +71,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				113717682FA17B980012480C /* Sparkle in Frameworks */,
+				113717682FA17B980012480C /* Perception in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -137,7 +137,7 @@
 			);
 			name = Docky;
 			packageProductDependencies = (
-				113717672FA17B980012480C /* Sparkle */,
+				113717672FA17B980012480C /* Perception */,
 			);
 			productName = Docky;
 			productReference = 11051DE72F929079005CE09D /* Docky.app */;
@@ -194,7 +194,7 @@
 			mainGroup = 11051DDE2F929079005CE09D;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				113717662FA17B980012480C /* XCRemoteSwiftPackageReference "Sparkle" */,
+				113717662FA17B980012480C /* XCRemoteSwiftPackageReference "Perception" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 11051DE82F929079005CE09D /* Products */;
@@ -238,7 +238,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Auto-bump CFBundleVersion on Release builds only.\n# Sparkle compares this numerically; using a fixed-width 12-digit\n# YYYYMMDDhhmm timestamp guarantees each release is greater than the last\n# without tracking state. Earlier ad-hoc YYYYMMDD[N] schemes broke when a\n# shorter same-day value (e.g. 20260507) ended up numerically less than a\n# prior 9-digit value (e.g. 202605012).\n#\n# The embedded DockyDockWatchdog gets the same CFBundleVersion (and the\n# main app's CFBundleShortVersionString) so the helper stays in lockstep —\n# version-mismatched login items can trip up macOS launch services and\n# update flows. Outer CodeSign re-signs the modified watchdog bundle.\nif [ \"$CONFIGURATION\" != \"Release\" ]; then\n    exit 0\nfi\n\nINFOPLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\nWATCHDOG_INFOPLIST=\"${TARGET_BUILD_DIR}/${CONTENTS_FOLDER_PATH}/Library/LoginItems/DockyDockWatchdog.app/Contents/Info.plist\"\n\nBUILD_NUMBER=$(date +%Y%m%d%H%M)\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUILD_NUMBER\" \"$INFOPLIST\"\necho \"note: bumped Docky CFBundleVersion to $BUILD_NUMBER\"\n\nif [ -f \"$WATCHDOG_INFOPLIST\" ]; then\n    /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUILD_NUMBER\" \"$WATCHDOG_INFOPLIST\"\n    SHORT_VERSION=$(/usr/libexec/PlistBuddy -c \"Print :CFBundleShortVersionString\" \"$INFOPLIST\" 2>/dev/null)\n    if [ -n \"$SHORT_VERSION\" ]; then\n        /usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $SHORT_VERSION\" \"$WATCHDOG_INFOPLIST\"\n    fi\n    echo \"note: synced DockyDockWatchdog to CFBundleVersion $BUILD_NUMBER (short $SHORT_VERSION)\"\nfi\n";
+			shellScript = "# Auto-bump CFBundleVersion on Release builds only.\n# Perception compares this numerically; using a fixed-width 12-digit\n# YYYYMMDDhhmm timestamp guarantees each release is greater than the last\n# without tracking state. Earlier ad-hoc YYYYMMDD[N] schemes broke when a\n# shorter same-day value (e.g. 20260507) ended up numerically less than a\n# prior 9-digit value (e.g. 202605012).\n#\n# The embedded DockyDockWatchdog gets the same CFBundleVersion (and the\n# main app's CFBundleShortVersionString) so the helper stays in lockstep —\n# version-mismatched login items can trip up macOS launch services and\n# update flows. Outer CodeSign re-signs the modified watchdog bundle.\nif [ \"$CONFIGURATION\" != \"Release\" ]; then\n    exit 0\nfi\n\nINFOPLIST=\"${TARGET_BUILD_DIR}/${INFOPLIST_PATH}\"\nWATCHDOG_INFOPLIST=\"${TARGET_BUILD_DIR}/${CONTENTS_FOLDER_PATH}/Library/LoginItems/DockyDockWatchdog.app/Contents/Info.plist\"\n\nBUILD_NUMBER=$(date +%Y%m%d%H%M)\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUILD_NUMBER\" \"$INFOPLIST\"\necho \"note: bumped Docky CFBundleVersion to $BUILD_NUMBER\"\n\nif [ -f \"$WATCHDOG_INFOPLIST\" ]; then\n    /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUILD_NUMBER\" \"$WATCHDOG_INFOPLIST\"\n    SHORT_VERSION=$(/usr/libexec/PlistBuddy -c \"Print :CFBundleShortVersionString\" \"$INFOPLIST\" 2>/dev/null)\n    if [ -n \"$SHORT_VERSION\" ]; then\n        /usr/libexec/PlistBuddy -c \"Set :CFBundleShortVersionString $SHORT_VERSION\" \"$WATCHDOG_INFOPLIST\"\n    fi\n    echo \"note: synced DockyDockWatchdog to CFBundleVersion $BUILD_NUMBER (short $SHORT_VERSION)\"\nfi\n";
 		};
 		D0C10010BBBBBBBB00000001 /* Copy Bundled Themes */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -337,7 +337,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.6;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -395,7 +395,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.6;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
@@ -451,7 +451,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.6;
 				MARKETING_VERSION = 0.8.0;
 				PRODUCT_BUNDLE_IDENTIFIER = gt.quintero.Docky;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -520,7 +520,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.6;
 				MARKETING_VERSION = 0.8.0;
 				PRODUCT_BUNDLE_IDENTIFIER = gt.quintero.Docky;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -556,7 +556,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Docky Dock Watchdog";
 				INFOPLIST_KEY_LSBackgroundOnly = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.6;
 				MARKETING_VERSION = 0.8.0;
 				PRODUCT_BUNDLE_IDENTIFIER = gt.quintero.Docky.DockWatchdog;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -585,7 +585,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "Docky Dock Watchdog";
 				INFOPLIST_KEY_LSBackgroundOnly = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 12.6;
 				MARKETING_VERSION = 0.8.0;
 				PRODUCT_BUNDLE_IDENTIFIER = gt.quintero.Docky.DockWatchdog;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -633,21 +633,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		113717662FA17B980012480C /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+		113717662FA17B980012480C /* XCRemoteSwiftPackageReference "Perception" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			repositoryURL = "https://github.com/pointfreeco/swift-perception";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.9.1;
+				kind = exactVersion;
+				version = 1.6.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		113717672FA17B980012480C /* Sparkle */ = {
+		113717672FA17B980012480C /* Perception */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 113717662FA17B980012480C /* XCRemoteSwiftPackageReference "Sparkle" */;
-			productName = Sparkle;
+			package = 113717662FA17B980012480C /* XCRemoteSwiftPackageReference "Perception" */;
+			productName = Perception;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

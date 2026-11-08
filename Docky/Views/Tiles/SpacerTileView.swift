@@ -4,10 +4,13 @@
 //
 
 import SwiftUI
+import Perception
 
 struct SpacerTileView: View {
     var body: some View {
-        Color.clear
-            .contentShape(.rect)
+        WithPerceptionTracking {
+            Color.clear
+                .contentShape(.rect)
+        }
     }
 }

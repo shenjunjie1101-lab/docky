@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Perception
 
 /// Call-to-action shown in place of a widget's content while its underlying
 /// permission is missing. Widget-tied permissions (calendar, reminders,
@@ -34,23 +35,25 @@ struct WidgetPermissionCTAView: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            let minSide = max(min(proxy.size.width, proxy.size.height), 1)
-            let iconSize = min(max(minSide * (isExpanded ? 0.16 : 0.24), 16), isExpanded ? 40 : 30)
-            let reasonSize = min(max(minSide * 0.11, 10), 14) * textScale
-            let spacing = min(max(minSide * 0.06, 4), 12)
+        WithPerceptionTracking {
+            GeometryReader { proxy in
+                let minSide = max(min(proxy.size.width, proxy.size.height), 1)
+                let iconSize = min(max(minSide * (isExpanded ? 0.16 : 0.24), 16), isExpanded ? 40 : 30)
+                let reasonSize = min(max(minSide * 0.11, 10), 14) * textScale
+                let spacing = min(max(minSide * 0.06, 4), 12)
 
-            // Larger widget text can outgrow the tile. Step down until it
-            // fits: drop the icon, then shorten the reason, then show only
-            // the button so access can always be granted.
-            ViewThatFits(in: .vertical) {
-                stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: true, reasonLines: 2)
-                stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 2)
-                stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 1)
-                stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 0)
+                // Larger widget text can outgrow the tile. Step down until it
+                // fits: drop the icon, then shorten the reason, then show only
+                // the button so access can always be granted.
+                ViewThatFits(in: .vertical) {
+                    stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: true, reasonLines: 2)
+                    stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 2)
+                    stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 1)
+                    stack(iconSize: iconSize, reasonSize: reasonSize, spacing: spacing, showsIcon: false, reasonLines: 0)
+                }
+                .padding(min(max(minSide * 0.1, 8), 20))
+                .frame(width: proxy.size.width, height: proxy.size.height)
             }
-            .padding(min(max(minSide * 0.1, 8), 20))
-            .frame(width: proxy.size.width, height: proxy.size.height)
         }
     }
 

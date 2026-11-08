@@ -5,33 +5,36 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct FolderTileView: View {
     let tile: FolderTile
     let isOpen: Bool
     @ObservedObject private var permissions = PermissionsService.shared
     @ObservedObject private var folderAccess = FolderAccessService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @State private var preview: [URL] = []
 
     var body: some View {
-        content
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .task(id: reloadKey) {
-                let sorted = await FolderAccessService.shared.refreshedSortedContents(
-                    of: tile.url,
-                    sortMode: tile.sortMode
-                )
-                guard !Task.isCancelled else { return }
-                preview = Array(sorted.prefix(3))
-                preloadFanThumbnails(for: sorted)
-            }
-            .onAppear {
-                folderAccess.beginWatching(tile.url, ownerID: watcherOwnerID)
-            }
-            .onDisappear {
-                folderAccess.endWatching(tile.url, ownerID: watcherOwnerID)
-            }
+        WithPerceptionTracking {
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .task(id: reloadKey) {
+                    let sorted = await FolderAccessService.shared.refreshedSortedContents(
+                        of: tile.url,
+                        sortMode: tile.sortMode
+                    )
+                    guard !Task.isCancelled else { return }
+                    preview = Array(sorted.prefix(3))
+                    preloadFanThumbnails(for: sorted)
+                }
+                .onAppear {
+                    folderAccess.beginWatching(tile.url, ownerID: watcherOwnerID)
+                }
+                .onDisappear {
+                    folderAccess.endWatching(tile.url, ownerID: watcherOwnerID)
+                }
+        }
     }
 
     @ViewBuilder

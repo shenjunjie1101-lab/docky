@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct AppearanceSettingsView: View {
@@ -20,37 +21,39 @@ struct AppearanceSettingsView: View {
     let subsection: Subsection
 
     private let dockSettings = DockSettingsService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @State private var isShowingResetConfirmation = false
 
     var body: some View {
-        Form {
-            switch subsection {
-            case .general:
-                generalSection
-            case .indicators:
-                indicatorsSection
-            case .tileLayout:
-                tileLayoutSection
-            case .windowShape:
-                windowShapeSection
-            case .windowBackground:
-                windowBackgroundSection
-            case .widgets:
-                widgetsSection
+        WithPerceptionTracking {
+            Form {
+                switch subsection {
+                case .general:
+                    generalSection
+                case .indicators:
+                    indicatorsSection
+                case .tileLayout:
+                    tileLayoutSection
+                case .windowShape:
+                    windowShapeSection
+                case .windowBackground:
+                    windowBackgroundSection
+                case .widgets:
+                    widgetsSection
+                }
             }
-        }
-        .formStyle(.grouped)
-        .confirmationDialog(
-            "Reset appearance settings?",
-            isPresented: $isShowingResetConfirmation
-        ) {
-            Button("Reset Appearance", role: .destructive) {
-                DockyPreferences.shared.resetAppearanceToDefaults()
+            .dockySettingsForm()
+            .confirmationDialog(
+                "Reset appearance settings?",
+                isPresented: $isShowingResetConfirmation
+            ) {
+                Button("Reset Appearance", role: .destructive) {
+                    DockyPreferences.shared.resetAppearanceToDefaults()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Indicators, tile layout, window shape, window background, and the glass toggle will return to their defaults. App icons, behavior, widgets, and other settings are unaffected. This cannot be undone.")
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Indicators, tile layout, window shape, window background, and the glass toggle will return to their defaults. App icons, behavior, widgets, and other settings are unaffected. This cannot be undone.")
         }
     }
 

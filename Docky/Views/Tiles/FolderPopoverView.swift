@@ -6,6 +6,7 @@
 import AppKit
 import QuickLookUI
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct FolderPopoverView: View {
@@ -55,34 +56,36 @@ struct FolderPopoverView: View {
     }
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        bodyContent
-            .task(id: reloadKey) {
-                syncWatchedFolder()
-                await refreshEntries()
-                guard !Task.isCancelled else { return }
-                selectDefaultItemIfNeeded()
-                reportPopoverSize()
-            }
-            .background {
-                FolderPopoverKeyMonitor { event in
-                    handleKeyDown(event)
+            bodyContent
+                .task(id: reloadKey) {
+                    syncWatchedFolder()
+                    await refreshEntries()
+                    guard !Task.isCancelled else { return }
+                    selectDefaultItemIfNeeded()
+                    reportPopoverSize()
                 }
-            }
-            .onAppear {
-                syncWatchedFolder()
-                selectDefaultItemIfNeeded()
-                reportPopoverSize()
-            }
-            .onDisappear {
-                stopWatchingCurrentFolder()
-            }
-            .onChange(of: popoverSize) { _ in
-                reportPopoverSize()
-            }
+                .background {
+                    FolderPopoverKeyMonitor { event in
+                        handleKeyDown(event)
+                    }
+                }
+                .onAppear {
+                    syncWatchedFolder()
+                    selectDefaultItemIfNeeded()
+                    reportPopoverSize()
+                }
+                .onDisappear {
+                    stopWatchingCurrentFolder()
+                }
+                .onChange(of: popoverSize) { _ in
+                    reportPopoverSize()
+                }
+        }
     }
 
     @ViewBuilder
@@ -599,22 +602,24 @@ private struct FolderPopoverItemView: View {
     let url: URL
 
     var body: some View {
-        VStack(spacing: 8) {
-            FilePreviewImage(url: url, maxPixelSize: IconCacheService.gridThumbnailPixelExtent)
-                .frame(width: 112, height: 112)
+        WithPerceptionTracking {
+            VStack(spacing: 8) {
+                FilePreviewImage(url: url, maxPixelSize: IconCacheService.gridThumbnailPixelExtent)
+                    .frame(width: 112, height: 112)
 
-            Text(displayName)
-                .font(.callout)
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
+                Text(displayName)
+                    .font(.callout)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, minHeight: 158, alignment: .top)
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, minHeight: 158, alignment: .top)
-        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private var displayName: String {
@@ -626,24 +631,26 @@ private struct FolderPopoverActionItemView: View {
     let action: FolderPopoverAction
 
     var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: action.systemImageName)
-                .font(.system(size: 64, weight: .ultraLight))
-                .foregroundStyle(.primary)
-                .frame(width: 112, height: 112)
+        WithPerceptionTracking {
+            VStack(spacing: 8) {
+                Image(systemName: action.systemImageName)
+                    .font(.system(size: 64, weight: .ultraLight))
+                    .foregroundStyle(.primary)
+                    .frame(width: 112, height: 112)
 
-            Text(action.title)
-                .font(.callout)
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .truncationMode(.middle)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
+                Text(action.title)
+                    .font(.callout)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, minHeight: 158, alignment: .top)
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, minHeight: 158, alignment: .top)
-        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
 

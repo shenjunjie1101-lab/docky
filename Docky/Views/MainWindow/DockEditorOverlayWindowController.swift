@@ -6,6 +6,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import Perception
 
 private enum DockEditorGalleryCategory: String, CaseIterable, Identifiable {
     case all
@@ -520,22 +521,24 @@ private struct DockEditorOverlayView: View {
     @ObservedObject var state: DockEditorOverlayState
     @ObservedObject private var editMode = DockEditModeService.shared
     private let dockSettings = DockSettingsService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
 
     var body: some View {
-        GeometryReader { proxy in
-            ZStack {
-                Color.clear
-                    .frame(width: proxy.size.width, height: proxy.size.height)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        editMode.exit()
-                    }
+        WithPerceptionTracking {
+            GeometryReader { proxy in
+                ZStack {
+                    Color.clear
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            editMode.exit()
+                        }
 
-                layout(in: proxy.size)
-                    .offset(y: position == .bottom ? -28 : 0)
+                    layout(in: proxy.size)
+                        .offset(y: position == .bottom ? -28 : 0)
+                }
+                .ignoresSafeArea()
             }
-            .ignoresSafeArea()
         }
     }
 
@@ -680,43 +683,45 @@ private struct DockEditorBrowserView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            horizontalSeparator
+        WithPerceptionTracking {
+            VStack(spacing: 0) {
+                header
+                horizontalSeparator
 
-            if visibleSections.isEmpty {
-                emptyResultsView
-                    .padding(24)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView(showsIndicators: false) {
-                    LazyVStack(alignment: .leading, spacing: 0) {
-                        ForEach(Array(visibleSections.enumerated()), id: \.element.id) { index, section in
-                            if index > 0 {
-                                horizontalSeparator
-                                    .padding(.vertical, 24)
+                if visibleSections.isEmpty {
+                    emptyResultsView
+                        .padding(24)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView(showsIndicators: false) {
+                        LazyVStack(alignment: .leading, spacing: 0) {
+                            ForEach(Array(visibleSections.enumerated()), id: \.element.id) { index, section in
+                                if index > 0 {
+                                    horizontalSeparator
+                                        .padding(.vertical, 24)
+                                }
+
+                                sectionView(section)
                             }
-
-                            sectionView(section)
                         }
+                        .padding(24)
                     }
-                    .padding(24)
                 }
             }
-        }
-        .frame(width: panelSize.width, height: panelSize.height)
-        .background(
-            Color(nsColor: .windowBackgroundColor),
-            in: panelChromeShape
-        )
-        .overlay {
-            panelChromeShape
-                .stroke(.primary.opacity(0.14), lineWidth: 1)
+            .frame(width: panelSize.width, height: panelSize.height)
+            .background(
+                Color(nsColor: .windowBackgroundColor),
+                in: panelChromeShape
+            )
+            .overlay {
+                panelChromeShape
+                    .stroke(.primary.opacity(0.14), lineWidth: 1)
+            }
         }
     }
 
-    private var panelChromeShape: UnevenRoundedRectangle {
-        UnevenRoundedRectangle(
+    private var panelChromeShape: DockyRoundedRectangle {
+        DockyRoundedRectangle(
             topLeadingRadius: position == .top || position == .left ? 0 : 30,
             bottomLeadingRadius: position == .bottom || position == .left ? 0 : 30,
             bottomTrailingRadius: position == .bottom || position == .right ? 0 : 30,
@@ -821,27 +826,29 @@ private struct DockEditorGalleryVariantCard: View {
     let onDrag: () -> NSItemProvider
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            ZStack {
-                DockEditorItemPreview(item: variant.item, selectedSpan: variant.span, scale: .card)
-                    .onDrag(onDrag)
-            }
-            .frame(maxWidth: .infinity, minHeight: DockEditorPreviewScale.card.canvasHeight)
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 14) {
+                ZStack {
+                    DockEditorItemPreview(item: variant.item, selectedSpan: variant.span, scale: .card)
+                        .onDrag(onDrag)
+                }
+                .frame(maxWidth: .infinity, minHeight: DockEditorPreviewScale.card.canvasHeight)
 
-            VStack(alignment: .center, spacing: 4) {
-                Text(variant.title)
-                    .font(.headline)
+                VStack(alignment: .center, spacing: 4) {
+                    Text(variant.title)
+                        .font(.headline)
 
-                Text(variant.subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(3)
-                    .fixedSize(horizontal: false, vertical: true)
+                    Text(variant.subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
             }
-            .multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 }
 
@@ -850,78 +857,80 @@ private struct DockEditorItemPreview: View {
     let selectedSpan: TileSpan?
     let scale: DockEditorPreviewScale
 
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
 
     var body: some View {
-        let previewSize = size
-        let cornerRadius = preferences.effectiveTileClipShape.resolvedCornerRadius(
-            base: previewSize.height * 0.22,
-            maximum: previewSize.height / 2
-        )
+        WithPerceptionTracking {
+            let previewSize = size
+            let cornerRadius = preferences.effectiveTileClipShape.resolvedCornerRadius(
+                base: previewSize.height * 0.22,
+                maximum: previewSize.height / 2
+            )
 
-        ZStack {
-            switch item.paletteItem {
-            case .launchpad:
-                AppTileView(
-                    tile: AppTile(
-                        bundleIdentifier: LaunchpadTile.spotlightBundleIdentifier,
-                        displayName: item.title
-                    ),
-                    clipShape: preferences.effectiveTileClipShape,
-                    transparencyCompensationInset: 0
-                )
-                .frame(width: previewSize.width, height: previewSize.height)
-            case .startMenu:
-                AppTileView(
-                    tile: AppTile(
-                        bundleIdentifier: StartMenuTile.iconBundleIdentifier,
-                        displayName: item.title
-                    ),
-                    clipShape: preferences.effectiveTileClipShape,
-                    transparencyCompensationInset: 0,
-                    iconOverrideURL: preferences.effectiveStartMenuIconOverrideURL,
-                    iconOverridePaddingFraction: preferences.effectiveStartMenuIconOverridePadding
-                )
-                .frame(width: previewSize.width, height: previewSize.height)
-            case .widget(let ownerBundleIdentifier, let kind):
-                WidgetTileView(
-                    tile: WidgetTile(
-                        identifier: "editor-preview:\(item.id)",
-                        title: item.title,
-                        kind: kind,
-                        ownerBundleIdentifier: ownerBundleIdentifier,
-                        span: item.resolvedSpan(selectedSpan: selectedSpan) ?? .one
-                    ),
-                    cornerRadius: cornerRadius,
-                    renderedSpan: item.resolvedSpan(selectedSpan: selectedSpan) ?? .one,
-                    isWithinStack: false
-                )
-                .frame(width: previewSize.width, height: previewSize.height)
-            case .smartStack:
-                SmartStackTileView(
-                    tile: SmartStackTile(
-                        identifier: "editor-preview:smart-stack",
-                        title: item.title,
-                        widgets: WidgetCatalog.smartStackRegistrations.map { $0.makeTile() },
-                        span: .three
-                    ),
-                    cornerRadius: cornerRadius,
-                    renderedSpan: .three
-                )
-                .frame(width: previewSize.width, height: previewSize.height)
-            case .spacer:
-                DockEditorUtilityPreview(kind: .spacer, scale: scale)
+            ZStack {
+                switch item.paletteItem {
+                case .launchpad:
+                    AppTileView(
+                        tile: AppTile(
+                            bundleIdentifier: LaunchpadTile.spotlightBundleIdentifier,
+                            displayName: item.title
+                        ),
+                        clipShape: preferences.effectiveTileClipShape,
+                        transparencyCompensationInset: 0
+                    )
                     .frame(width: previewSize.width, height: previewSize.height)
-            case .flexibleSpacer:
-                DockEditorUtilityPreview(kind: .flexibleSpacer, scale: scale)
+                case .startMenu:
+                    AppTileView(
+                        tile: AppTile(
+                            bundleIdentifier: StartMenuTile.iconBundleIdentifier,
+                            displayName: item.title
+                        ),
+                        clipShape: preferences.effectiveTileClipShape,
+                        transparencyCompensationInset: 0,
+                        iconOverrideURL: preferences.effectiveStartMenuIconOverrideURL,
+                        iconOverridePaddingFraction: preferences.effectiveStartMenuIconOverridePadding
+                    )
                     .frame(width: previewSize.width, height: previewSize.height)
-            case .divider:
-                DockEditorUtilityPreview(kind: .divider, scale: scale)
+                case .widget(let ownerBundleIdentifier, let kind):
+                    WidgetTileView(
+                        tile: WidgetTile(
+                            identifier: "editor-preview:\(item.id)",
+                            title: item.title,
+                            kind: kind,
+                            ownerBundleIdentifier: ownerBundleIdentifier,
+                            span: item.resolvedSpan(selectedSpan: selectedSpan) ?? .one
+                        ),
+                        cornerRadius: cornerRadius,
+                        renderedSpan: item.resolvedSpan(selectedSpan: selectedSpan) ?? .one,
+                        isWithinStack: false
+                    )
                     .frame(width: previewSize.width, height: previewSize.height)
+                case .smartStack:
+                    SmartStackTileView(
+                        tile: SmartStackTile(
+                            identifier: "editor-preview:smart-stack",
+                            title: item.title,
+                            widgets: WidgetCatalog.smartStackRegistrations.map { $0.makeTile() },
+                            span: .three
+                        ),
+                        cornerRadius: cornerRadius,
+                        renderedSpan: .three
+                    )
+                    .frame(width: previewSize.width, height: previewSize.height)
+                case .spacer:
+                    DockEditorUtilityPreview(kind: .spacer, scale: scale)
+                        .frame(width: previewSize.width, height: previewSize.height)
+                case .flexibleSpacer:
+                    DockEditorUtilityPreview(kind: .flexibleSpacer, scale: scale)
+                        .frame(width: previewSize.width, height: previewSize.height)
+                case .divider:
+                    DockEditorUtilityPreview(kind: .divider, scale: scale)
+                        .frame(width: previewSize.width, height: previewSize.height)
+                }
             }
+            .frame(maxWidth: .infinity, minHeight: scale.canvasHeight)
+            .shadow(color: .black.opacity(0.18), radius: 20)
         }
-        .frame(maxWidth: .infinity, minHeight: scale.canvasHeight)
-        .shadow(color: .black.opacity(0.18), radius: 20)
     }
 
     private var size: CGSize {
@@ -957,36 +966,38 @@ private struct DockEditorUtilityPreview: View {
     let scale: DockEditorPreviewScale
 
     var body: some View {
-        HStack(spacing: scale.tileSpacing + 6) {
-            tileBlock
+        WithPerceptionTracking {
+            HStack(spacing: scale.tileSpacing + 6) {
+                tileBlock
 
-            switch kind {
-            case .spacer:
-                RoundedRectangle(cornerRadius: scale.tileHeight * 0.24, style: .continuous)
-                    .stroke(.primary.opacity(0.32), style: StrokeStyle(lineWidth: 2, dash: [5, 6]))
-                    .frame(width: scale.tileHeight * 0.78, height: scale.tileHeight * 0.78)
-            case .flexibleSpacer:
-                // Arrows pointing outward signal "stretches to fill leftover
-                // space", distinguishes it from the fixed dashed-box spacer.
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.left")
+                switch kind {
+                case .spacer:
+                    RoundedRectangle(cornerRadius: scale.tileHeight * 0.24, style: .continuous)
+                        .stroke(.primary.opacity(0.32), style: StrokeStyle(lineWidth: 2, dash: [5, 6]))
+                        .frame(width: scale.tileHeight * 0.78, height: scale.tileHeight * 0.78)
+                case .flexibleSpacer:
+                    // Arrows pointing outward signal "stretches to fill leftover
+                    // space", distinguishes it from the fixed dashed-box spacer.
+                    HStack(spacing: 4) {
+                        Image(systemName: "arrow.left")
+                        Rectangle()
+                            .fill(.primary.opacity(0.28))
+                            .frame(height: 1)
+                        Image(systemName: "arrow.right")
+                    }
+                    .font(.system(size: scale.tileHeight * 0.32, weight: .semibold))
+                    .foregroundStyle(.primary.opacity(0.45))
+                    .frame(width: scale.tileHeight * 1.4, height: scale.tileHeight * 0.78)
+                case .divider:
                     Rectangle()
                         .fill(.primary.opacity(0.28))
-                        .frame(height: 1)
-                    Image(systemName: "arrow.right")
+                        .frame(width: 1, height: scale.tileHeight * 0.72)
                 }
-                .font(.system(size: scale.tileHeight * 0.32, weight: .semibold))
-                .foregroundStyle(.primary.opacity(0.45))
-                .frame(width: scale.tileHeight * 1.4, height: scale.tileHeight * 0.78)
-            case .divider:
-                Rectangle()
-                    .fill(.primary.opacity(0.28))
-                    .frame(width: 1, height: scale.tileHeight * 0.72)
-            }
 
-            tileBlock
+                tileBlock
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var tileBlock: some View {

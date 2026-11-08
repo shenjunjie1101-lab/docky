@@ -4,27 +4,30 @@
 //
 
 import SwiftUI
+import Perception
 
 struct PermissionsSettingsView: View {
     @ObservedObject private var service = PermissionsService.shared
 
     var body: some View {
-        Form {
-            permissionSection(for: .userFolders)
-            permissionSection(for: .finderAutomation)
-            permissionSection(for: .accessibility)
-            permissionSection(for: .screenCapture)
-            permissionSection(for: .location)
-            permissionSection(for: .calendar)
-            permissionSection(for: .reminders)
+        WithPerceptionTracking {
+            Form {
+                permissionSection(for: .userFolders)
+                permissionSection(for: .finderAutomation)
+                permissionSection(for: .accessibility)
+                permissionSection(for: .screenCapture)
+                permissionSection(for: .location)
+                permissionSection(for: .calendar)
+                permissionSection(for: .reminders)
 
-            Section {
-                Button("Re-check Permissions") {
-                    service.refresh()
+                Section {
+                    Button("Re-check Permissions") {
+                        service.refresh()
+                    }
                 }
             }
+            .dockySettingsForm()
         }
-        .formStyle(.grouped)
     }
 
     @ViewBuilder

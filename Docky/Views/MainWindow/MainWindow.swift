@@ -72,9 +72,9 @@ final class MainWindowContainerView: NSView {
     /// Observation-framework wiring: every read inside the closure is
     /// tracked; the `onChange` callback fires once per change, then we
     /// re-register by recursing. Same pattern AppKit code elsewhere in
-    /// the project uses to bridge from `@Observable` into NSView land.
+    /// the project uses to bridge from `@Perceptible` into NSView land.
     private func observePreferencesForInsets() {
-        withObservationTracking {
+        withPerceptionTracking {
             _ = DockyPreferences.shared.effectiveWindowAxisSizing
             _ = DockyPreferences.shared.effectiveWindowContentInsetTop
             _ = DockyPreferences.shared.effectiveWindowContentInsetLeading
@@ -435,7 +435,7 @@ final class MainWindow: NSPanel {
     }
 
     private func observeFrameInputs() {
-        // DockyPreferences is now `@Observable` so we read its
+        // DockyPreferences is now `@Perceptible` so we read its
         // properties through `observeChanges` (Observation framework
         // auto-tracks). DockSettingsService / DockDragService /
         // DockEditModeService are still ObservableObject; their

@@ -13,10 +13,10 @@
 //
 
 import Foundation
-import Observation
+import Perception
 
 @MainActor
-@Observable final class LaunchpadLayoutService {
+@Perceptible final class LaunchpadLayoutService {
     static let shared = LaunchpadLayoutService()
 
     private(set) var layout: LaunchpadLayout

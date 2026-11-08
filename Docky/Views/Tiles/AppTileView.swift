@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct AppTileView: View {
     let tile: AppTile
@@ -16,7 +17,7 @@ struct AppTileView: View {
     /// pass their own padding here, since per-bundle override padding
     /// only applies to real app overrides.
     var iconOverridePaddingFraction: CGFloat? = nil
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @ObservedObject private var workspace = WorkspaceService.shared
     @ObservedObject private var windowRegistry = WindowRegistry.shared
 
@@ -41,11 +42,13 @@ struct AppTileView: View {
     }
 
     var body: some View {
-        GeometryReader { proxy in
-            iconView(in: proxy.size)
-                .frame(width: proxy.size.width, height: proxy.size.height)
+        WithPerceptionTracking {
+            GeometryReader { proxy in
+                iconView(in: proxy.size)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder

@@ -11,6 +11,7 @@ import Combine
 import OSLog
 import QuickLookThumbnailing
 import SwiftUI
+import Perception
 
 struct TileView: View {
     private static let logger = Logger(subsystem: "gt.quintero.Docky", category: "TileTap")
@@ -27,7 +28,7 @@ struct TileView: View {
     let renderedTileSize: CGFloat?
     private let dockSettings = DockSettingsService.shared
     @ObservedObject private var layout = DockLayoutService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @ObservedObject private var workspace = WorkspaceService.shared
     // Not an @ObservedObject: media state is read only inside context-menu
     // and tap closures (never during `body`). Observing it here would
@@ -535,11 +536,13 @@ struct TileView: View {
     }
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        tileBody
+            tileBody
+        }
     }
 
     private var tileBody: some View {
@@ -2387,13 +2390,15 @@ private struct TileTooltipView: View {
     let title: String
 
     var body: some View {
-        Text(title)
-            .font(.callout.weight(.medium))
-            .foregroundStyle(.primary)
-            .multilineTextAlignment(.center)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .fixedSize()
+        WithPerceptionTracking {
+            Text(title)
+                .font(.callout.weight(.medium))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .fixedSize()
+        }
     }
 }
 

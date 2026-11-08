@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct CalendarWidgetSettingsContent: View {
     let tileID: String
@@ -17,18 +18,20 @@ struct CalendarWidgetSettingsContent: View {
     private let settingKey = "calendar.calendarIDs"
 
     var body: some View {
-        Group {
-            if calendarService.permissionStatus != .granted {
-                noAccessView
-            } else if choices.isEmpty {
-                Text("No calendars available.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            } else {
-                calendarList
+        WithPerceptionTracking {
+            Group {
+                if calendarService.permissionStatus != .granted {
+                    noAccessView
+                } else if choices.isEmpty {
+                    Text("No calendars available.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                } else {
+                    calendarList
+                }
             }
+            .onAppear(perform: load)
         }
-        .onAppear(perform: load)
     }
 
     private var calendarList: some View {

@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Perception
 
 private enum SettingsPane: String, CaseIterable, Identifiable {
     case profiles
@@ -181,7 +182,7 @@ private let settingsSections: [SettingsSection] = [
 /// divider context menu's "Send Feedback" entry today; can carry
 /// any future "jump to pane X" shortcuts the rest of the app needs.
 @MainActor
-@Observable
+@Perceptible
 final class SettingsNavigator {
     static let shared = SettingsNavigator()
     private init() {}
@@ -203,55 +204,57 @@ struct SettingsRootView: View {
     // Suppresses history pushes when the selection change originated from
     // a back/forward button rather than a fresh user navigation.
     @State private var isNavigatingHistory = false
-    @Bindable private var navigator = SettingsNavigator.shared
+    @Perception.Bindable private var navigator = SettingsNavigator.shared
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        NavigationSplitView {
-            List(selection: $selection) {
-                ForEach(settingsSections) { section in
-                    if let title = section.title {
-                        Section(title) {
-                            paneRows(section.panes)
-                        }
-                    } else {
-                        Section {
-                            paneRows(section.panes)
+            NavigationSplitView {
+                List(selection: $selection) {
+                    ForEach(settingsSections) { section in
+                        if let title = section.title {
+                            Section(title) {
+                                paneRows(section.panes)
+                            }
+                        } else {
+                            Section {
+                                paneRows(section.panes)
+                            }
                         }
                     }
                 }
+                .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
+                .listStyle(.sidebar)
+            } detail: {
+                SettingsDetailView(pane: selection)
             }
-            .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
-            .listStyle(.sidebar)
-        } detail: {
-            SettingsDetailView(pane: selection)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .toolbar {
-            ToolbarItem(placement: .navigation) {
-                HStack(spacing: 2) {
-                    Button(action: goBack) {
-                        Image(systemName: "chevron.left")
-                    }
-                    .disabled(!canGoBack)
-                    .keyboardShortcut("[", modifiers: .command)
-                    .help("Back")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .toolbar {
+                ToolbarItem(placement: .navigation) {
+                    HStack(spacing: 2) {
+                        Button(action: goBack) {
+                            Image(systemName: "chevron.left")
+                        }
+                        .disabled(!canGoBack)
+                        .keyboardShortcut("[", modifiers: .command)
+                        .help("Back")
 
-                    Button(action: goForward) {
-                        Image(systemName: "chevron.right")
+                        Button(action: goForward) {
+                            Image(systemName: "chevron.right")
+                        }
+                        .disabled(!canGoForward)
+                        .keyboardShortcut("]", modifiers: .command)
+                        .help("Forward")
                     }
-                    .disabled(!canGoForward)
-                    .keyboardShortcut("]", modifiers: .command)
-                    .help("Forward")
                 }
             }
+            .onAppear { consumePendingPane() }
+            .onChange(of: navigator.pendingPaneID) { _ in consumePendingPane() }
+            .onChange(of: selection) { newPane in recordHistory(newPane) }
         }
-        .onAppear { consumePendingPane() }
-        .onChange(of: navigator.pendingPaneID) { _ in consumePendingPane() }
-        .onChange(of: selection) { newPane in recordHistory(newPane) }
     }
 
     private var canGoBack: Bool { historyIndex > 0 }
@@ -316,15 +319,17 @@ private struct PaneIconBadge: View {
     private static let cornerRadius: CGFloat = 5
 
     var body: some View {
-        let isDark = colorScheme == .dark
-        RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
-            .fill(isDark ? Color.black : color)
-            .frame(width: Self.tileSize, height: Self.tileSize)
-            .overlay {
-                Image(systemName: symbol)
-                    .font(.system(size: Self.symbolSize, weight: .semibold))
-                    .foregroundStyle(isDark ? color : Color.white)
-            }
+        WithPerceptionTracking {
+            let isDark = colorScheme == .dark
+            RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
+                .fill(isDark ? Color.black : color)
+                .frame(width: Self.tileSize, height: Self.tileSize)
+                .overlay {
+                    Image(systemName: symbol)
+                        .font(.system(size: Self.symbolSize, weight: .semibold))
+                        .foregroundStyle(isDark ? color : Color.white)
+                }
+        }
     }
 }
 
@@ -332,11 +337,13 @@ private struct SettingsDetailView: View {
     let pane: SettingsPane
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            selectedView
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 0) {
+                selectedView
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+            .navigationTitle(pane.title)
         }
-        .navigationTitle(pane.title)
     }
 
     @ViewBuilder

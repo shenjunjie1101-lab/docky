@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct RemindersWidgetTileView: View {
     @Environment(\.widgetTextScale) private var textScale
@@ -19,30 +20,32 @@ struct RemindersWidgetTileView: View {
     @ObservedObject private var reminders = RemindersService.shared
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            GeometryReader { proxy in
-                let layout = layout(in: proxy.size)
+            TimelineView(.periodic(from: .now, by: 60)) { context in
+                GeometryReader { proxy in
+                    let layout = layout(in: proxy.size)
 
-                ZStack {
-                    Color(nsColor: backgroundTintColor)
-                        .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    ZStack {
+                        Color(nsColor: backgroundTintColor)
+                            .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                    if !isWithinStack {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                        if !isWithinStack {
+                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                        }
+
+                        content(layout: layout, now: context.date)
                     }
-
-                    content(layout: layout, now: context.date)
                 }
             }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .task {
-            reminders.ensureFreshReminders()
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .task {
+                reminders.ensureFreshReminders()
+            }
         }
     }
 

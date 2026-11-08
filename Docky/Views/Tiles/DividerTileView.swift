@@ -5,27 +5,30 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct DividerTileView: View {
     let tileID: String
     private let dockSettings = DockSettingsService.shared
     @ObservedObject private var layout = DockLayoutService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
 
     var body: some View {
-        GeometryReader { proxy in
-            divider(globalFrame: proxy.frame(in: .global))
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .offset(x: dividerOffsetVector.width, y: dividerOffsetVector.height)
-                .background(.black.opacity(0.001))
-                .contentShape(Path(CGRect(origin: .zero, size: proxy.size)))
-                .background {
-                    if !isPinnedCustomDivider {
-                        ContextActionMenuPresenter { _ in
-                            dividerContextActions
+        WithPerceptionTracking {
+            GeometryReader { proxy in
+                divider(globalFrame: proxy.frame(in: .global))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .offset(x: dividerOffsetVector.width, y: dividerOffsetVector.height)
+                    .background(.black.opacity(0.001))
+                    .contentShape(Path(CGRect(origin: .zero, size: proxy.size)))
+                    .background {
+                        if !isPinnedCustomDivider {
+                            ContextActionMenuPresenter { _ in
+                                dividerContextActions
+                            }
                         }
                     }
-                }
+            }
         }
     }
 

@@ -17,6 +17,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import Perception
 
 /// Externally-controlled expand state for the fan. Living in an
 /// ObservableObject (instead of `@State` on `FolderFanView`) lets
@@ -123,12 +124,14 @@ struct FolderFanView: View {
 
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            ForEach(Array(items.enumerated()), id: \.offset) { index, url in
-                fanItem(url: url, index: index, total: items.count)
+        WithPerceptionTracking {
+            ZStack(alignment: .topLeading) {
+                ForEach(Array(items.enumerated()), id: \.offset) { index, url in
+                    fanItem(url: url, index: index, total: items.count)
+                }
             }
+            .frame(width: viewWidth, height: viewHeight, alignment: .topLeading)
         }
-        .frame(width: viewWidth, height: viewHeight, alignment: .topLeading)
     }
 
     @ViewBuilder

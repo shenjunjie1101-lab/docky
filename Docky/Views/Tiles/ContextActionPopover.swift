@@ -6,6 +6,7 @@
 import AppKit
 import ObjectiveC
 import SwiftUI
+import Perception
 
 struct ContextAction: Identifiable {
     enum Kind: Equatable {
@@ -424,29 +425,31 @@ struct MoreActionsButton: View {
     }
 
     var body: some View {
-        Button {
-            triggerCount &+= 1
-        } label: {
-            Image(systemName: "ellipsis")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.white)
-                .frame(width: 26, height: 26)
-                .background(.ultraThinMaterial, in: Circle())
-                .overlay {
-                    Circle().strokeBorder(.white.opacity(0.25), lineWidth: 0.5)
-                }
-                .shadow(color: .black.opacity(0.4), radius: 3, y: 1)
-        }
-        .buttonStyle(.plain)
-        .help("More actions")
-        .background(
-            MoreActionsMenuAnchor(
-                trigger: triggerCount,
-                actionProvider: actionProvider,
-                preferredEdge: preferredEdge,
-                onPresentationChanged: onPresentationChanged
+        WithPerceptionTracking {
+            Button {
+                triggerCount &+= 1
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 26, height: 26)
+                    .background(.ultraThinMaterial, in: Circle())
+                    .overlay {
+                        Circle().strokeBorder(.white.opacity(0.25), lineWidth: 0.5)
+                    }
+                    .shadow(color: .black.opacity(0.4), radius: 3, y: 1)
+            }
+            .buttonStyle(.plain)
+            .help("More actions")
+            .background(
+                MoreActionsMenuAnchor(
+                    trigger: triggerCount,
+                    actionProvider: actionProvider,
+                    preferredEdge: preferredEdge,
+                    onPresentationChanged: onPresentationChanged
+                )
             )
-        )
+        }
     }
 }
 

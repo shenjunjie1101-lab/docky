@@ -42,10 +42,6 @@
 	<string>Docky uses reminders access to show your open tasks in the reminders widget.</string>
 	<key>NSRemindersUsageDescription</key>
 	<string>Docky uses reminders access to show your open tasks in the reminders widget.</string>
-	<key>SUFeedURL</key>
-	<string>https://getdocky.com/releases/appcast.xml</string>
-	<key>SUPublicEDKey</key>
-	<string>LfZUqraK4HiOj/+9iztgnWzdQTrC1ccmJPp/Fy/aTPc=</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

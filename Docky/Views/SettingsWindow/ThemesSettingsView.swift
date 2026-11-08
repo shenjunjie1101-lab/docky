@@ -14,113 +14,116 @@
 
 import AppKit
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct ThemesSettingsView: View {
-    @Bindable private var manager = ThemeManager.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var manager = ThemeManager.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @State private var themeIDPendingDeletion: String?
     @State private var importErrorMessage: String?
 
     var body: some View {
-        Form {
-            Section("Active") {
-                if let active = manager.activeManifest {
-                    activeThemeRow(active)
-                } else {
-                    Text("No theme is active. Your appearance customizations are applied directly.")
-                        .foregroundStyle(.secondary)
+        WithPerceptionTracking {
+            Form {
+                Section("Active") {
+                    if let active = manager.activeManifest {
+                        activeThemeRow(active)
+                    } else {
+                        Text("No theme is active. Your appearance customizations are applied directly.")
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if !preferences.userOverriddenAppearanceKeys.isEmpty {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("You have \(preferences.userOverriddenAppearanceKeys.count) appearance override(s).")
+                                    .font(.callout)
+                                Text("These take precedence over the active theme. Clear them to let the theme show through.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 12)
+                            Button("Clear Overrides") {
+                                preferences.clearAllAppearanceOverrides()
+                            }
+                        }
+                    }
                 }
 
-                if !preferences.userOverriddenAppearanceKeys.isEmpty {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("You have \(preferences.userOverriddenAppearanceKeys.count) appearance override(s).")
+                Section("Installed Themes") {
+                    let installed = manager.installedThemes.values
+                        .sorted { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
+
+                    if installed.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("No themes installed yet.")
                                 .font(.callout)
-                            Text("These take precedence over the active theme. Clear them to let the theme show through.")
+                            Text("Drop an unzipped `.dockytheme` folder into the Themes directory, then refresh.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-                        Spacer(minLength: 12)
-                        Button("Clear Overrides") {
-                            preferences.clearAllAppearanceOverrides()
+                    } else {
+                        ForEach(installed, id: \.manifest.id) { theme in
+                            installedThemeRow(theme)
+                        }
+                    }
+                }
+
+                Section {
+                    Grid(horizontalSpacing: 12, verticalSpacing: 12) {
+                        GridRow {
+                            themesActionButton(
+                                "Import Theme…",
+                                systemImage: "square.and.arrow.down",
+                                action: importTheme
+                            )
+                            themesActionButton(
+                                "Export to Theme…",
+                                systemImage: "square.and.arrow.up",
+                                action: exportTheme
+                            )
+                        }
+                        GridRow {
+                            themesActionButton(
+                                "Reveal Themes Folder",
+                                systemImage: "folder",
+                                action: revealThemesFolder
+                            )
+                            themesActionButton(
+                                "Refresh",
+                                systemImage: "arrow.clockwise",
+                                action: manager.refreshInstalled
+                            )
                         }
                     }
                 }
             }
-
-            Section("Installed Themes") {
-                let installed = manager.installedThemes.values
-                    .sorted { $0.manifest.name.localizedCaseInsensitiveCompare($1.manifest.name) == .orderedAscending }
-
-                if installed.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("No themes installed yet.")
-                            .font(.callout)
-                        Text("Drop an unzipped `.dockytheme` folder into the Themes directory, then refresh.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                } else {
-                    ForEach(installed, id: \.manifest.id) { theme in
-                        installedThemeRow(theme)
-                    }
+            .dockySettingsForm()
+            .confirmationDialog(
+                "Delete this theme?",
+                isPresented: deletionDialogBinding,
+                presenting: themeIDPendingDeletion
+            ) { id in
+                Button("Delete", role: .destructive) {
+                    try? manager.deleteTheme(id: id)
+                    themeIDPendingDeletion = nil
                 }
-            }
-
-            Section {
-                Grid(horizontalSpacing: 12, verticalSpacing: 12) {
-                    GridRow {
-                        themesActionButton(
-                            "Import Theme…",
-                            systemImage: "square.and.arrow.down",
-                            action: importTheme
-                        )
-                        themesActionButton(
-                            "Export to Theme…",
-                            systemImage: "square.and.arrow.up",
-                            action: exportTheme
-                        )
-                    }
-                    GridRow {
-                        themesActionButton(
-                            "Reveal Themes Folder",
-                            systemImage: "folder",
-                            action: revealThemesFolder
-                        )
-                        themesActionButton(
-                            "Refresh",
-                            systemImage: "arrow.clockwise",
-                            action: manager.refreshInstalled
-                        )
-                    }
+                Button("Cancel", role: .cancel) {
+                    themeIDPendingDeletion = nil
                 }
+            } message: { _ in
+                Text("The theme bundle will be removed from disk. This cannot be undone.")
             }
-        }
-        .formStyle(.grouped)
-        .confirmationDialog(
-            "Delete this theme?",
-            isPresented: deletionDialogBinding,
-            presenting: themeIDPendingDeletion
-        ) { id in
-            Button("Delete", role: .destructive) {
-                try? manager.deleteTheme(id: id)
-                themeIDPendingDeletion = nil
+            .alert(
+                "Could not import theme",
+                isPresented: importErrorBinding,
+                presenting: importErrorMessage
+            ) { _ in
+                Button("OK", role: .cancel) { importErrorMessage = nil }
+            } message: { message in
+                Text(message)
             }
-            Button("Cancel", role: .cancel) {
-                themeIDPendingDeletion = nil
-            }
-        } message: { _ in
-            Text("The theme bundle will be removed from disk. This cannot be undone.")
-        }
-        .alert(
-            "Could not import theme",
-            isPresented: importErrorBinding,
-            presenting: importErrorMessage
-        ) { _ in
-            Button("OK", role: .cancel) { importErrorMessage = nil }
-        } message: { message in
-            Text(message)
         }
     }
 
@@ -330,35 +333,37 @@ private struct ThemePreviewBadge: View {
     private static let cornerRadius: CGFloat = 8
 
     var body: some View {
-        let tint = manifest.appearance.window?.tintColor?.nsColor
-        let cover = coverImageURL.flatMap { NSImage(contentsOf: $0) }
-        let background: NSImage? = cover == nil
-            ? backgroundImageURL.flatMap { NSImage(contentsOf: $0) }
-            : nil
-        let clipShape = RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
+        WithPerceptionTracking {
+            let tint = manifest.appearance.window?.tintColor?.nsColor
+            let cover = coverImageURL.flatMap { NSImage(contentsOf: $0) }
+            let background: NSImage? = cover == nil
+                ? backgroundImageURL.flatMap { NSImage(contentsOf: $0) }
+                : nil
+            let clipShape = RoundedRectangle(cornerRadius: Self.cornerRadius, style: .continuous)
 
-        // The outer `.clipShape` guarantees the fill, image overlay,
-        // and anything added later are all confined to the rounded
-        // bounds — `scaledToFill` will gladly render outside the
-        // frame, and per-image clipping has been forgotten before.
-        Rectangle()
-            .fill(tint.map(Color.init(nsColor:)) ?? Color.secondary.opacity(0.2))
-            .frame(width: Self.size.width, height: Self.size.height)
-            .overlay {
-                if let cover {
-                    Image(nsImage: cover)
-                        .resizable()
-                        .scaledToFill()
-                } else if let background {
-                    Image(nsImage: background)
-                        .resizable()
-                        .scaledToFill()
+            // The outer `.clipShape` guarantees the fill, image overlay,
+            // and anything added later are all confined to the rounded
+            // bounds — `scaledToFill` will gladly render outside the
+            // frame, and per-image clipping has been forgotten before.
+            Rectangle()
+                .fill(tint.map(Color.init(nsColor:)) ?? Color.secondary.opacity(0.2))
+                .frame(width: Self.size.width, height: Self.size.height)
+                .overlay {
+                    if let cover {
+                        Image(nsImage: cover)
+                            .resizable()
+                            .scaledToFill()
+                    } else if let background {
+                        Image(nsImage: background)
+                            .resizable()
+                            .scaledToFill()
+                    }
                 }
-            }
-            .clipShape(clipShape)
-            .overlay {
-                clipShape.strokeBorder(.separator, lineWidth: 0.5)
-            }
+                .clipShape(clipShape)
+                .overlay {
+                    clipShape.strokeBorder(.separator, lineWidth: 0.5)
+                }
+        }
     }
 
     private var coverImageURL: URL? {

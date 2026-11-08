@@ -18,6 +18,7 @@ import AppKit
 import Carbon
 import Combine
 import SwiftUI
+import Perception
 
 final class StartMenuOverlayWindowController: NSWindowController {
     private weak var mainWindow: MainWindow?
@@ -316,7 +317,7 @@ private struct StartMenuView: View {
     @ObservedObject private var launchpad = LaunchpadOverlayService.shared
     @ObservedObject private var recentApps = RecentAppsService.shared
     @ObservedObject private var service = StartMenuService.shared
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @State private var query = ""
     @FocusState private var searchFocused: Bool
 
@@ -428,15 +429,17 @@ private struct StartMenuView: View {
     }
 
     var body: some View {
-        HStack(spacing: 8) {
-            mainPanel
-            sidePanel
-                .opacity(service.showsAllApps ? 1 : 0)
-                .scaleEffect(service.showsAllApps ? 1 : 0.97, anchor: .leading)
-                .allowsHitTesting(service.showsAllApps)
+        WithPerceptionTracking {
+            HStack(spacing: 8) {
+                mainPanel
+                sidePanel
+                    .opacity(service.showsAllApps ? 1 : 0)
+                    .scaleEffect(service.showsAllApps ? 1 : 0.97, anchor: .leading)
+                    .allowsHitTesting(service.showsAllApps)
+            }
+            .animation(.easeInOut(duration: 0.18), value: service.showsAllApps)
+            .onAppear { searchFocused = true }
         }
-        .animation(.easeInOut(duration: 0.18), value: service.showsAllApps)
-        .onAppear { searchFocused = true }
     }
 
     private var mainPanel: some View {

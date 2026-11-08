@@ -5,103 +5,106 @@
 
 import AppKit
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct AppIconsSettingsView: View {
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @ObservedObject private var workspace = WorkspaceService.shared
     @State private var otherApps: [AppIconSettingsEntry] = []
     @State private var otherAppsLoaded = false
 
     var body: some View {
-        Form {
-            Section("Trash") {
-                Text("Pick custom images for the Trash tile's empty and full states. Both default to the system Trash icons.")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+        WithPerceptionTracking {
+            Form {
+                Section("Trash") {
+                    Text("Pick custom images for the Trash tile's empty and full states. Both default to the system Trash icons.")
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                ForEach(TrashIconState.allCases) { state in
-                    TrashIconOverrideRow(state: state)
+                    ForEach(TrashIconState.allCases) { state in
+                        TrashIconOverrideRow(state: state)
+                            .padding(.vertical, 4)
+                    }
+                }
+
+                Section("Folders") {
+                    Text("Pick custom images for any folder tile currently in the dock. Each folder defaults to its system icon.")
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if folderEntries.isEmpty {
+                        Text("No folder tiles are currently in the dock.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(folderEntries) { entry in
+                            FolderIconOverrideRow(entry: entry)
+                                .padding(.vertical, 4)
+                        }
+                    }
+                }
+
+                Section("Launchpad") {
+                    Text("Pick a custom image for the Launchpad tile. Defaults to the system Launchpad icon.")
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    LaunchpadIconOverrideRow()
                         .padding(.vertical, 4)
                 }
-            }
 
-            Section("Folders") {
-                Text("Pick custom images for any folder tile currently in the dock. Each folder defaults to its system icon.")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if folderEntries.isEmpty {
-                    Text("No folder tiles are currently in the dock.")
+                Section("Start Menu") {
+                    Text("Pick a custom image for the Start Menu tile. Defaults to Docky's own app icon.")
                         .foregroundStyle(.secondary)
-                } else {
-                    ForEach(folderEntries) { entry in
-                        FolderIconOverrideRow(entry: entry)
-                            .padding(.vertical, 4)
-                    }
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    StartMenuIconOverrideRow()
+                        .padding(.vertical, 4)
                 }
-            }
 
-            Section("Launchpad") {
-                Text("Pick a custom image for the Launchpad tile. Defaults to the system Launchpad icon.")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                LaunchpadIconOverrideRow()
-                    .padding(.vertical, 4)
-            }
-
-            Section("Start Menu") {
-                Text("Pick a custom image for the Start Menu tile. Defaults to Docky's own app icon.")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                StartMenuIconOverrideRow()
-                    .padding(.vertical, 4)
-            }
-
-            Section("Overrides") {
-                Text("Choose a custom image for any app Docky currently knows about. Custom app icons follow Docky's circle tile clipping when circle tiles are enabled.")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if appEntries.isEmpty {
-                    Text("No apps are currently available for icon overrides.")
+                Section("Overrides") {
+                    Text("Choose a custom image for any app Docky currently knows about. Custom app icons follow Docky's circle tile clipping when circle tiles are enabled.")
                         .foregroundStyle(.secondary)
-                } else {
-                    ForEach(appEntries) { entry in
-                        AppIconOverrideRow(entry: entry)
-                            .padding(.vertical, 4)
-                    }
-                }
-            }
+                        .fixedSize(horizontal: false, vertical: true)
 
-            Section("Other Apps") {
-                Text("Apps installed on this Mac that aren't currently in your dock. Set their icon ahead of time and it'll be ready when you add them.")
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if !otherAppsLoaded {
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .controlSize(.small)
-                        Text("Scanning…")
+                    if appEntries.isEmpty {
+                        Text("No apps are currently available for icon overrides.")
                             .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(appEntries) { entry in
+                            AppIconOverrideRow(entry: entry)
+                                .padding(.vertical, 4)
+                        }
                     }
-                } else if otherApps.isEmpty {
-                    Text("No other apps found in /Applications, /System/Applications, or ~/Applications.")
+                }
+
+                Section("Other Apps") {
+                    Text("Apps installed on this Mac that aren't currently in your dock. Set their icon ahead of time and it'll be ready when you add them.")
                         .foregroundStyle(.secondary)
-                } else {
-                    ForEach(otherApps) { entry in
-                        AppIconOverrideRow(entry: entry)
-                            .padding(.vertical, 4)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    if !otherAppsLoaded {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Scanning…")
+                                .foregroundStyle(.secondary)
+                        }
+                    } else if otherApps.isEmpty {
+                        Text("No other apps found in /Applications, /System/Applications, or ~/Applications.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(otherApps) { entry in
+                            AppIconOverrideRow(entry: entry)
+                                .padding(.vertical, 4)
+                        }
                     }
                 }
             }
-        }
-        .formStyle(.grouped)
-        .task(id: dockBundleIDsSignature) {
-            await refreshOtherApps()
+            .dockySettingsForm()
+            .task(id: dockBundleIDsSignature) {
+                await refreshOtherApps()
+            }
         }
     }
 
@@ -205,59 +208,61 @@ struct AppIconsSettingsView: View {
 private struct AppIconOverrideRow: View {
     let entry: AppIconSettingsEntry
 
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 12) {
-                Image(nsImage: previewImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 36, height: 36)
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .center, spacing: 12) {
+                    Image(nsImage: previewImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 36, height: 36)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(entry.displayName)
-                        .font(.headline)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(entry.displayName)
+                            .font(.headline)
 
-                    Text(entry.subtitle)
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-                        .textSelection(.enabled)
-
-                    if let overrideName {
-                        Text("Override: \(overrideName)")
+                        Text(entry.subtitle)
                             .foregroundStyle(.secondary)
                             .font(.caption)
+                            .textSelection(.enabled)
+
+                        if let overrideName {
+                            Text("Override: \(overrideName)")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
+                    }
+
+                    Spacer()
+
+                    HStack(spacing: 8) {
+                        Button("Choose Image...") {
+                            chooseOverrideImage()
+                        }
+
+                        if let themeIconURL {
+                            Button("Use Theme Icon") {
+                                preferences.setAppIconOverride(
+                                    bundleIdentifier: entry.bundleIdentifier,
+                                    iconPath: themeIconURL.path
+                                )
+                            }
+                            .help("Pin the active theme's icon for this app as your override. Without this, the theme icon already applies; pinning it preserves the choice if you switch themes.")
+                        }
+
+                        if overrideEntry != nil {
+                            Button("Clear") {
+                                preferences.removeAppIconOverride(bundleIdentifier: entry.bundleIdentifier)
+                            }
+                        }
                     }
                 }
 
-                Spacer()
-
-                HStack(spacing: 8) {
-                    Button("Choose Image...") {
-                        chooseOverrideImage()
-                    }
-
-                    if let themeIconURL {
-                        Button("Use Theme Icon") {
-                            preferences.setAppIconOverride(
-                                bundleIdentifier: entry.bundleIdentifier,
-                                iconPath: themeIconURL.path
-                            )
-                        }
-                        .help("Pin the active theme's icon for this app as your override. Without this, the theme icon already applies; pinning it preserves the choice if you switch themes.")
-                    }
-
-                    if overrideEntry != nil {
-                        Button("Clear") {
-                            preferences.removeAppIconOverride(bundleIdentifier: entry.bundleIdentifier)
-                        }
-                    }
+                if overrideEntry != nil {
+                    paddingSlider
                 }
-            }
-
-            if overrideEntry != nil {
-                paddingSlider
             }
         }
     }
@@ -430,50 +435,52 @@ private enum AppIconsInstalledAppScanner {
 private struct TrashIconOverrideRow: View {
     let state: TrashIconState
 
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 12) {
-                Image(nsImage: previewImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 36, height: 36)
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .center, spacing: 12) {
+                    Image(nsImage: previewImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 36, height: 36)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Trash (\(state.title))")
-                        .font(.headline)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Trash (\(state.title))")
+                            .font(.headline)
 
-                    Text(state == .empty
-                         ? "Shown when the Trash is empty."
-                         : "Shown when the Trash has items.")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-
-                    if let overrideName {
-                        Text("Override: \(overrideName)")
+                        Text(state == .empty
+                             ? "Shown when the Trash is empty."
+                             : "Shown when the Trash has items.")
                             .foregroundStyle(.secondary)
                             .font(.caption)
-                    }
-                }
 
-                Spacer()
-
-                HStack(spacing: 8) {
-                    Button("Choose Image...") {
-                        chooseOverrideImage()
+                        if let overrideName {
+                            Text("Override: \(overrideName)")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
                     }
 
-                    if overrideEntry != nil {
-                        Button("Clear") {
-                            preferences.removeTrashIconOverride(state: state)
+                    Spacer()
+
+                    HStack(spacing: 8) {
+                        Button("Choose Image...") {
+                            chooseOverrideImage()
+                        }
+
+                        if overrideEntry != nil {
+                            Button("Clear") {
+                                preferences.removeTrashIconOverride(state: state)
+                            }
                         }
                     }
                 }
-            }
 
-            if overrideEntry != nil {
-                paddingSlider
+                if overrideEntry != nil {
+                    paddingSlider
+                }
             }
         }
     }
@@ -553,50 +560,52 @@ private struct FolderIconSettingsEntry: Identifiable {
 private struct FolderIconOverrideRow: View {
     let entry: FolderIconSettingsEntry
 
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 12) {
-                Image(nsImage: previewImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 36, height: 36)
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .center, spacing: 12) {
+                    Image(nsImage: previewImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 36, height: 36)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(entry.displayName)
-                        .font(.headline)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(entry.displayName)
+                            .font(.headline)
 
-                    Text(entry.folderPath)
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-
-                    if let overrideName {
-                        Text("Override: \(overrideName)")
+                        Text(entry.folderPath)
                             .foregroundStyle(.secondary)
                             .font(.caption)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+
+                        if let overrideName {
+                            Text("Override: \(overrideName)")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
                     }
-                }
 
-                Spacer()
+                    Spacer()
 
-                HStack(spacing: 8) {
-                    Button("Choose Image...") {
-                        chooseOverrideImage()
-                    }
+                    HStack(spacing: 8) {
+                        Button("Choose Image...") {
+                            chooseOverrideImage()
+                        }
 
-                    if overrideEntry != nil {
-                        Button("Clear") {
-                            preferences.removeFolderIconOverride(folderPath: entry.folderPath)
+                        if overrideEntry != nil {
+                            Button("Clear") {
+                                preferences.removeFolderIconOverride(folderPath: entry.folderPath)
+                            }
                         }
                     }
                 }
-            }
 
-            if overrideEntry != nil {
-                paddingSlider
+                if overrideEntry != nil {
+                    paddingSlider
+                }
             }
         }
     }
@@ -666,49 +675,51 @@ private struct FolderIconOverrideRow: View {
 }
 
 private struct LaunchpadIconOverrideRow: View {
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 12) {
-                Image(nsImage: previewImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 36, height: 36)
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .center, spacing: 12) {
+                    Image(nsImage: previewImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 36, height: 36)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Launchpad")
-                        .font(.headline)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Launchpad")
+                            .font(.headline)
 
-                    Text("Replaces the Launchpad tile's icon.")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-
-                    if let overrideName {
-                        Text("Override: \(overrideName)")
+                        Text("Replaces the Launchpad tile's icon.")
                             .foregroundStyle(.secondary)
                             .font(.caption)
-                    }
-                }
 
-                Spacer()
-
-                HStack(spacing: 8) {
-                    Button("Choose Image...") {
-                        chooseOverrideImage()
+                        if let overrideName {
+                            Text("Override: \(overrideName)")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
                     }
 
-                    if hasOverride {
-                        Button("Clear") {
-                            preferences.launchpadIconPath = nil
-                            preferences.launchpadIconPaddingFraction = nil
+                    Spacer()
+
+                    HStack(spacing: 8) {
+                        Button("Choose Image...") {
+                            chooseOverrideImage()
+                        }
+
+                        if hasOverride {
+                            Button("Clear") {
+                                preferences.launchpadIconPath = nil
+                                preferences.launchpadIconPaddingFraction = nil
+                            }
                         }
                     }
                 }
-            }
 
-            if hasOverride {
-                paddingSlider
+                if hasOverride {
+                    paddingSlider
+                }
             }
         }
     }
@@ -774,49 +785,51 @@ private struct LaunchpadIconOverrideRow: View {
 }
 
 private struct StartMenuIconOverrideRow: View {
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .center, spacing: 12) {
-                Image(nsImage: previewImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 36, height: 36)
+        WithPerceptionTracking {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .center, spacing: 12) {
+                    Image(nsImage: previewImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 36, height: 36)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Start Menu")
-                        .font(.headline)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Start Menu")
+                            .font(.headline)
 
-                    Text("Replaces the Start Menu tile's icon.")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-
-                    if let overrideName {
-                        Text("Override: \(overrideName)")
+                        Text("Replaces the Start Menu tile's icon.")
                             .foregroundStyle(.secondary)
                             .font(.caption)
-                    }
-                }
 
-                Spacer()
-
-                HStack(spacing: 8) {
-                    Button("Choose Image...") {
-                        chooseOverrideImage()
+                        if let overrideName {
+                            Text("Override: \(overrideName)")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
                     }
 
-                    if hasOverride {
-                        Button("Clear") {
-                            preferences.startMenuIconPath = nil
-                            preferences.startMenuIconPaddingFraction = nil
+                    Spacer()
+
+                    HStack(spacing: 8) {
+                        Button("Choose Image...") {
+                            chooseOverrideImage()
+                        }
+
+                        if hasOverride {
+                            Button("Clear") {
+                                preferences.startMenuIconPath = nil
+                                preferences.startMenuIconPaddingFraction = nil
+                            }
                         }
                     }
                 }
-            }
 
-            if hasOverride {
-                paddingSlider
+                if hasOverride {
+                    paddingSlider
+                }
             }
         }
     }

@@ -11,10 +11,11 @@
 
 import AppKit
 import SwiftUI
+import Perception
 import UniformTypeIdentifiers
 
 struct WidgetsSettingsView: View {
-    @Bindable private var prefs = DockyPreferences.shared
+    @Perception.Bindable private var prefs = DockyPreferences.shared
     @State private var entries: [WidgetEntry] = []
     @State private var marketplaceState: MarketplaceState = .loading
     @State private var hasPendingChanges = false
@@ -23,38 +24,40 @@ struct WidgetsSettingsView: View {
     @State private var installingIdentifiers: Set<String> = []
 
     var body: some View {
-        Form {
-            unlockedContent
-        }
-        .formStyle(.grouped)
-        .navigationTitle("Widget Store")
-        .onAppear {
-            refresh()
-            loadMarketplace()
-        }
-        .confirmationDialog(
-            "Delete this widget?",
-            isPresented: deletionDialogBinding,
-            presenting: bundleURLPendingDeletion
-        ) { url in
-            Button("Delete", role: .destructive) {
-                deleteBundle(at: url)
-                bundleURLPendingDeletion = nil
+        WithPerceptionTracking {
+            Form {
+                unlockedContent
             }
-            Button("Cancel", role: .cancel) {
-                bundleURLPendingDeletion = nil
+            .dockySettingsForm()
+            .navigationTitle("Widget Store")
+            .onAppear {
+                refresh()
+                loadMarketplace()
             }
-        } message: { url in
-            Text("\(url.lastPathComponent) will be removed from disk. It will keep running until you restart Docky.")
-        }
-        .alert(
-            "Could not install widget",
-            isPresented: installErrorBinding,
-            presenting: installErrorMessage
-        ) { _ in
-            Button("OK", role: .cancel) { installErrorMessage = nil }
-        } message: { message in
-            Text(message)
+            .confirmationDialog(
+                "Delete this widget?",
+                isPresented: deletionDialogBinding,
+                presenting: bundleURLPendingDeletion
+            ) { url in
+                Button("Delete", role: .destructive) {
+                    deleteBundle(at: url)
+                    bundleURLPendingDeletion = nil
+                }
+                Button("Cancel", role: .cancel) {
+                    bundleURLPendingDeletion = nil
+                }
+            } message: { url in
+                Text("\(url.lastPathComponent) will be removed from disk. It will keep running until you restart Docky.")
+            }
+            .alert(
+                "Could not install widget",
+                isPresented: installErrorBinding,
+                presenting: installErrorMessage
+            ) { _ in
+                Button("OK", role: .cancel) { installErrorMessage = nil }
+            } message: { message in
+                Text(message)
+            }
         }
     }
 

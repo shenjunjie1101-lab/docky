@@ -17,6 +17,7 @@
 import AppKit
 import Combine
 import SwiftUI
+import Perception
 
 @MainActor
 final class WindowPreviewsDebugWindowController: NSWindowController {
@@ -53,26 +54,28 @@ private struct WindowPreviewsDebugView: View {
     @State private var search = ""
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            Divider()
-            if filteredWindows.isEmpty {
-                emptyState
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(filteredWindows) { window in
-                            row(for: window)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                            Divider()
+        WithPerceptionTracking {
+            VStack(spacing: 0) {
+                header
+                Divider()
+                if filteredWindows.isEmpty {
+                    emptyState
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(filteredWindows) { window in
+                                row(for: window)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                Divider()
+                            }
                         }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
                 }
             }
+            .frame(minWidth: 600, minHeight: 400)
         }
-        .frame(minWidth: 600, minHeight: 400)
     }
 
     private var header: some View {
@@ -506,24 +509,26 @@ private struct QuickLookContent: View {
     let onDismiss: () -> Void
 
     var body: some View {
-        ZStack {
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture { onDismiss() }
+        WithPerceptionTracking {
+            ZStack {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture { onDismiss() }
 
-            VStack(spacing: 8) {
-                Image(nsImage: image)
-                    .resizable()
-                    .interpolation(.high)
-                    .aspectRatio(contentMode: .fit)
-                    .padding(20)
+                VStack(spacing: 8) {
+                    Image(nsImage: image)
+                        .resizable()
+                        .interpolation(.high)
+                        .aspectRatio(contentMode: .fit)
+                        .padding(20)
 
-                Text(title)
-                    .font(.callout)
-                    .foregroundStyle(.white)
-                    .padding(.bottom, 12)
+                    Text(title)
+                        .font(.callout)
+                        .foregroundStyle(.white)
+                        .padding(.bottom, 12)
+                }
+                .allowsHitTesting(false)
             }
-            .allowsHitTesting(false)
         }
     }
 }

@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Perception
 
 struct BehaviorSettingsView: View {
     enum Subsection {
@@ -19,41 +20,43 @@ struct BehaviorSettingsView: View {
 
     let subsection: Subsection
 
-    @Bindable private var preferences = DockyPreferences.shared
+    @Perception.Bindable private var preferences = DockyPreferences.shared
     @State private var isShowingResetConfirmation = false
 
     var body: some View {
-        Form {
-            switch subsection {
-            case .general:
-                generalSection
-            case .placement:
-                placementSection
-            case .visibility:
-                visibilitySection
-            case .appTileClick:
-                appTileClickSection
-            case .widgets:
-                widgetsSection
-            case .launch:
-                launchSection
-            case .systemDock:
-                systemDockSection
-            case .appFolders:
-                appFoldersSection
+        WithPerceptionTracking {
+            Form {
+                switch subsection {
+                case .general:
+                    generalSection
+                case .placement:
+                    placementSection
+                case .visibility:
+                    visibilitySection
+                case .appTileClick:
+                    appTileClickSection
+                case .widgets:
+                    widgetsSection
+                case .launch:
+                    launchSection
+                case .systemDock:
+                    systemDockSection
+                case .appFolders:
+                    appFoldersSection
+                }
             }
-        }
-        .formStyle(.grouped)
-        .confirmationDialog(
-            "Reset behavior settings?",
-            isPresented: $isShowingResetConfirmation
-        ) {
-            Button("Reset Behavior", role: .destructive) {
-                DockyPreferences.shared.resetBehaviorToDefaults()
+            .dockySettingsForm()
+            .confirmationDialog(
+                "Reset behavior settings?",
+                isPresented: $isShowingResetConfirmation
+            ) {
+                Button("Reset Behavior", role: .destructive) {
+                    DockyPreferences.shared.resetBehaviorToDefaults()
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Placement, visibility, app-tile click, app folders, widgets, launch, and system-dock settings will return to their defaults. Appearance, app icons, and other settings are unaffected. This cannot be undone.")
             }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Placement, visibility, app-tile click, app folders, widgets, launch, and system-dock settings will return to their defaults. Appearance, app icons, and other settings are unaffected. This cannot be undone.")
         }
     }
 

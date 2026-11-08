@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import Perception
 
 struct CalendarWidgetTileView: View {
     @Environment(\.widgetTextScale) private var textScale
@@ -44,45 +45,47 @@ struct CalendarWidgetTileView: View {
     }
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        TimelineView(.periodic(from: .now, by: 60)) { context in
-            GeometryReader { proxy in
-                let layout = layout(in: proxy.size)
-                let expandedLayout = expandedLayout(in: proxy.size)
+            TimelineView(.periodic(from: .now, by: 60)) { context in
+                GeometryReader { proxy in
+                    let layout = layout(in: proxy.size)
+                    let expandedLayout = expandedLayout(in: proxy.size)
 
-                ZStack {
-                    Color(nsColor: backgroundTintColor)
-                        .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+                    ZStack {
+                        Color(nsColor: backgroundTintColor)
+                            .dockyGlassBorder(in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
 
-                    if !isWithinStack {
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                        if !isWithinStack {
+                            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+                        }
+
+                        content(layout: layout, now: context.date)
+                            .opacity(isExpandedPreviewOpen && isExpanded ? 0 : 1)
+
+                        if isExpanded {
+                            expandedContent(layout: expandedLayout, now: context.date)
+                                .transition(
+                                    .opacity.animation(
+                                        .easeInOut(duration: 0.22).delay(0.22)
+                                    ).combined(with: .scale).combined(with: .slide)
+                                )
+                        }
                     }
-
-                    content(layout: layout, now: context.date)
-                        .opacity(isExpandedPreviewOpen && isExpanded ? 0 : 1)
-
-                    if isExpanded {
-                        expandedContent(layout: expandedLayout, now: context.date)
-                            .transition(
-                                .opacity.animation(
-                                    .easeInOut(duration: 0.22).delay(0.22)
-                                ).combined(with: .scale).combined(with: .slide)
-                            )
-                    }
+                    .animation(.easeInOut(duration: 0.22), value: isExpanded)
+                    .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
                 }
-                .animation(.easeInOut(duration: 0.22), value: isExpanded)
-                .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
             }
-        }
-        .opacity(isExpandedPreviewOpen && !isExpanded ? 0.5 : 1)
-        .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-        .task {
-            calendar.ensureFreshEvent()
+            .opacity(isExpandedPreviewOpen && !isExpanded ? 0.5 : 1)
+            .animation(.easeOut(duration: 0.12), value: isExpandedPreviewOpen)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .task {
+                calendar.ensureFreshEvent()
+            }
         }
     }
 
@@ -688,67 +691,69 @@ private struct ExpandedEventRow: View {
     @State private var isHovered = false
 
     var body: some View {
-        Button(action: openInCalendar) {
-            HStack(alignment: .top, spacing: layout.eventRowGap) {
-                RoundedRectangle(cornerRadius: layout.accentWidth / 2, style: .continuous)
-                    .fill(Color(nsColor: event.color).opacity(0.95))
-                    .frame(width: layout.accentWidth)
+        WithPerceptionTracking {
+            Button(action: openInCalendar) {
+                HStack(alignment: .top, spacing: layout.eventRowGap) {
+                    RoundedRectangle(cornerRadius: layout.accentWidth / 2, style: .continuous)
+                        .fill(Color(nsColor: event.color).opacity(0.95))
+                        .frame(width: layout.accentWidth)
 
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(event.title)
-                        .font(.system(size: layout.eventTitleFontSize, weight: .semibold))
-                        .foregroundStyle(Color.primary.opacity(0.96))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(event.title)
+                            .font(.system(size: layout.eventTitleFontSize, weight: .semibold))
+                            .foregroundStyle(Color.primary.opacity(0.96))
+                            .lineLimit(1)
+                            .truncationMode(.tail)
 
-                    Text(scheduleText)
-                        .font(.system(size: layout.eventDetailFontSize, weight: .medium))
-                        .foregroundStyle(Color.primary.opacity(0.66))
-                        .lineLimit(1)
+                        Text(scheduleText)
+                            .font(.system(size: layout.eventDetailFontSize, weight: .medium))
+                            .foregroundStyle(Color.primary.opacity(0.66))
+                            .lineLimit(1)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .padding(.vertical, layout.eventRowVerticalPadding)
+                .padding(.horizontal, layout.eventRowHorizontalPadding)
+                .contentShape(RoundedRectangle(cornerRadius: layout.eventRowCornerRadius, style: .continuous))
+                .background(
+                    RoundedRectangle(cornerRadius: layout.eventRowCornerRadius, style: .continuous)
+                        .fill(Color.primary.opacity(isHovered ? 0.14 : 0.06))
+                )
+                .animation(.easeOut(duration: 0.12), value: isHovered)
+            }
+            .buttonStyle(.plain)
+            .onHover { isHovered = $0 }
+            .contextMenu {
+                Button("Open in Calendar") {
+                    openInCalendar()
                 }
 
-                Spacer(minLength: 0)
-            }
-            .padding(.vertical, layout.eventRowVerticalPadding)
-            .padding(.horizontal, layout.eventRowHorizontalPadding)
-            .contentShape(RoundedRectangle(cornerRadius: layout.eventRowCornerRadius, style: .continuous))
-            .background(
-                RoundedRectangle(cornerRadius: layout.eventRowCornerRadius, style: .continuous)
-                    .fill(Color.primary.opacity(isHovered ? 0.14 : 0.06))
-            )
-            .animation(.easeOut(duration: 0.12), value: isHovered)
-        }
-        .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
-        .contextMenu {
-            Button("Open in Calendar") {
-                openInCalendar()
-            }
-
-            if let quickJoinURL = event.quickJoinURL {
-                Button("Join Meeting") {
-                    NSWorkspace.shared.open(quickJoinURL)
+                if let quickJoinURL = event.quickJoinURL {
+                    Button("Join Meeting") {
+                        NSWorkspace.shared.open(quickJoinURL)
+                    }
+                    Button("Copy Meeting Link") {
+                        let pasteboard = NSPasteboard.general
+                        pasteboard.clearContents()
+                        pasteboard.setString(quickJoinURL.absoluteString, forType: .string)
+                    }
                 }
-                Button("Copy Meeting Link") {
+
+                Divider()
+
+                Button("Copy Title") {
                     let pasteboard = NSPasteboard.general
                     pasteboard.clearContents()
-                    pasteboard.setString(quickJoinURL.absoluteString, forType: .string)
+                    pasteboard.setString(event.title, forType: .string)
                 }
-            }
 
-            Divider()
-
-            Button("Copy Title") {
-                let pasteboard = NSPasteboard.general
-                pasteboard.clearContents()
-                pasteboard.setString(event.title, forType: .string)
-            }
-
-            if !event.location.isEmpty {
-                Button("Copy Location") {
-                    let pasteboard = NSPasteboard.general
-                    pasteboard.clearContents()
-                    pasteboard.setString(event.location, forType: .string)
+                if !event.location.isEmpty {
+                    Button("Copy Location") {
+                        let pasteboard = NSPasteboard.general
+                        pasteboard.clearContents()
+                        pasteboard.setString(event.location, forType: .string)
+                    }
                 }
             }
         }

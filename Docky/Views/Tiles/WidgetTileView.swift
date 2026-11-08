@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import Perception
 
 struct WidgetTileView: View {
     let tile: WidgetTile
@@ -14,14 +15,16 @@ struct WidgetTileView: View {
     var isExpandedPreviewOpen: Bool = false
 
     var body: some View {
-        #if DEBUG
-        let _ = Self._printChanges()
-        #endif
+        WithPerceptionTracking {
+            #if DEBUG
+            let _ = Self._printChanges()
+            #endif
 
-        Group {
-            kindView
+            Group {
+                kindView
+            }
+            .environment(\.widgetTextScale, DockyPreferences.shared.widgetTextScale)
         }
-        .environment(\.widgetTextScale, DockyPreferences.shared.widgetTextScale)
     }
 
     @ViewBuilder
