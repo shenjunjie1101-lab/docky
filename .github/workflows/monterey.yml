@@ -2,7 +2,7 @@ name: Monterey compatibility build
 
 on:
   push:
-    branches: [compat/macos-12.6, compat/macos-12.6-zh-cn]
+    branches: [compat/macos-12.6, compat/macos-12.6-zh-cn, fix/monterey-window-layer]
   workflow_dispatch:
 
 permissions:
@@ -50,6 +50,8 @@ jobs:
             build 2>&1 | tee build.log
       - name: Verify and package the app
         run: bash scripts/package_monterey.sh
+      - name: Check native dock layer above other applications
+        run: build/Build/Products/Release/Docky.app/Contents/MacOS/Docky --window-layer-smoke-test
       - name: Verify Chinese resources and render UI previews
         run: build/Build/Products/Release/Docky.app/Contents/MacOS/Docky --localization-smoke-test
       - name: Upload Monterey test build

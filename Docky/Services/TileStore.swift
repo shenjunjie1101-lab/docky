@@ -528,9 +528,15 @@ final class TileStore: ObservableObject {
 
         let folderItem = preferences.pinnedItems[itemIndex]
         expandedInlineAppFolderIDs.remove(folderItem.id)
-        let replacementItems = folderItem.folderBundleIdentifiers.map(PinnedTileItem.app(bundleIdentifier:))
         var pinnedItems = preferences.pinnedItems
         pinnedItems.remove(at: itemIndex)
+        // Restored/imported layouts may already contain a member as a separate
+        // app, or contain a repeated member. Never emit duplicate SwiftUI IDs
+        // while replacing the folder with its member tiles.
+        let existingIDs = Set(pinnedItems.map(\.id))
+        let replacementItems = normalizedGroupedAppBundleIdentifiers(folderItem.folderBundleIdentifiers)
+            .map(PinnedTileItem.app(bundleIdentifier:))
+            .filter { !existingIDs.contains($0.id) }
         pinnedItems.insert(contentsOf: replacementItems, at: itemIndex)
         preferences.pinnedItems = pinnedItems
         refreshPinnedTilesFromPreferences()

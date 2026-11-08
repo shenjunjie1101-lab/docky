@@ -42,6 +42,9 @@ final class MainWindowController: NSWindowController {
 
     override func showWindow(_ sender: Any?) {
         super.showWindow(sender)
+        // Show the nonactivating dock even if a different application is active.
+        // This preserves that application's keyboard focus.
+        window?.orderFrontRegardless()
         dockEditorHintWindowController?.scheduleInitialPresentation()
     }
 }

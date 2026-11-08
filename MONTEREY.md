@@ -18,6 +18,11 @@ widgets still need testing on a real Monterey Mac.
 - Settings, corner shapes, geometry observation, path helpers, delays, app
   activation and calendar/reminder requests have Monterey-compatible versions.
 - Pointer magnification uses a 60 Hz timer that stops when the pointer rests.
+- The main panel explicitly sets AppKit's native window level, remains visible
+  when another app activates, and is ordered forward without taking focus.
+  CI checks its WindowServer layer and stacking against an overlapping normal
+  window, including after Finder activation; user-selected autohide and
+  fullscreen visibility rules still apply.
 - Monterey uses ordinary scrolling with explicit page buttons, without the newer
   snapping behavior. Adaptive widget content uses its compact presentation.
 - Window snapshots first use the existing CoreGraphics capture path. The newer

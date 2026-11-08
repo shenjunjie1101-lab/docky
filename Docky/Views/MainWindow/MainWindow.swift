@@ -234,8 +234,6 @@ final class MainWindow: NSPanel {
     override var canBecomeKey: Bool { Self.allowsKeyWindow }
     override var canBecomeMain: Bool { false }
 
-    override var level: NSWindow.Level { get { .mainMenu } set {} }
-
     private enum VisibilityState {
         case visible
         case hidden
@@ -370,7 +368,19 @@ final class MainWindow: NSPanel {
 
     override func awakeFromNib() {
         super.awakeFromNib()
+        configurePersistentPanel()
         applyCurrentFrame(animated: false)
+    }
+
+    private func configurePersistentPanel() {
+        // Set AppKit's stored level so WindowServer actually raises the panel.
+        // Overriding the getter with a no-op setter only reports a high level;
+        // it can leave the native window at its ordinary level.
+        level = .mainMenu
+        // A dock must remain visible and interactive when another app is active.
+        // NSPanel otherwise defaults to hiding when its app deactivates.
+        hidesOnDeactivate = false
+        ignoresMouseEvents = false
     }
 
     private func performSetupIfNeeded() {
@@ -381,6 +391,7 @@ final class MainWindow: NSPanel {
         isOpaque = false
         isMovableByWindowBackground = false
         alphaValue = 0
+        configurePersistentPanel()
         // Magnification tracking lives on the content view's NSTrackingArea
         // (.mouseMoved + .activeAlways). Enabling mouseMoved on the window
         // itself ensures AppKit routes those events through the responder

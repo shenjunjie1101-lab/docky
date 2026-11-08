@@ -158,6 +158,8 @@ struct ContextActionMenuPresenter: NSViewRepresentable {
         private var preferredEdge: NSRectEdge
         private var onPresentationChanged: (Bool) -> Void
         private var isInterruptingAutohide = false
+        private var isTrackingMenu = false
+        private var pendingAction: (() -> Void)?
 
         init(
             actionProvider: @escaping (NSEvent.ModifierFlags) -> [ContextAction],
@@ -230,11 +232,23 @@ struct ContextActionMenuPresenter: NSViewRepresentable {
             return nil
         }
 
-        private func popUpCartouche(menu: NSMenu, in view: NSView) {
+        func popUpCartouche(menu: NSMenu, in view: NSView) {
+            isTrackingMenu = true
             onPresentationChanged(true)
-            defer { onPresentationChanged(false) }
             beginAutohideInterruption(for: view)
-            defer { endAutohideInterruption() }
+            defer {
+                endAutohideInterruption()
+                onPresentationChanged(false)
+                isTrackingMenu = false
+                let handler = pendingAction
+                pendingAction = nil
+                if let handler {
+                    // Ungroup/removal destroys the SwiftUI view and its menu
+                    // anchor. Wait for AppKit's nested menu tracking loop and
+                    // this event-monitor callback to unwind before doing that.
+                    DispatchQueue.main.async { handler() }
+                }
+            }
 
             let selector = NSSelectorFromString("_popUpMenuRelativeToRect:inView:preferredEdge:")
             if menu.responds(to: selector) {
@@ -337,7 +351,11 @@ struct ContextActionMenuPresenter: NSViewRepresentable {
 
         @objc private func runAction(_ sender: NSMenuItem) {
             guard let action = sender.representedObject as? ContextAction else { return }
-            action.handler()
+            if isTrackingMenu {
+                pendingAction = action.handler
+            } else {
+                DispatchQueue.main.async { action.handler() }
+            }
         }
     }
 }
